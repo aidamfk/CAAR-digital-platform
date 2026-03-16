@@ -58,6 +58,12 @@
           <li><a href="contact.html" class="nav-link">Contact</a></li>
         </ul>
         <div class="nav-icons">
+          <!-- Mobile hamburger -->
+          <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Menu">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <button class="icon-btn" id="searchBtn">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -237,7 +243,7 @@
       <div class="pdf-dl-sub">For administrative and legal reference</div>
     </div>
     <div class="pdf-downloads-grid">
-      <a href="uploads/SUCCURSALE_DE_CHERAGA.pdf" download class="pdf-dl-card">
+      <a href="downloads/SUCCURSALE DE CHERAGA.pdf" download class="pdf-dl-card">
         <div class="pdf-dl-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -251,7 +257,7 @@
           <span class="pdf-dl-hint">Agency list (PDF)</span>
         </div>
       </a>
-      <a href="uploads/SUCCURSALE_DE_CONSTANTINE.pdf" download class="pdf-dl-card">
+      <a href="downloads/SUCCURSALE DE CONSTANTINE.pdf" download class="pdf-dl-card">
         <div class="pdf-dl-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -265,7 +271,7 @@
           <span class="pdf-dl-hint">Agency list (PDF)</span>
         </div>
       </a>
-      <a href="uploads/Liste_des_agences_CAAR_dotées_des_Terminaux_de_Paiement.pdf" download class="pdf-dl-card">
+      <a href="downloads/Liste des agences CAAR dotées des Terminaux de Paiement.pdf" download class="pdf-dl-card">
         <div class="pdf-dl-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -332,6 +338,25 @@
   </div>
 </footer>
 
+
+<!-- Mobile nav overlay -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
+<nav class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-header">
+    <span class="mobile-nav-title">Menu</span>
+    <button onclick="toggleMobileMenu()" class="mobile-nav-close">✕</button>
+  </div>
+  <a href="index.html" onclick="toggleMobileMenu()">Home</a>
+  <a href="products.html" onclick="toggleMobileMenu()">Products</a>
+  <a href="company.html" onclick="toggleMobileMenu()">Company</a>
+  <a href="network.html" class="active" onclick="toggleMobileMenu()">Network</a>
+  <a href="news.html" onclick="toggleMobileMenu()">News</a>
+  <a href="contact.html" onclick="toggleMobileMenu()">Contact</a>
+  <div class="mobile-nav-btns">
+    <a href="network.html" class="btn-top">Find Agency</a>
+    <a href="contact.html" class="btn-top">Contact Us</a>
+  </div>
+</nav>
 
 <!-- Leaflet JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -526,8 +551,8 @@ function makePopup(ag) {
 ============================================================ */
 function initHeroMap() {
   heroMap = L.map('heroMap', {
-    center: [28.5, 2.5],
-    zoom: 4,
+    center: [28.0339, 1.6596],
+    zoom: 6,
     zoomControl: true,
     scrollWheelZoom: false,
     attributionControl: false,
@@ -556,8 +581,8 @@ function initHeroMap() {
 ============================================================ */
 function initFilterMap() {
   filterMap = L.map('filterMap', {
-    center: [28.5, 2.5],
-    zoom: 5,
+    center: [28.0339, 1.6596],
+    zoom: 6,
     zoomControl: true,
     scrollWheelZoom: true,
   });
@@ -574,6 +599,8 @@ function initFilterMap() {
       resetFilterIcons();
       m.setIcon(makeFilterIcon(true));
       highlightFilterCard(ag.id);
+      // Brief delay so popup opens after icon update
+      setTimeout(function() { m.openPopup(); }, 80);
     });
     filterMarkerMap[ag.id] = m;
   });
@@ -647,7 +674,7 @@ function renderFilterCards(list) {
     var group = L.featureGroup(list.map(function(ag) { return filterMarkerMap[ag.id]; }));
     filterMap.fitBounds(group.getBounds().pad(0.2));
   } else {
-    filterMap.flyTo([28.5, 2.5], 5, { animate: true, duration: 1 });
+    filterMap.flyTo([28.0339, 1.6596], 6, { animate: true, duration: 1 });
   }
 }
 
@@ -744,7 +771,7 @@ function clearSearch() {
   var clearBtn = document.getElementById('sClear');
   if (clearBtn) clearBtn.classList.remove('vis');
   closeAuto();
-  heroMap.flyTo([28.5, 2.5], 5, { animate: true, duration: 1.5 });
+  heroMap.flyTo([28.0339, 1.6596], 6, { animate: true, duration: 1.5 });
 }
 
 function closeAuto() {
@@ -923,7 +950,7 @@ function resetFilters() {
   buildCityDropdown('');
   updateFilterTags();
   renderFilterCards(AGENCIES);
-  filterMap.flyTo([28.5, 2.5], 5, { animate: true, duration: 1 });
+  filterMap.flyTo([28.0339, 1.6596], 6, { animate: true, duration: 1 });
 }
 
 /* ============================================================
@@ -935,6 +962,65 @@ document.getElementById('searchBtn').addEventListener('click', function() {
 document.getElementById('searchCloseHdr').addEventListener('click', function() {
   document.getElementById('searchBar').classList.remove('open');
 });
+
+/* ============================================================
+   MOBILE NAV
+============================================================ */
+function toggleMobileMenu() {
+  var nav = document.getElementById('mobileNav');
+  var overlay = document.getElementById('mobileNavOverlay');
+  var isOpen = nav.classList.contains('open');
+  nav.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+
+/* ============================================================
+   GEOLOCATION — "Use my location" button
+============================================================ */
+function useMyLocation() {
+  var btn = document.getElementById('locateBtn');
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  btn.classList.add('loading');
+  btn.querySelector('span').textContent = 'Locating…';
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      // Find nearest agency
+      var nearest = null;
+      var minDist = Infinity;
+      AGENCIES.forEach(function(ag) {
+        var d = Math.pow(ag.lat - lat, 2) + Math.pow(ag.lng - lng, 2);
+        if (d < minDist) { minDist = d; nearest = ag; }
+      });
+      btn.classList.remove('loading');
+      btn.querySelector('span').textContent = 'Use my location';
+      if (nearest) {
+        // Pan hero map to show user + nearest agency
+        heroMap.flyTo([nearest.lat, nearest.lng], 13, { animate: true, duration: 1.5 });
+        // Add user dot on hero map
+        L.circleMarker([lat, lng], {
+          radius: 8, color: '#2563eb', fillColor: '#3b82f6',
+          fillOpacity: 1, weight: 3
+        }).addTo(heroMap).bindPopup('<strong>Your location</strong>').openPopup();
+        // Highlight nearest in filter section
+        flyToFilterAgency(nearest.id);
+        // Scroll to filter section
+        document.querySelector('.filter-section').scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    function(err) {
+      btn.classList.remove('loading');
+      btn.querySelector('span').textContent = 'Use my location';
+      alert('Could not get your location. Please allow location access.');
+    },
+    { timeout: 10000, maximumAge: 60000 }
+  );
+}
 
 /* ============================================================
    BOOT
