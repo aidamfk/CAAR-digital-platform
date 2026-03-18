@@ -107,7 +107,8 @@
 .contact-hero-illustration {
   position: relative;
   flex-shrink: 0;
-  width: 420px;
+  width: 540px;           /* was 420px */
+  margin-right: -40px;    /* shift slightly left/center */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,6 +119,7 @@
   height: auto;
   display: block;
   object-fit: contain;
+  max-height: 340px;      /* was unset, now larger */
 }
 
 .hero-badge {
