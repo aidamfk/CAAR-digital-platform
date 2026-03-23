@@ -10,13 +10,11 @@
 </head>
 <body>
 
-<!-- ===== HEADER (same as index.html) ===== -->
+<!-- ===== HEADER ===== -->
 <header class="header">
   <div class="header-inner">
     <div class="logo-block">
-      <a href="index.html">
-        <img src="img/grand_logo.png" alt="Logo CAAR" class="logo-img"/>
-      </a>
+      <a href="index.html"><img src="img/grand_logo.png" alt="Logo CAAR" class="logo-img"/></a>
     </div>
     <div class="right-side">
       <div class="top-row">
@@ -49,13 +47,6 @@
           <li><a href="contact.html" class="nav-link">Contact</a></li>
         </ul>
         <div class="nav-icons">
-          <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Menu">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
           <button class="icon-btn" id="searchBtn">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -81,8 +72,10 @@
   </div>
 </header>
 
+<!-- ===== CATNAT PAGE ===== -->
 <div class="catnat-page">
 
+  <!-- STEP BAR -->
   <div class="step-bar">
     <div class="step-bar-brand">CATNAT &mdash; Subscription Form</div>
     <div class="step-bar-steps">
@@ -110,7 +103,9 @@
 
   <div class="catnat-form-container">
 
-    <!-- STEP 1 -->
+    <!-- ======================================================
+         STEP 1 — QUOTE (Property Details)
+    ====================================================== -->
     <div class="catnat-step" id="form-step-1">
       <div class="form-header">
         <h2>Property Details</h2>
@@ -118,63 +113,42 @@
       </div>
 
       <div class="form-grid">
+        <!-- Wilaya -->
         <div class="form-group">
           <label for="wilaya">Wilaya <span class="req">*</span></label>
           <div class="select-wrap">
-            <select id="wilaya" name="wilaya">
+            <select id="wilaya" name="wilaya" onchange="onWilayaChange()">
               <option value="16">16 _ ALGER</option>
-              <option value="01">01 _ Adrar</option>
-              <option value="02">02 _ Chlef</option>
-              <option value="03">03 _ Laghouat</option>
-              <option value="04">04 _ Oum El Bouaghi</option>
-              <option value="05">05 _ Batna</option>
-              <option value="06">06 _ Béjaïa</option>
-              <option value="07">07 _ Biskra</option>
-              <option value="08">08 _ Béchar</option>
-              <option value="09">09 _ Blida</option>
-              <option value="10">10 _ Bouira</option>
-              <option value="11">11 _ Tamanrasset</option>
-              <option value="12">12 _ Tébessa</option>
-              <option value="13">13 _ Tlemcen</option>
-              <option value="14">14 _ Tiaret</option>
-              <option value="15">15 _ Tizi Ouzou</option>
-              <option value="17">17 _ Djelfa</option>
-              <option value="18">18 _ Jijel</option>
-              <option value="19">19 _ Sétif</option>
-              <option value="20">20 _ Saïda</option>
-              <option value="21">21 _ Skikda</option>
-              <option value="22">22 _ Sidi Bel Abbès</option>
-              <option value="23">23 _ Annaba</option>
-              <option value="24">24 _ Guelma</option>
-              <option value="25">25 _ Constantine</option>
-              <option value="26">26 _ Médéa</option>
-              <option value="27">27 _ Mostaganem</option>
-              <option value="28">28 _ M'Sila</option>
-              <option value="29">29 _ Mascara</option>
-              <option value="30">30 _ Ouargla</option>
-              <option value="31">31 _ Oran</option>
-              <option value="32">32 _ El Bayadh</option>
-              <option value="33">33 _ Illizi</option>
-              <option value="34">34 _ Bordj Bou Arréridj</option>
-              <option value="35">35 _ Boumerdès</option>
-              <option value="36">36 _ El Tarf</option>
-              <option value="37">37 _ Tindouf</option>
-              <option value="38">38 _ Tissemsilt</option>
-              <option value="39">39 _ El Oued</option>
-              <option value="40">40 _ Khenchela</option>
-              <option value="41">41 _ Souk Ahras</option>
-              <option value="42">42 _ Tipaza</option>
-              <option value="43">43 _ Mila</option>
-              <option value="44">44 _ Aïn Defla</option>
-              <option value="45">45 _ Naâma</option>
-              <option value="46">46 _ Aïn Témouchent</option>
-              <option value="47">47 _ Ghardaïa</option>
+              <option value="01">01 _ Adrar</option><option value="02">02 _ Chlef</option>
+              <option value="03">03 _ Laghouat</option><option value="04">04 _ Oum El Bouaghi</option>
+              <option value="05">05 _ Batna</option><option value="06">06 _ Béjaïa</option>
+              <option value="07">07 _ Biskra</option><option value="08">08 _ Béchar</option>
+              <option value="09">09 _ Blida</option><option value="10">10 _ Bouira</option>
+              <option value="11">11 _ Tamanrasset</option><option value="12">12 _ Tébessa</option>
+              <option value="13">13 _ Tlemcen</option><option value="14">14 _ Tiaret</option>
+              <option value="15">15 _ Tizi Ouzou</option><option value="17">17 _ Djelfa</option>
+              <option value="18">18 _ Jijel</option><option value="19">19 _ Sétif</option>
+              <option value="20">20 _ Saïda</option><option value="21">21 _ Skikda</option>
+              <option value="22">22 _ Sidi Bel Abbès</option><option value="23">23 _ Annaba</option>
+              <option value="24">24 _ Guelma</option><option value="25">25 _ Constantine</option>
+              <option value="26">26 _ Médéa</option><option value="27">27 _ Mostaganem</option>
+              <option value="28">28 _ M'Sila</option><option value="29">29 _ Mascara</option>
+              <option value="30">30 _ Ouargla</option><option value="31">31 _ Oran</option>
+              <option value="32">32 _ El Bayadh</option><option value="33">33 _ Illizi</option>
+              <option value="34">34 _ Bordj Bou Arréridj</option><option value="35">35 _ Boumerdès</option>
+              <option value="36">36 _ El Tarf</option><option value="37">37 _ Tindouf</option>
+              <option value="38">38 _ Tissemsilt</option><option value="39">39 _ El Oued</option>
+              <option value="40">40 _ Khenchela</option><option value="41">41 _ Souk Ahras</option>
+              <option value="42">42 _ Tipaza</option><option value="43">43 _ Mila</option>
+              <option value="44">44 _ Aïn Defla</option><option value="45">45 _ Naâma</option>
+              <option value="46">46 _ Aïn Témouchent</option><option value="47">47 _ Ghardaïa</option>
               <option value="48">48 _ Relizane</option>
             </select>
             <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
           </div>
         </div>
 
+        <!-- Municipality -->
         <div class="form-group">
           <label for="municipality">Municipality <span class="req">*</span></label>
           <div class="select-wrap">
@@ -195,28 +169,31 @@
           </div>
         </div>
 
+        <!-- Year of Construction -->
         <div class="form-group">
           <label for="year_construction">Year of Construction <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="year_construction" name="year_construction" placeholder="e.g. 2005" min="1900" max="2026" />
+            <input type="number" id="year_construction" placeholder="e.g. 2005" min="1900" max="2026" oninput="calculatePremium()"/>
             <div class="spin-btns">
-              <button type="button" onclick="spinUp('year_construction')">&#8963;</button>
-              <button type="button" onclick="spinDown('year_construction')">&#8964;</button>
+              <button type="button" onclick="spinUp('year_construction',1)">&#8963;</button>
+              <button type="button" onclick="spinDown('year_construction',1)">&#8964;</button>
             </div>
           </div>
         </div>
 
+        <!-- Built Area -->
         <div class="form-group">
           <label for="built_area">Total Built Area (m²) <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="built_area" name="built_area" placeholder="e.g. 120" min="1" />
+            <input type="number" id="built_area" placeholder="e.g. 120" min="1" oninput="calculatePremium()"/>
             <div class="spin-btns">
-              <button type="button" onclick="spinUp('built_area')">&#8963;</button>
-              <button type="button" onclick="spinDown('built_area')">&#8964;</button>
+              <button type="button" onclick="spinUp('built_area',10)">&#8963;</button>
+              <button type="button" onclick="spinDown('built_area',10)">&#8964;</button>
             </div>
           </div>
         </div>
 
+        <!-- Floors -->
         <div class="form-group">
           <label for="num_floors">Number of Floors <span class="req">*</span></label>
           <div class="select-wrap">
@@ -225,120 +202,129 @@
               <option value="1">1st Floor</option>
               <option value="2">2nd Floor</option>
               <option value="3">3rd Floor</option>
-              <option value="4">4th Floor</option>
-              <option value="5">5th Floor</option>
-              <option value="6+">6th Floor or Higher</option>
+              <option value="4">4 Floors</option>
+              <option value="5">5 Floors</option>
+              <option value="6+">6 Floors or More</option>
             </select>
             <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
           </div>
         </div>
 
+        <!-- Construction Type -->
         <div class="form-group">
           <label for="construction_type">Type of Construction <span class="req">*</span></label>
           <div class="select-wrap">
-            <select id="construction_type" name="construction_type" onchange="updateConstructionTooltip(this.value)">
-              <option value="individual_home">Individual Home</option>
-              <option value="apartment">Apartment</option>
-              <option value="villa">Villa</option>
-              <option value="commercial">Commercial Building</option>
-              <option value="industrial">Industrial Building</option>
+            <select id="construction_type" name="construction_type" onchange="onConstructionTypeChange()">
+              <option value="Individual Home">Individual Home</option>
+              <option value="Apartment / Building">Apartment / Building</option>
+              <option value="Villa">Villa</option>
+              <option value="Commercial Building">Commercial Building</option>
+              <option value="Industrial Building">Industrial Building</option>
             </select>
             <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
           </div>
-          <div class="construction-tooltip" id="constructionTooltip">
-            <div class="tooltip-item">Individual home</div>
-            <div class="tooltip-item">Entire building</div>
-          </div>
         </div>
 
+        <!-- Declared Value -->
         <div class="form-group form-group-full">
           <label for="declared_value">Declared Value (DZD) <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="declared_value" name="declared_value" placeholder="e.g. 5 000 000" min="0" step="100000" />
+            <input type="number" id="declared_value" placeholder="e.g. 5 000 000" min="0" step="100000" oninput="calculatePremium()"/>
             <div class="spin-btns">
-              <button type="button" onclick="spinUp('declared_value', 100000)">&#8963;</button>
-              <button type="button" onclick="spinDown('declared_value', 100000)">&#8964;</button>
+              <button type="button" onclick="spinUp('declared_value',100000)">&#8963;</button>
+              <button type="button" onclick="spinDown('declared_value',100000)">&#8964;</button>
             </div>
           </div>
         </div>
-      </div>
 
+        <!-- Usage -->
+        <div class="form-group">
+          <label for="usage_type">Usage <span class="req">*</span></label>
+          <div class="select-wrap">
+            <select id="usage_type" name="usage_type" onchange="calculatePremium()">
+              <option value="Personal">Personal / Residential</option>
+              <option value="Professional">Professional</option>
+              <option value="Mixed">Mixed</option>
+            </select>
+            <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+          </div>
+        </div>
+      </div><!-- /form-grid -->
+
+      <!-- YES / NO QUESTIONS -->
       <div class="yn-questions">
         <div class="yn-row">
           <span class="yn-label">Is any part rented for commercial / industrial use?</span>
           <div class="yn-toggle" id="yn-commercial">
-            <button class="yn-btn yn-no active" onclick="setYN('commercial', 'no')">NO</button>
-            <button class="yn-btn yn-yes" onclick="setYN('commercial', 'yes')">YES</button>
+            <button class="yn-btn yn-no active" onclick="setYN('commercial','no')">NO</button>
+            <button class="yn-btn yn-yes"        onclick="setYN('commercial','yes')">YES</button>
           </div>
         </div>
-
         <div class="yn-row">
           <span class="yn-label">Is the property attested by a notarial deed?</span>
           <div class="yn-toggle" id="yn-notarial">
-            <button class="yn-btn yn-no active" onclick="setYN('notarial', 'no')">NO</button>
-            <button class="yn-btn yn-yes" onclick="setYN('notarial', 'yes')">YES</button>
+            <button class="yn-btn yn-no active" onclick="setYN('notarial','no')">NO</button>
+            <button class="yn-btn yn-yes"        onclick="setYN('notarial','yes')">YES</button>
           </div>
         </div>
-
         <div class="yn-row">
           <span class="yn-label">Is the construction compliant with seismic regulations?</span>
           <div class="yn-toggle" id="yn-seismic">
-            <button class="yn-btn yn-no active" onclick="setYN('seismic', 'no')">NO</button>
-            <button class="yn-btn yn-yes" onclick="setYN('seismic', 'yes')">YES</button>
+            <button class="yn-btn yn-no active" onclick="setYN('seismic','no')">NO</button>
+            <button class="yn-btn yn-yes"        onclick="setYN('seismic','yes')">YES</button>
           </div>
         </div>
       </div>
 
+      <!-- COVERAGE GUARANTEES -->
       <div class="coverage-section">
         <h3 class="coverage-title">Coverage Guarantees</h3>
         <div class="coverage-list">
-          <div class="coverage-item coverage-included">
+          <div class="coverage-item">
             <div class="coverage-item-left">
               <span class="coverage-icon">&#127758;</span>
               <span class="coverage-name">Earthquakes</span>
             </div>
-            <div class="coverage-item-right included-badge">&#10003; Included</div>
+            <div class="coverage-item-right"><span class="included-badge">&#10003; Included</span></div>
           </div>
-
-          <div class="coverage-item coverage-optional">
+          <div class="coverage-item">
             <div class="coverage-item-left">
               <span class="coverage-icon">&#127754;</span>
               <span class="coverage-name">Floods &amp; Mudflows</span>
             </div>
             <div class="coverage-item-right">
-              <button class="add-btn" id="btn-floods" onclick="toggleCoverage('floods', this)">Add</button>
+              <button class="add-btn" id="btn-floods" onclick="toggleCoverage('floods',this)">+ Add</button>
             </div>
           </div>
-
-          <div class="coverage-item coverage-optional">
+          <div class="coverage-item">
             <div class="coverage-item-left">
               <span class="coverage-icon">&#127749;</span>
               <span class="coverage-name">Storms &amp; High Winds</span>
             </div>
             <div class="coverage-item-right">
-              <button class="add-btn" id="btn-storms" onclick="toggleCoverage('storms', this)">Add</button>
+              <button class="add-btn" id="btn-storms" onclick="toggleCoverage('storms',this)">+ Add</button>
             </div>
           </div>
-
-          <div class="coverage-item coverage-optional">
+          <div class="coverage-item">
             <div class="coverage-item-left">
               <span class="coverage-icon">&#127755;</span>
               <span class="coverage-name">Ground Movements</span>
             </div>
             <div class="coverage-item-right">
-              <button class="add-btn" id="btn-ground" onclick="toggleCoverage('ground', this)">Add</button>
+              <button class="add-btn" id="btn-ground" onclick="toggleCoverage('ground',this)">+ Add</button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- PREMIUM BAR -->
       <div class="premium-bar">
         <div class="premium-row">
           <span class="premium-label">Net Premium (excl. tax)</span>
           <span class="premium-value" id="net-premium">0.00 DZD</span>
         </div>
         <div class="premium-row">
-          <span class="premium-label">Taxes &amp; Management Fees</span>
+          <span class="premium-label">Taxes &amp; Management Fees (19%)</span>
           <span class="premium-value" id="tax-fees">0.00 DZD</span>
         </div>
         <div class="premium-divider"></div>
@@ -347,603 +333,515 @@
           <span class="premium-total-value" id="total-pay">0.00 DZD</span>
         </div>
         <div class="premium-consent-row">
-          <input type="checkbox" id="terms-consent" />
+          <input type="checkbox" id="terms-consent"/>
           <label for="terms-consent">I accept the <a href="#">general terms and conditions</a> of CATNAT insurance</label>
         </div>
       </div>
 
       <div class="form-nav-btns">
-        <a href="online-subscription.html" class="btn-back-products">&#8592; Back to Products</a>
-        <button class="btn-continue" type="button" onclick="goToStep(2)">Continue to Purchase →</button>
+        <a href="Online_subscription.html" class="btn-back-products">&#8592; Back to Products</a>
+        <button class="btn-continue" type="button" onclick="goToStep(2)">Continue to Purchase &#8594;</button>
       </div>
-    </div>
+    </div><!-- /form-step-1 -->
 
-<!-- STEP 2 -->
-<div class="catnat-step hidden" id="form-step-2">
 
-  <!-- Subscription form first -->
-  <div id="subscription-form-view">
-    <div class="subscription-layout">
+    <!-- ======================================================
+         STEP 2 — SUBSCRIPTION
+    ====================================================== -->
+    <div class="catnat-step hidden" id="form-step-2">
 
-      <div class="subscription-left">
-        <div class="form-section">
-          <div class="section-title">
-            <span class="step-badge">2</span>
-            <div>
-              <h2>Policyholder Information</h2>
-              <p>Personal details of the insured person</p>
-            </div>
-          </div>
+      <!-- SUB-VIEW A: Subscription Form -->
+      <div id="subscription-form-view">
+        <div class="subscription-layout">
 
-          <div class="form-grid step2-grid">
-            <div class="form-group">
-              <label for="title">Title</label>
-              <div class="select-wrap">
-                <select id="title" name="title">
-                  <option value="Mr">Mr</option>
-                  <option value="Mrs">Mrs</option>
-                  <option value="Ms">Ms</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+          <!-- LEFT: Form fields -->
+          <div class="subscription-left">
+
+            <!-- Policyholder Info -->
+            <div class="form-section">
+              <div class="section-title">
+                <span class="step-badge">1</span>
+                <div>
+                  <h2>Policyholder Information</h2>
+                  <p>Personal details of the insured person</p>
+                </div>
+              </div>
+              <div class="form-grid step2-grid">
+                <div class="form-group">
+                  <label for="title">Title</label>
+                  <div class="select-wrap">
+                    <select id="title">
+                      <option value="Mr">Mr</option>
+                      <option value="Mrs">Mrs</option>
+                      <option value="Ms">Ms</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="last_name">Last Name <span class="req">*</span></label>
+                  <input type="text" id="last_name" placeholder="Owner's last name"/>
+                </div>
+                <div class="form-group">
+                  <label for="first_name">First Name <span class="req">*</span></label>
+                  <input type="text" id="first_name" placeholder="Owner's first name"/>
+                </div>
+                <div class="form-group form-group-full">
+                  <label for="address">Address <span class="req">*</span></label>
+                  <input type="text" id="address" placeholder="Full address"/>
+                </div>
+                <div class="form-group">
+                  <label for="policy_wilaya">Wilaya <span class="req">*</span></label>
+                  <div class="select-wrap">
+                    <select id="policy_wilaya">
+                      <option value="16">16 _ ALGER</option>
+                      <option value="09">09 _ BLIDA</option>
+                      <option value="25">25 _ CONSTANTINE</option>
+                      <option value="31">31 _ ORAN</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="city">City <span class="req">*</span></label>
+                  <input type="text" id="city" placeholder="City"/>
+                </div>
+                <div class="form-group">
+                  <label for="email">Email <span class="req">*</span></label>
+                  <input type="email" id="email" placeholder="your@email.com"/>
+                </div>
+                <div class="form-group">
+                  <label for="confirm_email">Confirm Email <span class="req">*</span></label>
+                  <input type="email" id="confirm_email" placeholder="Confirm Email"/>
+                </div>
+                <div class="form-group">
+                  <label for="mobile_1">Mobile 1 <span class="req">*</span></label>
+                  <input type="tel" id="mobile_1" placeholder="05XX XX XX XX"/>
+                </div>
+                <div class="form-group">
+                  <label for="mobile_2">Mobile 2</label>
+                  <input type="tel" id="mobile_2" placeholder="Optional"/>
+                </div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="last_name">Last Name *</label>
-              <input type="text" id="last_name" placeholder="Owner's last name">
+            <!-- Property to Insure -->
+            <div class="form-section">
+              <div class="section-title">
+                <span class="step-badge">2</span>
+                <div>
+                  <h2>Property to Insure</h2>
+                  <p>Address of the property to be covered</p>
+                </div>
+              </div>
+              <div class="form-grid step2-grid">
+                <div class="form-group form-group-full">
+                  <label for="property_address">Property Address <span class="req">*</span></label>
+                  <input type="text" id="property_address" placeholder="Street address of the insured property"/>
+                </div>
+                <div class="form-group">
+                  <label for="property_wilaya">Wilaya <span class="req">*</span></label>
+                  <div class="select-wrap">
+                    <select id="property_wilaya">
+                      <option value="16">16 _ ALGER</option>
+                      <option value="09">09 _ BLIDA</option>
+                      <option value="14">14 _ TIARET</option>
+                      <option value="25">25 _ CONSTANTINE</option>
+                      <option value="31">31 _ ORAN</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="property_city">City <span class="req">*</span></label>
+                  <input type="text" id="property_city" placeholder="City / Zone"/>
+                </div>
+                <div class="form-group">
+                  <label for="postal_code">Postal Code</label>
+                  <div class="select-wrap">
+                    <select id="postal_code">
+                      <option value="16000">16000</option>
+                      <option value="02215">02215</option>
+                      <option value="25000">25000</option>
+                      <option value="14431">14431</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="first_name">First Name *</label>
-              <input type="text" id="first_name" placeholder="Owner's first name">
+            <!-- Choose Agency -->
+            <div class="form-section">
+              <div class="section-title">
+                <span class="step-badge">3</span>
+                <div>
+                  <h2>Choose Your Agency</h2>
+                  <p>Select the CAAR agency that will handle your policy</p>
+                </div>
+              </div>
+              <div class="form-grid step2-grid">
+                <div class="form-group">
+                  <label for="agency_wilaya">Wilaya</label>
+                  <div class="select-wrap">
+                    <select id="agency_wilaya" onchange="updateAgencyList()">
+                      <option value="16">16 _ ALGER</option>
+                      <option value="09">09 _ BLIDA</option>
+                      <option value="25">25 _ CONSTANTINE</option>
+                      <option value="13">13 _ TLEMCEN</option>
+                      <option value="31">31 _ ORAN</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="agency">Agency</label>
+                  <div class="select-wrap">
+                    <select id="agency" onchange="updateAgencyCard()">
+                      <option value="203">203 _ ALGER (Belouizded)</option>
+                      <option value="210">210 _ ALGER (Kouba)</option>
+                      <option value="233">233 _ ALGER (Ain Naadja)</option>
+                      <option value="601">601 _ ALGER (El Djaouhara)</option>
+                      <option value="602">602 _ ALGER (Didouche Mourad)</option>
+                    </select>
+                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="agency-card" id="agency-info-card">
+                <div class="agency-icon">&#127970;</div>
+                <div class="agency-content">
+                  <div class="agency-top">
+                    <strong id="agency-card-name">Agency 203 — ALGER</strong>
+                    <span class="agency-status">&#8226; Open</span>
+                  </div>
+                  <p id="agency-card-addr">23, Rue Mohamed Belouizded, ALGER</p>
+                  <p id="agency-card-phone">021 65 10 24 — 021 65 40 92</p>
+                  <p id="agency-card-fax">Fax: 021 66 06 76</p>
+                </div>
+              </div>
+            </div>
+          </div><!-- /subscription-left -->
+
+          <!-- RIGHT: Quote Summary Sidebar -->
+          <div class="subscription-right">
+            <div class="quote-summary-box">
+              <div class="summary-title">&#128221; Your Quote Summary</div>
+              <div class="summary-row"><span>Construction type</span><strong id="sum-constr">—</strong></div>
+              <div class="summary-row"><span>Usage</span><strong id="sum-usage">—</strong></div>
+              <div class="summary-row"><span>Built area</span><strong id="sum-area">—</strong></div>
+              <div class="summary-row"><span>Year built</span><strong id="sum-year">—</strong></div>
+              <div class="summary-row"><span>Declared value</span><strong id="sum-dvalue">—</strong></div>
+              <div class="summary-row"><span>Start date</span><strong id="sum-start">—</strong></div>
+              <div class="summary-row"><span>End date</span><strong id="sum-end">—</strong></div>
+              <hr class="summary-divider"/>
+              <div class="summary-row"><span>Net premium</span><strong id="sum-net">0.00 DZD</strong></div>
+              <div class="summary-row"><span>Taxes &amp; fees</span><strong id="sum-tax">0.00 DZD</strong></div>
+              <hr class="summary-divider"/>
+              <div class="summary-total"><span>Total to pay</span><strong id="sum-total">0.00 DZD</strong></div>
             </div>
 
+            <div class="guarantees-box">
+              <div class="guarantees-title">Guarantees Included</div>
+              <ul id="guarantees-list">
+                <li>Earthquakes</li>
+              </ul>
+            </div>
+
+            <div class="form-nav-btns" style="flex-direction:column;">
+              <button class="btn-back-products" type="button" onclick="goToStep(1)" style="width:100%;justify-content:center;">&#8592; Back to Quote</button>
+              <button type="button" class="btn-continue" onclick="showReviewView()" style="width:100%;justify-content:center;">Review Summary &#8594;</button>
+            </div>
+          </div><!-- /subscription-right -->
+
+        </div>
+      </div><!-- /subscription-form-view -->
+
+      <!-- SUB-VIEW B: Review Summary -->
+      <div id="subscription-review-view" class="hidden">
+        <div class="review-page">
+          <div class="review-note">
+            &#128203; Please review all information carefully before confirming your subscription
+          </div>
+
+          <!-- Property Details review -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#127968; Property Details</div>
+              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><span class="review-label">Construction type</span><span class="review-value" id="rv-constr">—</span></div>
+              <div class="review-item"><span class="review-label">Usage</span><span class="review-value" id="rv-usage">—</span></div>
+              <div class="review-item"><span class="review-label">Number of Floors</span><span class="review-value" id="rv-floors">—</span></div>
+              <div class="review-item"><span class="review-label">Total Built Area</span><span class="review-value" id="rv-area">—</span></div>
+              <div class="review-item"><span class="review-label">Declared Value</span><span class="review-value" id="rv-dvalue">—</span></div>
+              <div class="review-item"><span class="review-label">Year Built</span><span class="review-value" id="rv-year">—</span></div>
+            </div>
+          </div>
+
+          <!-- Policyholder review -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#128100; Policyholder Information</div>
+              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><span class="review-label">Full Name</span><span class="review-value" id="rv-name">—</span></div>
+              <div class="review-item"><span class="review-label">Wilaya</span><span class="review-value" id="rv-wilaya">—</span></div>
+              <div class="review-item review-item-full"><span class="review-label">Address</span><span class="review-value" id="rv-addr">—</span></div>
+              <div class="review-item"><span class="review-label">Phone</span><span class="review-value" id="rv-phone">—</span></div>
+              <div class="review-item review-item-full"><span class="review-label">Email</span><span class="review-value" id="rv-email">—</span></div>
+            </div>
+          </div>
+
+          <!-- Property location review -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#128205; Insured Property Location</div>
+              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item review-item-full"><span class="review-label">Address</span><span class="review-value" id="rv-prop-addr">—</span></div>
+              <div class="review-item"><span class="review-label">Wilaya</span><span class="review-value" id="rv-prop-wilaya">—</span></div>
+              <div class="review-item"><span class="review-label">City</span><span class="review-value" id="rv-prop-city">—</span></div>
+            </div>
+          </div>
+
+          <!-- Agency review -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#127970; Selected Agency</div>
+              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><span class="review-label">Agency</span><span class="review-value" id="rv-agency">—</span></div>
+              <div class="review-item"><span class="review-label">Address</span><span class="review-value" id="rv-agency-addr">—</span></div>
+            </div>
+          </div>
+
+          <!-- Contract & Pricing review -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#128196; Contract &amp; Pricing</div>
+              <button type="button" class="review-edit-btn" onclick="goToStep(1)">Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><span class="review-label">Start Date</span><span class="review-value" id="rv-start">—</span></div>
+              <div class="review-item"><span class="review-label">End Date</span><span class="review-value" id="rv-end">—</span></div>
+              <div class="review-item"><span class="review-label">Net Premium</span><span class="review-value" id="rv-net">—</span></div>
+              <div class="review-item"><span class="review-label">Taxes &amp; Fees</span><span class="review-value" id="rv-tax">—</span></div>
+            </div>
+            <div class="review-total-bar">
+              <span>Total to Pay</span>
+              <strong id="rv-total">—</strong>
+            </div>
+          </div>
+
+          <!-- Consents -->
+          <div class="review-consents">
+            <label class="review-checkbox">
+              <input type="checkbox" id="confirm-info"/>
+              <span>I confirm that all the information provided is correct and complete.</span>
+            </label>
+            <label class="review-checkbox">
+              <input type="checkbox" id="confirm-terms"/>
+              <span>I accept the <a href="#">general terms and conditions</a> of online sale — الشروط العامة للبيع عن بعد</span>
+            </label>
+          </div>
+
+          <!-- Identity Upload (optional) -->
+          <div class="review-card">
+            <div class="review-card-header">
+              <div class="review-card-title">&#128206; Identity Document Upload (optional)</div>
+            </div>
+            <p class="review-upload-text">Attach a copy of your national ID card or passport to speed up processing.</p>
+            <div class="upload-box" onclick="document.getElementById('idUpload').click()">
+              <div class="upload-icon">&#128196;</div>
+              <div class="upload-main">
+                <strong>Click to upload or drag &amp; drop</strong>
+                <span>PDF, JPG, PNG — Max 5 MB</span>
+              </div>
+              <input type="file" id="idUpload" accept=".pdf,.jpg,.jpeg,.png" style="display:none"/>
+            </div>
+          </div>
+
+          <div class="form-nav-btns review-nav">
+            <button class="btn-back-products" type="button" onclick="showSubscriptionForm()">&#8592; Back</button>
+            <button class="btn-continue" type="button" onclick="goToStep(3)">Pay with CIB/Baridi Mob &#8594;</button>
+          </div>
+        </div>
+      </div><!-- /subscription-review-view -->
+    </div><!-- /form-step-2 -->
+
+
+    <!-- ======================================================
+         STEP 3 — PAYMENT (CIB Gateway)
+    ====================================================== -->
+    <div class="catnat-step hidden" id="form-step-3">
+      <div class="payment-page">
+        <div class="payment-box">
+
+          <div class="payment-header">
+            <div class="payment-brand">
+              <span class="payment-logo">CB</span>
+              <span class="payment-title">Welcome to the CIB Interbank Payment Platform</span>
+            </div>
+          </div>
+
+          <div class="payment-section-title">
+            <span>Payment Information</span>
+            <span class="payment-session">&#9203; Session expires in <span id="countdown">5:00</span></span>
+          </div>
+
+          <div class="payment-info-card">
+            <div class="info-line"><span class="info-label">Merchant</span><span class="info-value">CAAR ASSURANCES</span></div>
+            <div class="info-line"><span class="info-label">Website</span><span class="info-value">https://www.caar.dz</span></div>
+            <div class="info-line"><span class="info-label">Amount</span><span class="info-value amount" id="pay-amount">0.00 DZD</span></div>
+            <div class="info-line"><span class="info-label">Reference</span><span class="info-value ref" id="pay-ref">New Contract — CATNAT</span></div>
+          </div>
+
+          <div class="payment-section-title" style="margin-top:0;">
+            <span>Card Information</span>
+          </div>
+
+          <div class="payment-form-card">
             <div class="form-group form-group-full">
-              <label for="address">Address *</label>
-              <input type="text" id="address" placeholder="Full address">
+              <label for="card_number">Your CIB Card Number <span class="req">*</span></label>
+              <input type="text" id="card_number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this)"/>
             </div>
-
             <div class="form-group">
-              <label for="policy_wilaya">Wilaya *</label>
-              <div class="select-wrap">
-                <select id="policy_wilaya">
-                  <option value="16">16 _ ALGER</option>
-                  <option value="09">09 _ BLIDA</option>
-                  <option value="25">25 _ CONSTANTINE</option>
-                  <option value="31">31 _ ORAN</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+              <label for="cvv2">CVV2 <span class="req">*</span></label>
+              <input type="password" id="cvv2" placeholder="&#8226;&#8226;&#8226;" maxlength="3"/>
+            </div>
+            <div class="form-group">
+              <label>Expiry Date <span class="req">*</span></label>
+              <div class="expiry-row">
+                <div class="select-wrap">
+                  <select id="expiry_month">
+                    <option value="">Month</option>
+                    <option value="01">01 _ January</option><option value="02">02 _ February</option>
+                    <option value="03">03 _ March</option><option value="04">04 _ April</option>
+                    <option value="05">05 _ May</option><option value="06">06 _ June</option>
+                    <option value="07">07 _ July</option><option value="08">08 _ August</option>
+                    <option value="09">09 _ September</option><option value="10">10 _ October</option>
+                    <option value="11">11 _ November</option><option value="12">12 _ December</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                </div>
+                <div class="select-wrap">
+                  <select id="expiry_year">
+                    <option value="">Year</option>
+                    <option value="2026">2026</option><option value="2027">2027</option>
+                    <option value="2028">2028</option><option value="2029">2029</option>
+                    <option value="2030">2030</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+                </div>
               </div>
             </div>
-
             <div class="form-group">
-              <label for="city">City *</label>
-              <input type="text" id="city" value="ALGER">
+              <label for="cardholder_name">Cardholder Name <span class="req">*</span></label>
+              <input type="text" id="cardholder_name" placeholder="Name as on card"/>
             </div>
+          </div>
 
-            <div class="form-group">
-              <label for="email">Email *</label>
-              <input type="email" id="email" placeholder="your@email.com">
-            </div>
+          <div class="payment-actions">
+            <button type="button" class="btn-cancel-payment" onclick="goToStep(2)">&#x2715; Cancel</button>
+            <button type="button" class="btn-reset-payment" onclick="resetPaymentForm()">&#8635; Reset</button>
+            <button type="button" class="btn-validate-payment" onclick="validatePayment()">&#10003; Validate Payment</button>
+          </div>
 
-            <div class="form-group">
-              <label for="confirm_email">Confirm Email *</label>
-              <input type="email" id="confirm_email" placeholder="Confirm Email">
-            </div>
+          <div class="payment-footer-bar">
+            <span>HELP</span>
+            <span>&#128274; Secured by CIB &middot; 256-bit SSL</span>
+            <span>30 20</span>
+          </div>
 
-            <div class="form-group">
-              <label for="mobile_1">Mobile 1 *</label>
-              <input type="text" id="mobile_1" placeholder="05XX XX XX XX">
-            </div>
+        </div>
+      </div>
+    </div><!-- /form-step-3 -->
 
-            <div class="form-group">
-              <label for="mobile_2">Mobile 2</label>
-              <input type="text" id="mobile_2" placeholder="Optional">
+
+    <!-- ======================================================
+         STEP 4 — CONFIRMATION
+    ====================================================== -->
+    <div class="catnat-step hidden" id="form-step-4">
+      <div class="success-page">
+
+        <div class="success-card">
+          <div class="success-icon">&#10003;</div>
+          <h2>Payment Successful!</h2>
+          <p class="success-message">
+            Your CATNAT insurance subscription has been confirmed.<br>
+            Your certificate will be sent to your email shortly.
+          </p>
+
+          <div class="policy-ref-box">
+            <div class="policy-ref-label">Policy Reference</div>
+            <div class="policy-ref-code" id="confirm-policy-ref">POLA-20260310-XXXX</div>
+            <div class="policy-ref-dates" id="confirm-dates">Issued: — · Valid until: —</div>
+          </div>
+
+          <div class="success-metrics">
+            <div class="metric-box">
+              <span class="metric-label amount">Amount Paid</span>
+              <strong id="confirm-amount">—</strong>
             </div>
+            <div class="metric-box">
+              <span class="metric-label coverage">Coverage</span>
+              <strong>CATNAT</strong>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label payment">Payment</span>
+              <strong>CIB / Baridi Mob</strong>
+            </div>
+          </div>
+
+          <div class="success-actions">
+            <a href="index.html" class="success-btn primary">Go to My Space &#8594;</a>
+            <button type="button" class="success-btn" onclick="downloadCertificate()">&#128196; Download Certificate</button>
+            <button type="button" class="success-btn" onclick="window.print()">&#128424; Print</button>
           </div>
         </div>
 
-        <div class="form-section">
-          <div class="section-title">
-            <span class="step-badge">3</span>
+        <div class="next-steps-card">
+          <h3>What happens next?</h3>
+          <div class="next-step">
+            <span class="next-step-num">1</span>
             <div>
-              <h2>Property to Insure</h2>
-              <p>Address of the property to be covered</p>
+              <strong>Certificate sent by email</strong>
+              <p>Your insurance certificate will be sent to your email within minutes.</p>
             </div>
           </div>
-
-          <div class="form-grid step2-grid">
-            <div class="form-group form-group-full">
-              <label for="property_address">Property Address *</label>
-              <input type="text" id="property_address" placeholder="Street address of the insured property">
-            </div>
-
-            <div class="form-group">
-              <label for="property_wilaya">Wilaya *</label>
-              <div class="select-wrap">
-                <select id="property_wilaya">
-                  <option value="16">16 _ ALGER</option>
-                  <option value="09">09 _ BLIDA</option>
-                  <option value="25">25 _ CONSTANTINE</option>
-                  <option value="31">31 _ ORAN</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="property_city">City *</label>
-              <input type="text" id="property_city" value="ABOU EL HASSEN _ Zone 2">
-            </div>
-
-            <div class="form-group">
-              <label for="postal_code">Postal Code</label>
-              <div class="select-wrap">
-                <select id="postal_code">
-                  <option value="02215">02215</option>
-                  <option value="16000">16000</option>
-                  <option value="25000">25000</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="section-title">
-            <span class="step-badge">4</span>
+          <div class="next-step">
+            <span class="next-step-num">2</span>
             <div>
-              <h2>Choose Your Agency</h2>
-              <p>Select the CAAR agency that will handle your policy</p>
+              <strong>Agency will contact you</strong>
+              <p id="confirm-agency-msg">Your selected agency will reach out within 48 hours to finalize your file.</p>
             </div>
           </div>
-
-          <div class="form-grid step2-grid">
-            <div class="form-group">
-              <label for="agency_wilaya">Wilaya</label>
-              <div class="select-wrap">
-                <select id="agency_wilaya">
-                  <option value="16">16 _ ALGER</option>
-                  <option value="09">09 _ BLIDA</option>
-                  <option value="25">25 _ CONSTANTINE</option>
-                  <option value="31">31 _ ORAN</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="agency">Agency</label>
-              <div class="select-wrap">
-                <select id="agency">
-                  <option value="203">203 _ ALGER</option>
-                  <option value="101">101 _ BLIDA</option>
-                  <option value="305">305 _ CONSTANTINE</option>
-                </select>
-                <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="agency-card">
-            <div class="agency-icon">🏢</div>
-            <div class="agency-content">
-              <div class="agency-top">
-                <strong>Agency 203 — ALGER</strong>
-                <span class="agency-status">• Open</span>
-              </div>
-              <p>23, Rue Mohamed Belouizdad, ALGER</p>
-              <p>021 65 10 24 — 021 65 40 92</p>
-              <p>Fax: 021 66 06 76</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="subscription-right">
-        <div class="quote-summary-box">
-          <div class="summary-title">🗒 Your Quote Summary</div>
-          <div class="summary-row"><span>Construction type</span><strong id="sum-construction-step2">Apartment / Building</strong></div>
-          <div class="summary-row"><span>Built area</span><strong id="sum-area-step2">Professional</strong></div>
-          <div class="summary-row"><span>Usage</span><strong id="sum-usage-step2">200.00 m²</strong></div>
-          <div class="summary-row"><span>Start date</span><strong id="sum-start-step2">10/03/2026</strong></div>
-          <div class="summary-row"><span>End date</span><strong id="sum-end-step2">09/03/2027</strong></div>
-          <div class="summary-row"><span>Year built</span><strong id="sum-year-step2">2004</strong></div>
-          <hr>
-          <div class="summary-row"><span>Net premium</span><strong>5,700.00 DZD</strong></div>
-          <div class="summary-row"><span>Taxes &amp; fees</span><strong>370.00 DZD</strong></div>
-          <hr>
-          <div class="summary-total"><span>Total to pay</span><strong>6,070.00 DZD</strong></div>
-        </div>
-
-        <div class="guarantees-box">
-          <div class="guarantees-title">Guarantees Included</div>
-          <ul>
-            <li>Earthquakes</li>
-            <li>Floods &amp; Mudflows</li>
-            <li>Storms &amp; High Winds</li>
-          </ul>
-        </div>
-
-        <div class="form-nav-btns">
-          <button class="btn-back-products" type="button" onclick="goToStep(1)">← Back to Quote</button>
-        <button type="button" class="btn-continue" onclick="showReviewView()">Review Summary →</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Review summary second -->
-  <div id="subscription-review-view" class="hidden">
-    <div class="review-page">
-
-      <div class="review-note">
-        📄 Please review all information carefully before confirming your subscription
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">🏠 Property Details</div>
-          <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-        </div>
-
-        <div class="review-grid">
-          <div class="review-item">
-            <span class="review-label">Construction type</span>
-            <span class="review-value">Apartment / Building</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Usage</span>
-            <span class="review-value">Professional</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Number of Floors</span>
-            <span class="review-value">4 Floors</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Total Built Area</span>
-            <span class="review-value">200.00 m²</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Declared Value</span>
-            <span class="review-value">6,200,000.00 DZD</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Year Built</span>
-            <span class="review-value">2004</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">👤 Policyholder Information</div>
-          <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-        </div>
-
-        <div class="review-grid">
-          <div class="review-item">
-            <span class="review-label">Full Name</span>
-            <span class="review-value">Mrs. MESSOUAF Nawal</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Address</span>
-            <span class="review-value">350, ALGER</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Wilaya</span>
-            <span class="review-value">16 — ALGER</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Phone</span>
-            <span class="review-value">07 95 91 73 23</span>
-          </div>
-          <div class="review-item review-item-full">
-            <span class="review-label">Email</span>
-            <span class="review-value">nawalmessouaf04@outlook.fr</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">📍 Insured Property Location</div>
-          <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-        </div>
-
-        <div class="review-grid">
-          <div class="review-item">
-            <span class="review-label">Address</span>
-            <span class="review-value">350</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Wilaya</span>
-            <span class="review-value">14 — TIARET</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">City / Zone</span>
-            <span class="review-value">ROSFA — Zone 1: 2a DJESILET</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Postal Code</span>
-            <span class="review-value">1 — 14431</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">🏢 Selected Agency</div>
-          <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-        </div>
-
-        <div class="review-grid">
-          <div class="review-item">
-            <span class="review-label">Wilaya</span>
-            <span class="review-value">13 — TLEMCEN</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Agency</span>
-            <span class="review-value">404 — TLEMCEN</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">📄 Contract & Pricing</div>
-          <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-        </div>
-
-        <div class="review-grid">
-          <div class="review-item">
-            <span class="review-label">Start Date</span>
-            <span class="review-value">10/02/2026</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">End Date</span>
-            <span class="review-value">09/03/2027</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Net Premium</span>
-            <span class="review-value">4,030.00 DZD</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Taxes & Fees</span>
-            <span class="review-value">370.00 DZD</span>
-          </div>
-        </div>
-
-        <div class="review-total-bar">
-          <span>Total to Pay</span>
-          <strong>4,400.00 DZD</strong>
-        </div>
-      </div>
-
-      <div class="review-consents">
-        <label class="review-checkbox">
-          <input type="checkbox" id="confirm-info">
-          <span>I confirm that all the information provided is correct and complete.</span>
-        </label>
-
-        <label class="review-checkbox">
-          <input type="checkbox" id="confirm-terms" checked>
-          <span>I accept the <a href="#">general terms and conditions</a> of online sale — الشروط العامة للبيع عن بعد</span>
-        </label>
-      </div>
-
-      <div class="review-card">
-        <div class="review-card-header">
-          <div class="review-card-title">📎 Identity Document Upload (optional)</div>
-          <button type="button" class="review-edit-btn">Edit</button>
-        </div>
-        <p class="review-upload-text">Attach a copy of your national ID card or passport to speed up processing.</p>
-
-        <div class="upload-box">
-          <div class="upload-icon">📄</div>
-          <div class="upload-main">
-            <strong>Click to upload or drag & drop</strong>
-            <span>PDF, JPG, PNG — Max 5 MB</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-nav-btns review-nav">
-        <button class="btn-back-products" type="button" onclick="showSubscriptionForm()">← Back</button>
-        <button class="btn-continue" type="button" onclick="goToStep(3)">Continue to Payment →</button>
-      </div>
-    </div>
-  </div>
-</div>
-  <!-- STEP 3 -->
-<div class="catnat-step hidden" id="form-step-3">
-  <div class="payment-page">
-
-    <div class="payment-box">
-      <div class="payment-header">
-        <div class="payment-brand">
-          <span class="payment-logo">CB</span>
-          <span class="payment-title">Welcome to the CIB Interbank Payment Platform</span>
-        </div>
-      </div>
-
-      <div class="payment-section-title">
-        <span>Payment Information</span>
-        <span class="payment-session">⏱ Session expires in 5:00</span>
-      </div>
-
-      <div class="payment-info-card">
-        <div class="payment-info-grid">
-          <div class="payment-info-left">
-            <div class="info-line">
-              <span class="info-label">Merchant</span>
-              <span class="info-value">CAAR ASSURANCES</span>
-            </div>
-            <div class="info-line">
-              <span class="info-label">Website</span>
-              <span class="info-value">https://www.caar.dz</span>
-            </div>
-            <div class="info-line">
-              <span class="info-label">Amount</span>
-              <span class="info-value amount">17,400.00 DZD</span>
-            </div>
-            <div class="info-line">
-              <span class="info-label">Reference</span>
-              <span class="info-value">New Contract — CATNAT</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="payment-section-title" style="margin-top:12px;">
-        <span>Card Information</span>
-      </div>
-
-      <div class="payment-form-card">
-        <div class="form-group form-group-full">
-          <label for="card_number">Your CIB Card Number *</label>
-          <input type="text" id="card_number" placeholder="1234567890123456">
-        </div>
-
-        <div class="form-group">
-          <label for="cvv2">CVV2 *</label>
-          <input type="password" id="cvv2" placeholder="•••">
-        </div>
-
-        <div class="form-group">
-          <label for="expiry_month">Expiry Date *</label>
-          <div class="expiry-row">
-            <div class="select-wrap">
-              <select id="expiry_month">
-                <option value="">06 _ June</option>
-                <option value="01">01 _ January</option>
-                <option value="02">02 _ February</option>
-                <option value="03">03 _ March</option>
-                <option value="04">04 _ April</option>
-                <option value="05">05 _ May</option>
-                <option value="06">06 _ June</option>
-                <option value="07">07 _ July</option>
-                <option value="08">08 _ August</option>
-                <option value="09">09 _ September</option>
-                <option value="10">10 _ October</option>
-                <option value="11">11 _ November</option>
-                <option value="12">12 _ December</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-            </div>
-
-            <div class="select-wrap">
-              <select id="expiry_year">
-                <option value="">2027</option>
-                <option value="2026">2026</option>
-                <option value="2027">2027</option>
-                <option value="2028">2028</option>
-                <option value="2029">2029</option>
-              </select>
-              <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+          <div class="next-step">
+            <span class="next-step-num">3</span>
+            <div>
+              <strong>Manage your policy online</strong>
+              <p>Access your client space to view your policy, add coverage, or file a claim anytime.</p>
             </div>
           </div>
         </div>
 
-        <div class="form-group form-group-full">
-          <label for="cardholder_name">Cardholder Name *</label>
-          <input type="text" id="cardholder_name" placeholder="Name on card">
-        </div>
       </div>
+    </div><!-- /form-step-4 -->
 
-      <div class="payment-actions">
-        <button type="button" class="btn-back-products" onclick="goToStep(2)">✕ Cancel</button>
-        <button type="button" class="btn-validate-payment" onclick="goToStep(4)">✓ Validate Payment</button>
-        <button type="button" class="btn-reset-payment" onclick="resetPaymentForm()">↻ Reset</button>
-      </div>
+  </div><!-- /catnat-form-container -->
+</div><!-- /catnat-page -->
 
-      <div class="payment-footer-bar">
-        <span>HELP</span>
-        <span>🔒 Secured by CIB · 256-bit SSL</span>
-        <span>30 20</span>
-      </div>
-    </div>
-  </div>
-</div>
-    <!-- STEP 4 -->
-<div class="catnat-step hidden" id="form-step-4">
-  <div class="success-page">
 
-    <div class="success-card">
-      <div class="success-icon">✓</div>
-      <h2>Payment Successful!</h2>
-      <p class="success-message">
-        Your CATNAT insurance subscription has been confirmed. Your certificate will be sent to your email shortly.
-      </p>
-
-      <div class="policy-ref-box">
-        <div class="policy-ref-label">Policy Reference</div>
-        <div class="policy-ref-code">POLA-20260310-C9A2</div>
-        <div class="policy-ref-dates">Issued: 10/03/2026 · Valid until: 09/03/2027</div>
-      </div>
-
-      <div class="success-metrics">
-        <div class="metric-box">
-          <span class="metric-label amount">Amount Paid</span>
-          <strong>4,400 DZD</strong>
-        </div>
-
-        <div class="metric-box">
-          <span class="metric-label coverage">Coverage</span>
-          <strong>CATNAT</strong>
-        </div>
-
-        <div class="metric-box">
-          <span class="metric-label payment">Payment</span>
-          <strong>CIB / Baridi Mob</strong>
-        </div>
-      </div>
-
-      <div class="success-actions">
-        <a href="index.html" class="success-btn primary">Go to My Space →</a>
-        <button type="button" class="success-btn">📄 Download Certificate</button>
-        <button type="button" class="success-btn">🖨 Print</button>
-      </div>
-    </div>
-
-    <div class="next-steps-card">
-      <h3>What happens next?</h3>
-
-      <div class="next-step">
-        <span class="next-step-num">1</span>
-        <div>
-          <strong>Certificate sent by email</strong>
-          <p>Your insurance certificate will be sent to your email within minutes.</p>
-        </div>
-      </div>
-
-      <div class="next-step">
-        <span class="next-step-num">2</span>
-        <div>
-          <strong>Agency will contact you</strong>
-          <p>Agency 404 — TLEMCEN will reach out within 48 hours to finalize your file.</p>
-        </div>
-      </div>
-
-      <div class="next-step">
-        <span class="next-step-num">3</span>
-        <div>
-          <strong>Manage your policy online</strong>
-          <p>Access your client space to view your policy, add coverage, or file a claim anytime.</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
+<!-- ===== FOOTER ===== -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-grid">
-      <div class="footer-logo">
-        <img src="img/caarfooter.jpg" alt="CAAR"/>
-      </div>
+      <div class="footer-logo"><img src="img/caarfooter.jpg" alt="CAAR"/></div>
       <div class="footer-col">
         <h4>Company</h4>
         <a href="company.html">About Us</a>
@@ -959,9 +857,7 @@
       </div>
       <div class="footer-col">
         <h4>Follow Us</h4>
-        <div class="footer-social">
-          <a href="#" aria-label="Facebook">f</a>
-        </div>
+        <div class="footer-social"><a href="#" aria-label="Facebook">f</a></div>
       </div>
       <div class="footer-col-1">
         <div class="footer-item">
@@ -984,89 +880,376 @@
   </div>
 </footer>
 
-<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
-<nav class="mobile-nav" id="mobileNav">
-  <div class="mobile-nav-header">
-    <span class="mobile-nav-title">Menu</span>
-    <button onclick="toggleMobileMenu()" class="mobile-nav-close">&#x2715;</button>
-  </div>
-  <a href="index.html" onclick="toggleMobileMenu()">Home</a>
-  <a href="products.html" onclick="toggleMobileMenu()">Products</a>
-  <a href="company.html" onclick="toggleMobileMenu()">Company</a>
-  <a href="network.html" onclick="toggleMobileMenu()">Network</a>
-  <a href="news.html" onclick="toggleMobileMenu()">News</a>
-  <a href="contact.html" onclick="toggleMobileMenu()">Contact</a>
-  <div class="mobile-nav-btns">
-    <a href="network.html" class="btn-top">Find Agency</a>
-    <a href="contact.html" class="btn-top">Contact Us</a>
-  </div>
-</nav>
 
 <script>
-document.getElementById('searchBtn').addEventListener('click', function () {
+/* ============================================================
+   AGENCY DATA
+   ============================================================ */
+var AGENCIES = {
+  '203': { name:'203 — ALGER (Belouizded)', addr:'23, Rue Mohamed Belouizded, ALGER', phone:'021 65 10 24 — 021 65 40 92', fax:'021 66 06 76' },
+  '210': { name:'210 — ALGER (Kouba)',      addr:'Cité Serbat Bt A9 Garidi 1, Kouba', phone:'023 70 01 60',                  fax:'023 70 01 57' },
+  '233': { name:'233 — ALGER (Ain Naadja)', addr:'Cité 1516 Logts Bt D6, Ain Naadja', phone:'023 53 00 28',                  fax:'023 53 00 27' },
+  '601': { name:'601 — ALGER (El Djaouhara)',addr:'Cité El Djaouhara Bt 63, Belouizded', phone:'021 67 46 93',               fax:'021 67 46 92' },
+  '602': { name:'602 — ALGER (Didouche)',   addr:'74, Rue Didouche Mourad, Alger',    phone:'023 50 49 65',                  fax:'023 50 49 90' },
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var addedCoverages = { floods: false, storms: false, ground: false };
+var ynState        = { commercial: 'no', notarial: 'no', seismic: 'no' };
+var currentStep    = 1;
+var premiumData    = { net: 0, tax: 0, total: 0 };
+var countdownTimer = null;
+
+/* ============================================================
+   HEADER SEARCH
+   ============================================================ */
+document.getElementById('searchBtn').addEventListener('click', function() {
   document.getElementById('searchBar').classList.toggle('open');
 });
-document.getElementById('searchClose').addEventListener('click', function () {
+document.getElementById('searchClose').addEventListener('click', function() {
   document.getElementById('searchBar').classList.remove('open');
 });
-document.addEventListener('keydown', function (e) {
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') document.getElementById('searchBar').classList.remove('open');
 });
-document.querySelectorAll('[data-lang]').forEach(function (link) {
-  link.addEventListener('click', function (e) {
+document.querySelectorAll('[data-lang]').forEach(function(link) {
+  link.addEventListener('click', function(e) {
     e.preventDefault();
     document.getElementById('currentLang').textContent = this.getAttribute('data-lang');
   });
 });
 
-function toggleMobileMenu() {
-  var nav = document.getElementById('mobileNav');
-  var overlay = document.getElementById('mobileNavOverlay');
-  var isOpen = nav.classList.contains('open');
-  nav.classList.toggle('open', !isOpen);
-  overlay.classList.toggle('open', !isOpen);
-  document.body.style.overflow = isOpen ? '' : 'hidden';
+/* ============================================================
+   SPINNER HELPERS
+   ============================================================ */
+function spinUp(id, step) {
+  var el = document.getElementById(id);
+  var v  = parseFloat(el.value) || 0;
+  el.value = v + step;
+  calculatePremium();
+}
+function spinDown(id, step) {
+  var el  = document.getElementById(id);
+  var min = parseFloat(el.min) || 0;
+  var v   = parseFloat(el.value) || 0;
+  el.value = Math.max(min, v - step);
+  calculatePremium();
 }
 
-var currentStep = 1;
-var totalSteps = 4;
+/* ============================================================
+   YES / NO
+   ============================================================ */
+function setYN(key, val) {
+  ynState[key] = val;
+  var wrap = document.getElementById('yn-' + key);
+  wrap.querySelectorAll('.yn-btn').forEach(function(b) { b.classList.remove('active'); });
+  wrap.querySelector('.yn-' + val).classList.add('active');
+  calculatePremium();
+}
 
-function goToStep(n) {
-  if (n < 1 || n > totalSteps) return;
+/* ============================================================
+   COVERAGE TOGGLE
+   ============================================================ */
+function toggleCoverage(key, btn) {
+  addedCoverages[key] = !addedCoverages[key];
+  if (addedCoverages[key]) {
+    btn.textContent = '&#10003; Added';
+    btn.innerHTML   = '&#10003; Added';
+    btn.classList.add('added');
+  } else {
+    btn.textContent = '+ Add';
+    btn.classList.remove('added');
+  }
+  calculatePremium();
+}
 
-  if (currentStep === 1 && n === 2) {
-    if (!validateStep1()) return;
+/* ============================================================
+   PREMIUM CALCULATION — dynamic from Step 1 data
+   Rates (simplified actuarial):
+   - Base rate:  0.04% of declared value
+   - Floods:     +0.015%
+   - Storms:     +0.010%
+   - Ground:     +0.012%
+   - Commercial use discount/surcharge
+   - Non-seismic surcharge: +10%
+   - Tax: 19%
+   ============================================================ */
+function calculatePremium() {
+  var value = parseFloat(document.getElementById('declared_value').value) || 0;
+  if (value <= 0) {
+    setDisplay(0, 0, 0);
+    return;
   }
 
-  document.getElementById('form-step-' + currentStep).classList.add('hidden');
+  var baseRate = 0.0004; // 0.04%
+  var base = value * baseRate;
 
+  // Optional coverages
+  var extras = 0;
+  if (addedCoverages.floods) extras += value * 0.00015;
+  if (addedCoverages.storms) extras += value * 0.00010;
+  if (addedCoverages.ground) extras += value * 0.00012;
+
+  // Seismic non-compliance surcharge
+  var seismicMultiplier = ynState.seismic === 'no' ? 1.10 : 1.0;
+
+  // Commercial use surcharge
+  var commercialMultiplier = ynState.commercial === 'yes' ? 1.15 : 1.0;
+
+  var net   = (base + extras) * seismicMultiplier * commercialMultiplier;
+  var tax   = net * 0.19;
+  var total = net + tax;
+
+  premiumData = { net: net, tax: tax, total: total };
+  setDisplay(net, tax, total);
+}
+
+function setDisplay(net, tax, total) {
+  document.getElementById('net-premium').textContent = formatDZD(net);
+  document.getElementById('tax-fees').textContent    = formatDZD(tax);
+  document.getElementById('total-pay').textContent   = formatDZD(total);
+}
+
+function formatDZD(n) {
+  return n.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DZD';
+}
+
+/* ============================================================
+   CONSTRUCTION TYPE CHANGE
+   ============================================================ */
+function onConstructionTypeChange() {
+  calculatePremium();
+}
+function onWilayaChange() {
+  // Could update municipality options dynamically — keeping simple for now
+}
+
+/* ============================================================
+   DATE HELPERS
+   ============================================================ */
+function formatDate(d) {
+  var dd   = String(d.getDate()).padStart(2, '0');
+  var mm   = String(d.getMonth() + 1).padStart(2, '0');
+  var yyyy = d.getFullYear();
+  return dd + '/' + mm + '/' + yyyy;
+}
+function getStartDate() {
+  var d = new Date();
+  return d;
+}
+function getEndDate() {
+  var d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  d.setDate(d.getDate() - 1);
+  return d;
+}
+
+/* ============================================================
+   GENERATE POLICY REFERENCE
+   ============================================================ */
+function generatePolicyRef() {
+  var now    = new Date();
+  var y      = now.getFullYear();
+  var m      = String(now.getMonth() + 1).padStart(2, '0');
+  var d      = String(now.getDate()).padStart(2, '0');
+  var rand   = Math.random().toString(36).substr(2, 4).toUpperCase();
+  return 'POLA-' + y + m + d + '-' + rand;
+}
+
+/* ============================================================
+   POPULATE STEP 2 SUMMARY from Step 1 data
+   ============================================================ */
+function populateStep2Summary() {
+  var constr   = document.getElementById('construction_type').value || '—';
+  var usage    = document.getElementById('usage_type').value || '—';
+  var area     = document.getElementById('built_area').value;
+  var year     = document.getElementById('year_construction').value;
+  var dvalue   = document.getElementById('declared_value').value;
+  var startD   = getStartDate();
+  var endD     = getEndDate();
+
+  // Summary sidebar
+  document.getElementById('sum-constr').textContent  = constr;
+  document.getElementById('sum-usage').textContent   = usage;
+  document.getElementById('sum-area').textContent    = area ? area + ' m²' : '—';
+  document.getElementById('sum-year').textContent    = year || '—';
+  document.getElementById('sum-dvalue').textContent  = dvalue ? formatDZD(parseFloat(dvalue)) : '—';
+  document.getElementById('sum-start').textContent   = formatDate(startD);
+  document.getElementById('sum-end').textContent     = formatDate(endD);
+  document.getElementById('sum-net').textContent     = formatDZD(premiumData.net);
+  document.getElementById('sum-tax').textContent     = formatDZD(premiumData.tax);
+  document.getElementById('sum-total').textContent   = formatDZD(premiumData.total);
+
+  // Guarantees list
+  var gList = document.getElementById('guarantees-list');
+  var items = ['Earthquakes'];
+  if (addedCoverages.floods) items.push('Floods &amp; Mudflows');
+  if (addedCoverages.storms) items.push('Storms &amp; High Winds');
+  if (addedCoverages.ground) items.push('Ground Movements');
+  gList.innerHTML = items.map(function(i) { return '<li>' + i + '</li>'; }).join('');
+}
+
+/* ============================================================
+   POPULATE REVIEW from all collected data
+   ============================================================ */
+function populateReview() {
+  var constr  = document.getElementById('construction_type').value || '—';
+  var usage   = document.getElementById('usage_type').value || '—';
+  var floors  = document.getElementById('num_floors').options[document.getElementById('num_floors').selectedIndex].text;
+  var area    = document.getElementById('built_area').value;
+  var year    = document.getElementById('year_construction').value;
+  var dvalue  = document.getElementById('declared_value').value;
+
+  var title   = document.getElementById('title').value;
+  var last    = document.getElementById('last_name').value;
+  var first   = document.getElementById('first_name').value;
+  var addr    = document.getElementById('address').value;
+  var pol_w   = document.getElementById('policy_wilaya').options[document.getElementById('policy_wilaya').selectedIndex].text;
+  var city    = document.getElementById('city').value;
+  var email   = document.getElementById('email').value;
+  var mob1    = document.getElementById('mobile_1').value;
+
+  var propAddr  = document.getElementById('property_address').value;
+  var propWilEl = document.getElementById('property_wilaya');
+  var propWil   = propWilEl.options[propWilEl.selectedIndex].text;
+  var propCity  = document.getElementById('property_city').value;
+
+  var agencyVal = document.getElementById('agency').value;
+  var agencyObj = AGENCIES[agencyVal] || {};
+
+  var startD = getStartDate();
+  var endD   = getEndDate();
+
+  // Property
+  document.getElementById('rv-constr').textContent  = constr;
+  document.getElementById('rv-usage').textContent   = usage;
+  document.getElementById('rv-floors').textContent  = floors;
+  document.getElementById('rv-area').textContent    = area ? area + ' m²' : '—';
+  document.getElementById('rv-year').textContent    = year || '—';
+  document.getElementById('rv-dvalue').textContent  = dvalue ? formatDZD(parseFloat(dvalue)) : '—';
+
+  // Policyholder
+  document.getElementById('rv-name').textContent   = (title + ' ' + last + ' ' + first).trim() || '—';
+  document.getElementById('rv-wilaya').textContent = pol_w;
+  document.getElementById('rv-addr').textContent   = addr || '—';
+  document.getElementById('rv-phone').textContent  = mob1 || '—';
+  document.getElementById('rv-email').textContent  = email || '—';
+
+  // Property location
+  document.getElementById('rv-prop-addr').textContent  = propAddr || '—';
+  document.getElementById('rv-prop-wilaya').textContent = propWil;
+  document.getElementById('rv-prop-city').textContent   = propCity || '—';
+
+  // Agency
+  document.getElementById('rv-agency').textContent      = agencyObj.name || '—';
+  document.getElementById('rv-agency-addr').textContent = agencyObj.addr || '—';
+
+  // Contract & Pricing
+  document.getElementById('rv-start').textContent = formatDate(startD);
+  document.getElementById('rv-end').textContent   = formatDate(endD);
+  document.getElementById('rv-net').textContent   = formatDZD(premiumData.net);
+  document.getElementById('rv-tax').textContent   = formatDZD(premiumData.tax);
+  document.getElementById('rv-total').textContent = formatDZD(premiumData.total);
+}
+
+/* ============================================================
+   POPULATE PAYMENT from collected data
+   ============================================================ */
+function populatePayment() {
+  document.getElementById('pay-amount').textContent = formatDZD(premiumData.total);
+  document.getElementById('pay-ref').textContent    = 'New Contract — CATNAT';
+  startCountdown(300); // 5 minutes
+}
+
+/* ============================================================
+   COUNTDOWN TIMER
+   ============================================================ */
+function startCountdown(seconds) {
+  clearInterval(countdownTimer);
+  var remaining = seconds;
+  function tick() {
+    var m = Math.floor(remaining / 60);
+    var s = remaining % 60;
+    var el = document.getElementById('countdown');
+    if (el) el.textContent = m + ':' + String(s).padStart(2, '0');
+    if (remaining <= 0) {
+      clearInterval(countdownTimer);
+      if (el) el.textContent = '0:00';
+    }
+    remaining--;
+  }
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+/* ============================================================
+   AGENCY CARD UPDATE
+   ============================================================ */
+function updateAgencyCard() {
+  var val = document.getElementById('agency').value;
+  var ag  = AGENCIES[val];
+  if (!ag) return;
+  document.getElementById('agency-card-name').textContent  = 'Agency ' + ag.name;
+  document.getElementById('agency-card-addr').textContent  = ag.addr;
+  document.getElementById('agency-card-phone').textContent = ag.phone;
+  document.getElementById('agency-card-fax').textContent   = 'Fax: ' + ag.fax;
+}
+function updateAgencyList() {
+  // In a real app, filter by wilaya. Here we show all.
+  updateAgencyCard();
+}
+
+/* ============================================================
+   STEP NAVIGATION
+   ============================================================ */
+function goToStep(n) {
+  if (n < 1 || n > 4) return;
+
+  // Validate before advancing
+  if (currentStep === 1 && n === 2) {
+    if (!validateStep1()) return;
+    populateStep2Summary();
+  }
+  if (currentStep === 2 && n === 3) {
+    if (!validateStep2()) return;
+    populatePayment();
+  }
+
+  // Hide current, show next
+  document.getElementById('form-step-' + currentStep).classList.add('hidden');
   currentStep = n;
   document.getElementById('form-step-' + currentStep).classList.remove('hidden');
 
-  for (var i = 1; i <= totalSteps; i++) {
+  // Update step indicators
+  for (var i = 1; i <= 4; i++) {
     var ind = document.getElementById('step-indicator-' + i);
     ind.classList.remove('active', 'done');
-    if (i < currentStep) ind.classList.add('done');
+    if (i < currentStep)      ind.classList.add('done');
     else if (i === currentStep) ind.classList.add('active');
   }
 
-  document.querySelector('.catnat-page').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ============================================================
+   VALIDATION
+   ============================================================ */
 function validateStep1() {
-  var year = document.getElementById('year_construction').value;
-  var area = document.getElementById('built_area').value;
+  var year  = document.getElementById('year_construction').value;
+  var area  = document.getElementById('built_area').value;
   var value = document.getElementById('declared_value').value;
 
-  if (!year || year < 1900 || year > 2026) {
-    alert('Please enter a valid year of construction.');
+  if (!year || parseInt(year) < 1900 || parseInt(year) > 2026) {
+    alert('Please enter a valid year of construction (1900–2026).');
     return false;
   }
-  if (!area || area <= 0) {
-    alert('Please enter the total built area.');
+  if (!area || parseFloat(area) <= 0) {
+    alert('Please enter the total built area in m².');
     return false;
   }
-  if (!value || value <= 0) {
+  if (!value || parseFloat(value) <= 0) {
     alert('Please enter the declared value.');
     return false;
   }
@@ -1077,136 +1260,116 @@ function validateStep1() {
   return true;
 }
 
-function spinUp(id, step) {
-  step = step || 1;
-  var el = document.getElementById(id);
-  var v = parseFloat(el.value) || 0;
-  el.value = v + step;
-  calculatePremium();
+function validateStep2() {
+  var last  = document.getElementById('last_name').value.trim();
+  var first = document.getElementById('first_name').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var conf  = document.getElementById('confirm_email').value.trim();
+  var mob1  = document.getElementById('mobile_1').value.trim();
+  var addr  = document.getElementById('address').value.trim();
+  var paddr = document.getElementById('property_address').value.trim();
+
+  if (!last || !first)         { alert('Please enter your full name.'); return false; }
+  if (!email)                  { alert('Please enter your email address.'); return false; }
+  if (email !== conf)          { alert('Email addresses do not match.'); return false; }
+  if (!mob1)                   { alert('Please enter your mobile number.'); return false; }
+  if (!addr)                   { alert('Please enter your address.'); return false; }
+  if (!paddr)                  { alert('Please enter the insured property address.'); return false; }
+  return true;
 }
 
-function spinDown(id, step) {
-  step = step || 1;
-  var el = document.getElementById(id);
-  var min = parseFloat(el.min) || 0;
-  var v = parseFloat(el.value) || 0;
-  el.value = Math.max(min, v - step);
-  calculatePremium();
-}
-
-function setYN(key, val) {
-  var wrap = document.getElementById('yn-' + key);
-  wrap.querySelectorAll('.yn-btn').forEach(function (b) { b.classList.remove('active'); });
-  var target = wrap.querySelector('.yn-' + val);
-  if (target) target.classList.add('active');
-  calculatePremium();
-}
-
-var addedCoverages = {};
-function toggleCoverage(key, btn) {
-  addedCoverages[key] = !addedCoverages[key];
-  if (addedCoverages[key]) {
-    btn.textContent = '✓ Added';
-    btn.classList.add('added');
-  } else {
-    btn.textContent = 'Add';
-    btn.classList.remove('added');
+function validateReview() {
+  if (!document.getElementById('confirm-info').checked) {
+    alert('Please confirm that all information is correct.');
+    return false;
   }
-  calculatePremium();
-}
-
-function calculatePremium() {
-  var value = parseFloat(document.getElementById('declared_value').value) || 0;
-
-  if (value <= 0) {
-    document.getElementById('net-premium').textContent = '0.00 DZD';
-    document.getElementById('tax-fees').textContent = '0.00 DZD';
-    document.getElementById('total-pay').textContent = '0.00 DZD';
-    return;
+  if (!document.getElementById('confirm-terms').checked) {
+    alert('Please accept the general terms and conditions.');
+    return false;
   }
-
-  var base = value * 0.0004;
-  var extras = 0;
-
-  if (addedCoverages['floods']) extras += value * 0.00015;
-  if (addedCoverages['storms']) extras += value * 0.00010;
-  if (addedCoverages['ground']) extras += value * 0.00012;
-
-  var net = base + extras;
-  var taxes = net * 0.19;
-  var total = net + taxes;
-
-  document.getElementById('net-premium').textContent = formatDZD(net);
-  document.getElementById('tax-fees').textContent = formatDZD(taxes);
-  document.getElementById('total-pay').textContent = formatDZD(total);
+  return true;
 }
 
-function formatDZD(n) {
-  return n.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DZD';
-}
-
-document.getElementById('declared_value').addEventListener('input', calculatePremium);
-document.getElementById('built_area').addEventListener('input', calculatePremium);
-
-function resetPaymentForm() {
-  const ids = ['card_number', 'cvv2', 'expiry_month', 'expiry_year', 'cardholder_name'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (el.tagName === 'SELECT') el.selectedIndex = 0;
-    else el.value = '';
-  });
-}
-function updateConstructionTooltip(val) {
-  var tooltip = document.getElementById('constructionTooltip');
-  if (val === 'individual_home' || val === 'villa') {
-    tooltip.style.display = 'block';
-    tooltip.querySelector('.tooltip-item:nth-child(1)').textContent = 'Individual home';
-    tooltip.querySelector('.tooltip-item:nth-child(2)').textContent = 'Entire building';
-  } else {
-    tooltip.style.display = 'none';
-  }
-
+/* ============================================================
+   SHOW / HIDE REVIEW vs FORM (Step 2)
+   ============================================================ */
 function showReviewView() {
+  if (!validateStep2()) return;
+  populateReview();
   document.getElementById('subscription-form-view').classList.add('hidden');
   document.getElementById('subscription-review-view').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function showSubscriptionForm() {
   document.getElementById('subscription-review-view').classList.add('hidden');
   document.getElementById('subscription-form-view').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-}
-/* ── Construction type tooltip ── */
-function updateConstructionTooltip(val) {
-  /* tooltip stays visible, just for reference */
-}
-function goToStep(step) {
-  // Hide all steps
-  document.querySelectorAll(".catnat-step").forEach(s => s.classList.add("hidden"));
+/* ============================================================
+   PAYMENT VALIDATION → go to Step 4
+   ============================================================ */
+function validatePayment() {
+  var card   = document.getElementById('card_number').value.replace(/\s/g, '');
+  var cvv    = document.getElementById('cvv2').value.trim();
+  var month  = document.getElementById('expiry_month').value;
+  var year   = document.getElementById('expiry_year').value;
+  var name   = document.getElementById('cardholder_name').value.trim();
 
-  // Show selected step
-  document.getElementById("form-step-" + step).classList.remove("hidden");
+  if (card.length < 16) { alert('Please enter a valid 16-digit card number.'); return; }
+  if (cvv.length < 3)   { alert('Please enter a valid 3-digit CVV2.'); return; }
+  if (!month)           { alert('Please select an expiry month.'); return; }
+  if (!year)            { alert('Please select an expiry year.'); return; }
+  if (!name)            { alert('Please enter the cardholder name.'); return; }
 
-  // Update step indicator
-  document.querySelectorAll(".step").forEach(s => s.classList.remove("active"));
-  document.getElementById("step-indicator-" + step).classList.add("active");
-
-  window.scrollTo(0, 0);
-}
-
-function showReviewView() {
-  document.getElementById("subscription-form-view").classList.add("hidden");
-  document.getElementById("subscription-review-view").classList.remove("hidden");
-  window.scrollTo(0, 0);
+  clearInterval(countdownTimer);
+  populateConfirmation();
+  goToStep(4);
 }
 
-function showSubscriptionForm() {
-  document.getElementById("subscription-review-view").classList.add("hidden");
-  document.getElementById("subscription-form-view").classList.remove("hidden");
-  window.scrollTo(0, 0);
+function resetPaymentForm() {
+  ['card_number','cvv2','cardholder_name'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['expiry_month','expiry_year'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
 }
+
+function formatCardNumber(input) {
+  var val = input.value.replace(/\D/g, '').substr(0, 16);
+  input.value = val.match(/.{1,4}/g) ? val.match(/.{1,4}/g).join(' ') : val;
+}
+
+/* ============================================================
+   POPULATE CONFIRMATION (Step 4)
+   ============================================================ */
+function populateConfirmation() {
+  var ref       = generatePolicyRef();
+  var startD    = getStartDate();
+  var endD      = getEndDate();
+  var agencyVal = document.getElementById('agency').value;
+  var agencyObj = AGENCIES[agencyVal] || {};
+
+  document.getElementById('confirm-policy-ref').textContent = ref;
+  document.getElementById('confirm-dates').textContent      =
+    'Issued: ' + formatDate(startD) + ' · Valid until: ' + formatDate(endD);
+  document.getElementById('confirm-amount').textContent     = formatDZD(premiumData.total);
+  document.getElementById('confirm-agency-msg').textContent =
+    'Agency ' + (agencyObj.name || '') + ' will reach out within 48 hours to finalize your file.';
+}
+
+function downloadCertificate() {
+  alert('Your certificate is being prepared. It will be sent to your email shortly.');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+updateAgencyCard();
+calculatePremium();
 </script>
 </body>
 </html>
