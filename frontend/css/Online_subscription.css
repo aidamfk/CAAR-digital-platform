@@ -140,10 +140,11 @@ img { max-width: 100%; display: block; }
 
 .hero-deco {
   position: absolute;
-  top: 200px;           /* sits behind the subtitle text */
-  left: 100px;
-  width: 460px;
-  opacity: 0.45;
+  bottom: 60px;
+  left: 20px;
+  width: 55%;
+  max-width: 650px;
+  opacity: 0.5;
   z-index: 1;
   pointer-events: none;
 }
