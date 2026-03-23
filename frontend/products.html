@@ -6,232 +6,181 @@
   <title>CAAR — Our Insurance Products</title>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --orange:      #E8761E;
-      --orange-dark: #C9601A;
-      --dark:        #1C1C1C;
-      --gray:        #666;
-      --border:      #e0e0e0;
-      --white:       #fff;
-      --font-serif:  'Lora', serif;
-      --font-sans:   'Source Sans 3', sans-serif;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --orange:#E8761E;
+      --orange-dark:#C9601A;
+      --orange-lt:#FFF3E8;
+      --dark:#1C1C1C;
+      --gray:#666;
+      --border:#E0E0E0;
+      --white:#fff;
+      --hdr-orange:#F57C00;
     }
-    body { font-family: var(--font-sans); color: var(--dark); background: var(--white); }
-    a { text-decoration: none; color: inherit; }
+    body{font-family:'Source Sans 3',system-ui,sans-serif;color:var(--dark);background:var(--white);}
+    a{text-decoration:none;color:inherit;}
+    img{max-width:100%;display:block;}
 
-    /* ── NAVBAR ── */
-    .navbar {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--white); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px; height: 60px;
-    }
-    .nav-left { display: flex; align-items: center; gap: 28px; }
-    .nav-logo {
-      width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--orange);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-serif); font-size: 0.6rem; font-weight: 700;
-      color: var(--orange); text-align: center; line-height: 1.15; flex-shrink: 0;
-    }
-    .nav-ind {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 0.82rem; font-weight: 700; cursor: pointer; color: var(--dark);
-    }
-    .nav-ind svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.5; }
-    .nav-center { display: flex; align-items: center; gap: 20px; }
-    .nav-center a { font-size: 0.78rem; color: var(--gray); font-weight: 500; transition: color 0.2s; }
-    .nav-center a:hover, .nav-center a.active { color: var(--orange); }
-    .nav-center a.active { font-weight: 600; }
-    .nav-right { display: flex; align-items: center; gap: 10px; }
-    .nav-btn {
-      padding: 8px 18px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; font-family: var(--font-sans); border: 1.5px solid var(--orange);
-      transition: all 0.2s;
-    }
-    .nav-btn-ghost { background: var(--white); color: var(--orange); }
-    .nav-btn-ghost:hover { background: var(--orange); color: var(--white); }
-    .nav-btn-fill { background: var(--orange); color: var(--white); }
-    .nav-btn-fill:hover { background: var(--orange-dark); }
+    /* ════════════════════════════════
+       HEADER — exact copy from index.html
+    ════════════════════════════════ */
+    .header{background:var(--white);box-shadow:0 2px 10px rgba(0,0,0,0.09);position:sticky;top:0;z-index:1000;}
+    .header-inner{display:flex;align-items:stretch;padding:0 40px;}
+    .logo-block{display:flex;align-items:center;padding:10px 20px 10px 0;flex-shrink:0;border-right:1px solid var(--border);}
+    .logo-img{width:100px;height:100px;object-fit:contain;}
+    .right-side{display:flex;flex-direction:column;flex:1;}
+    .top-row{display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:14px 0 14px 20px;}
+    .btn-top{padding:9px 24px;background:var(--hdr-orange);border:2px solid var(--hdr-orange);border-radius:30px;color:var(--white);font-size:14px;font-weight:600;transition:background .2s;cursor:pointer;text-decoration:none;display:inline-block;}
+    .btn-top:hover{background:#e06d00;border-color:#e06d00;}
+    .divider{border:none;border-top:1px solid var(--border);}
+    .bottom-row{display:flex;align-items:center;justify-content:space-between;flex:1;}
+    .nav-links{display:flex;align-items:center;list-style:none;flex:1;justify-content:space-between;}
+    .nav-link{display:flex;align-items:center;gap:4px;padding:16px 14px;font-size:15px;font-weight:600;color:var(--dark);position:relative;transition:color .2s;}
+    .nav-link:hover{color:var(--hdr-orange);}
+    .nav-link.active{color:var(--hdr-orange);}
+    .nav-link.active::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:3px;background:var(--hdr-orange);border-radius:3px 3px 0 0;}
+    .arrow{font-size:14px;color:var(--hdr-orange);font-weight:700;transition:transform .2s;}
+    .dropdown{position:relative;list-style:none;}
+    .dropdown-menu{display:none;position:absolute;top:calc(100% + 2px);left:0;background:var(--white);border:1px solid var(--border);border-radius:6px;min-width:200px;box-shadow:0 8px 20px rgba(0,0,0,.12);list-style:none;padding:6px 0;z-index:999;}
+    .dropdown:hover .dropdown-menu{display:block;}
+    .dropdown:hover .arrow{transform:rotate(180deg);}
+    .dropdown-menu li a{display:block;padding:11px 20px;font-size:13px;color:var(--dark);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #f0f0f0;transition:background .15s,color .15s;}
+    .dropdown-menu li:last-child a{border-bottom:none;}
+    .dropdown-menu li a:hover{background:#fff5e6;color:var(--hdr-orange);}
+    .nav-icons{display:flex;align-items:center;gap:4px;}
+    .icon-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:6px;transition:background .2s;}
+    .icon-btn:hover{background:#f5f5f5;}
+    .lang-label{font-size:13px;font-weight:700;color:var(--dark);}
+    .lang-dropdown{position:relative;}
+    .lang-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:6px;min-width:160px;box-shadow:0 8px 20px rgba(0,0,0,.12);list-style:none;padding:6px 0;z-index:999;}
+    .lang-dropdown:hover .lang-menu{display:block;}
+    .lang-menu li a{display:block;padding:9px 16px;font-size:13px;color:var(--dark);transition:background .15s,color .15s;}
+    .lang-menu li a:hover{background:#fff5e6;color:var(--hdr-orange);}
 
-    /* ── BREADCRUMB ── */
-    .breadcrumb {
-      padding: 10px 48px; background: var(--white); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--gray);
-    }
-    .breadcrumb a { color: var(--gray); transition: color 0.2s; }
-    .breadcrumb a:hover { color: var(--orange); }
-    .breadcrumb .sep { color: #bbb; }
-    .breadcrumb .cur { color: var(--orange); font-weight: 600; }
+    /* ══ BREADCRUMB ══ */
+    .breadcrumb{padding:10px 48px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--gray);}
+    .breadcrumb a{color:var(--gray);transition:color 0.2s;}
+    .breadcrumb a:hover{color:var(--orange);}
+    .breadcrumb .sep{color:#bbb;}
+    .breadcrumb .cur{color:var(--orange);font-weight:600;}
 
-    /* ── HERO ── */
-    .hero {
-      padding: 32px 48px 0;
-      display: flex; align-items: flex-end; justify-content: space-between;
-      gap: 32px; overflow: hidden; background: var(--white);
-    }
-    .hero-text { max-width: 400px; padding-bottom: 20px; }
-    .hero-text h1 {
-      font-family: var(--font-serif); font-size: 1.7rem; font-weight: 700;
-      color: var(--dark); margin-bottom: 6px; line-height: 1.25;
-    }
-    .hero-text p { font-size: 0.88rem; color: var(--gray); line-height: 1.5; }
-    .hero-img { flex-shrink: 0; }
-    .hero-img img { height: 200px; width: auto; object-fit: contain; display: block; }
+    /* ══ HERO ══ */
+    .hero{padding:32px 48px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:32px;overflow:hidden;background:var(--white);}
+    .hero-text{max-width:400px;padding-bottom:20px;}
+    .hero-text h1{font-family:'Lora',serif;font-size:1.7rem;font-weight:700;color:var(--dark);margin-bottom:6px;line-height:1.25;}
+    .hero-text p{font-size:0.88rem;color:var(--gray);line-height:1.5;}
+    .hero-img{flex-shrink:0;}
+    .hero-img img{height:200px;width:auto;object-fit:contain;display:block;}
 
-    /* ── PRODUCTS SECTION ── */
-    .products-section {
-      background: var(--white);
-      padding: 32px 48px 52px;
-      border-top: 2px solid var(--dark);
-    }
+    /* ══ PRODUCTS — orange background ══ */
+    .products-section{background:var(--orange);padding:32px 48px 52px;}
 
-    /* Rows */
-    .row {
-      display: grid;
-      gap: 20px;
-      max-width: 960px;
-      margin: 0 auto 20px;
-    }
-    .row:last-child { margin-bottom: 0; }
-    .row-2 { grid-template-columns: 1fr 1fr; }
-    .row-1 { grid-template-columns: 1fr; }
+    .row{display:grid;gap:20px;max-width:960px;margin:0 auto 20px;}
+    .row:last-child{margin-bottom:0;}
+    .row-2{grid-template-columns:1fr 1fr;}
+    .row-1{grid-template-columns:1fr;}
 
-    /* Card — black border, matching screenshot */
-    .prod-card {
-      background: var(--white);
-      border-radius: 18px;
-      padding: 22px 24px 20px;
-      border: 2.5px solid var(--dark);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .prod-card:hover {
-      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-      transform: translateY(-2px);
-    }
+    .prod-card{background:var(--white);border-radius:18px;padding:22px 24px 20px;border:3px solid var(--orange);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;transition:box-shadow 0.2s,transform 0.2s;}
+    .prod-card:hover{box-shadow:0 8px 28px rgba(0,0,0,0.18);transform:translateY(-3px);}
+    .prod-card.centered{align-items:center;text-align:center;}
+    .prod-card.centered .card-list{text-align:left;display:inline-block;}
 
-    /* Transport card centered */
-    .prod-card.centered {
-      align-items: center;
-      text-align: center;
-    }
-    .prod-card.centered .card-list {
-      text-align: left;
-      display: inline-block;
-    }
+    .card-icon{width:60px;height:60px;border-radius:50%;border:2.5px solid var(--orange);background:var(--white);display:flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;overflow:hidden;}
+    .card-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 
-    /* Icon circle */
-    .card-icon {
-      width: 50px; height: 50px;
-      border-radius: 50%;
-      border: 2.5px solid var(--orange);
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 12px; flex-shrink: 0;
-    }
-    .card-icon svg {
-      width: 24px; height: 24px;
-      stroke: var(--orange); fill: none; stroke-width: 1.8;
-    }
+    .card-title{font-size:0.82rem;font-weight:900;text-transform:uppercase;letter-spacing:0.7px;color:var(--dark);margin-bottom:10px;}
+    .card-list{list-style:none;}
+    .card-list li{font-size:0.76rem;color:var(--dark);padding:2px 0 2px 13px;position:relative;line-height:1.5;}
+    .card-list li::before{content:">";position:absolute;left:0;color:var(--dark);font-weight:700;font-size:0.76rem;}
 
-    .card-title {
-      font-size: 0.8rem; font-weight: 900;
-      text-transform: uppercase; letter-spacing: 0.7px;
-      color: var(--dark); margin-bottom: 10px;
-    }
-
-    .card-list { list-style: none; }
-    .card-list li {
-      font-size: 0.76rem; color: var(--dark);
-      padding: 2px 0 2px 13px;
-      position: relative; line-height: 1.5;
-    }
-    .card-list li::before {
-      content: ">"; position: absolute; left: 0;
-      color: var(--dark); font-weight: 700; font-size: 0.76rem;
-    }
-
-    /* ── FOOTER ── */
-    footer {
-      background: #3a3a3a; color: rgba(255,255,255,0.72);
-      padding: 48px 64px 0; border-top: 4px solid var(--orange);
-    }
-    .footer-grid {
-      display: grid; grid-template-columns: 1.6fr 1fr 1.4fr 1fr;
-      gap: 40px; margin-bottom: 40px;
-    }
-    .footer-logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-    .footer-logo-circle {
-      width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--orange);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-serif); font-size: 0.52rem; font-weight: 700;
-      color: var(--orange); text-align: center; line-height: 1.15;
-    }
-    .footer-contact { display: flex; flex-direction: column; gap: 10px; }
-    .footer-contact-row {
-      display: flex; align-items: flex-start; gap: 9px;
-      font-size: 0.8rem; color: rgba(255,255,255,0.72); line-height: 1.4;
-    }
-    .footer-contact-row svg {
-      width: 14px; height: 14px; stroke: var(--orange); fill: none;
-      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-      flex-shrink: 0; margin-top: 1px;
-    }
-    .footer-col h5 {
-      font-size: 0.7rem; font-weight: 700; color: #fff;
-      text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px;
-    }
-    .footer-col ul { list-style: none; }
-    .footer-col ul li { margin-bottom: 10px; }
-    .footer-col ul li a { font-size: 0.8rem; color: rgba(255,255,255,0.72); transition: color 0.2s; }
-    .footer-col ul li a:hover { color: var(--orange); }
-    .social-row { display: flex; gap: 8px; margin-top: 4px; }
-    .s-icon {
-      width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--orange);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.78rem; font-weight: 700; color: var(--orange);
-      cursor: pointer; transition: all 0.2s;
-    }
-    .s-icon:hover { background: var(--orange); color: #fff; }
-    .footer-bottom {
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding: 18px 0; text-align: center;
-      font-size: 0.72rem; color: rgba(255,255,255,0.35);
-    }
+    /* ════════════════════════════════
+       FOOTER — exact copy from index.html
+    ════════════════════════════════ */
+    .footer{background:#3F3F3F;color:#ccc;padding:44px 7% 0;}
+    .footer-inner{max-width:1200px;margin:0 auto;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,.14);}
+    .footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1.8fr 1fr;grid-template-rows:auto auto;column-gap:40px;row-gap:16px;align-items:start;}
+    .footer-logo{grid-column:1;grid-row:1;width:38px;height:38px;border-radius:50%;overflow:hidden;align-self:center;}
+    .footer-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
+    .footer-col{grid-row:1/span 2;}
+    .footer-col h4{color:#fff;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;height:38px;display:flex;align-items:center;}
+    .footer-col-1{grid-column:1;grid-row:2;}
+    .footer-item{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:#ccc;margin-bottom:10px;line-height:1.4;}
+    .footer-item svg{width:14px;height:14px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:2px;}
+    .footer-col a{display:block;font-size:.82rem;color:#ccc;margin-bottom:9px;transition:color .2s;}
+    .footer-col a:hover{color:#fff;}
+    .footer-social{display:flex;gap:8px;}
+    .footer-social a{width:32px;height:32px;border-radius:50%;border:2px solid var(--orange);background:transparent;color:var(--orange);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;transition:background .2s,color .2s;}
+    .footer-social a:hover{background:var(--orange);color:#fff;}
+    .footer-bottom{text-align:center;font-size:.78rem;color:#999;padding:16px 0 20px;max-width:1200px;margin:0 auto;}
   </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="nav-left">
-    <a href="/index.html"><div class="nav-logo">CAAR</div></a>
-    <div class="nav-ind">
-      INDIVIDUALS
-      <svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+<!-- ════════════════════════════════
+     HEADER — same as index.html
+════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <a href="index.html">
+        <img src="img/grand_logo.png" alt="CAAR" class="logo-img"/>
+      </a>
+    </div>
+    <div class="right-side">
+      <div class="top-row">
+        <a href="network.html" class="btn-top">Find Agency</a>
+        <a href="contact.html" class="btn-top">Contact Us</a>
+      </div>
+      <hr class="divider"/>
+      <div class="bottom-row">
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li class="dropdown">
+            <a href="products.html" class="nav-link active">Products <span class="arrow">▾</span></a>
+            <ul class="dropdown-menu">
+              <li><a href="individual-risks.html">Individual Risks</a></li>
+              <li><a href="auto-insurance.html">Auto Insurance</a></li>
+              <li><a href="transport-insurance.html">Transport Insurance</a></li>
+              <li><a href="technical-risks.html">Technical Risks</a></li>
+              <li><a href="industrial-risks.html">Industrial Risks</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="company.html" class="nav-link">Company <span class="arrow">▾</span></a>
+            <ul class="dropdown-menu">
+              <li><a href="company.html">About Us</a></li>
+              <li><a href="company-careers.html">Careers</a></li>
+            </ul>
+          </li>
+          <li><a href="network.html" class="nav-link">Network</a></li>
+          <li><a href="news.html" class="nav-link">News</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-icons">
+          <button class="icon-btn" id="searchBtn">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <div class="lang-dropdown">
+            <button class="icon-btn">
+              <span class="lang-label" id="currentLang">ANG</span>
+            </button>
+            <ul class="lang-menu">
+              <li><a href="#" data-lang="FR">Français (FR)</a></li>
+              <li><a href="#" data-lang="ANG">English (ANG)</a></li>
+              <li><a href="#" data-lang="ARAB">عربي (ARAB)</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="nav-center">
-    <a href="/index.html">Home</a>
-    <a href="/products.html" class="active">Insurance</a>
-    <a href="/company.html">Company</a>
-    <a href="/network.html">Network</a>
-    <a href="/news.html">News</a>
-    <a href="/contact.html">Contact</a>
-  </div>
-  <div class="nav-right">
-    <button class="nav-btn nav-btn-ghost" onclick="window.location.href='/network.html'">Find Agency</button>
-    <button class="nav-btn nav-btn-fill"  onclick="window.location.href='/contact.html'">Contact Us</button>
-  </div>
-</nav>
+</header>
 
 <!-- BREADCRUMB -->
 <div class="breadcrumb">
-  <a href="/index.html">Home</a>
+  <a href="index.html">Home</a>
   <span class="sep">›</span>
   <span class="cur">Our Insurance Products</span>
 </div>
@@ -247,18 +196,15 @@
   </div>
 </section>
 
-<!-- PRODUCTS — 5 cards, no "Our Other Solutions" -->
+<!-- PRODUCTS — orange background, image circles -->
 <section class="products-section">
 
   <!-- Row 1: Individual Risks + Auto Insurance -->
   <div class="row row-2">
 
-    <div class="prod-card" onclick="window.location.href='/individual-risks.html'">
+    <div class="prod-card" onclick="window.location.href='individual-risks.html'">
       <div class="card-icon">
-        <svg viewBox="0 0 26 26">
-          <circle cx="13" cy="8" r="4.5"/>
-          <path d="M4 22c0-5 4-8 9-8s9 3 9 8"/>
-        </svg>
+        <img src="img/home.webp" alt="Individual Risks"/>
       </div>
       <div class="card-title">Individual Risks</div>
       <ul class="card-list">
@@ -268,14 +214,9 @@
       </ul>
     </div>
 
-    <div class="prod-card" onclick="window.location.href='/auto-insurance.html'">
+    <div class="prod-card" onclick="window.location.href='auto-insurance.html'">
       <div class="card-icon">
-        <svg viewBox="0 0 26 26">
-          <rect x="3" y="11" width="20" height="9" rx="3"/>
-          <path d="M5 11l3-5h10l3 5"/>
-          <circle cx="7.5" cy="21" r="2"/>
-          <circle cx="18.5" cy="21" r="2"/>
-        </svg>
+        <img src="img/car.webp" alt="Auto Insurance"/>
       </div>
       <div class="card-title">Auto Insurance</div>
       <ul class="card-list">
@@ -289,12 +230,9 @@
 
   <!-- Row 2: Transport Insurance (full width, centered) -->
   <div class="row row-1">
-    <div class="prod-card centered" onclick="window.location.href='/transport-insurance.html'">
+    <div class="prod-card centered" onclick="window.location.href='transport-insurance.html'">
       <div class="card-icon">
-        <svg viewBox="0 0 26 26">
-          <path d="M3 17 Q13 21 23 17L20 10H6Z"/>
-          <rect x="10" y="4" width="6" height="7" rx="1"/>
-        </svg>
+        <img src="img/travel.webp" alt="Transport Insurance"/>
       </div>
       <div class="card-title">Transport Insurance</div>
       <ul class="card-list">
@@ -309,13 +247,9 @@
   <!-- Row 3: Technical Risks + Industrial Risks -->
   <div class="row row-2">
 
-    <div class="prod-card" onclick="window.location.href='/technical-risks.html'">
+    <div class="prod-card" onclick="window.location.href='technical-risks.html'">
       <div class="card-icon">
-        <svg viewBox="0 0 26 26">
-          <circle cx="13" cy="13" r="3.5"/>
-          <path d="M13 4v3M13 19v3M4 13h3M19 13h3"/>
-          <path d="M6.8 6.8l2.1 2.1M17.1 17.1l2.1 2.1M6.8 19.2l2.1-2.1M17.1 8.9l2.1-2.1"/>
-        </svg>
+        <img src="img/risk.webp" alt="Technical Risks"/>
       </div>
       <div class="card-title">Technical Risks</div>
       <ul class="card-list">
@@ -325,14 +259,9 @@
       </ul>
     </div>
 
-    <div class="prod-card" onclick="window.location.href='/industrial-risks.html'">
+    <div class="prod-card" onclick="window.location.href='industrial-risks.html'">
       <div class="card-icon">
-        <svg viewBox="0 0 26 26">
-          <rect x="4"  y="13" width="5" height="9" rx="1"/>
-          <rect x="11" y="9"  width="5" height="13" rx="1"/>
-          <rect x="18" y="16" width="4" height="6"  rx="1"/>
-          <path d="M2 22h22"/>
-        </svg>
+        <img src="img/industry.webp" alt="Industrial Risks"/>
       </div>
       <div class="card-title">Industrial Risks</div>
       <ul class="card-list">
@@ -346,52 +275,67 @@
 
 </section>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div>
-      <div class="footer-logo-wrap">
-        <div class="footer-logo-circle">CAAR</div>
+<!-- ════════════════════════════════
+     FOOTER — same as index.html
+════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-logo">
+        <img src="img/caarfooter.jpg" alt="CAAR"/>
       </div>
-      <div class="footer-contact">
-        <div class="footer-contact-row">
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="company.html">About Us</a>
+        <a href="company-careers.html">Careers</a>
+      </div>
+      <div class="footer-col">
+        <h4>Insurance</h4>
+        <a href="auto-insurance.html">Auto Insurance</a>
+        <a href="individual-risks.html">Individual Risks</a>
+        <a href="transport-insurance.html">Transport Insurance</a>
+        <a href="technical-risks.html">Technical Risks</a>
+        <a href="industrial-risks.html">Industrial Risks</a>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook">f</a>
+        </div>
+      </div>
+      <div class="footer-col-1">
+        <div class="footer-item">
           <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span>48 Rue Didouche Mourad, Algiers 16000</span>
         </div>
-        <div class="footer-contact-row">
+        <div class="footer-item">
           <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12.7 19.79 19.79 0 0 1 1.06 4.1 2 2 0 0 1 3 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           <span>+213 21 34 10 16</span>
         </div>
-        <div class="footer-contact-row">
+        <div class="footer-item">
           <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           <span>contact@caar.dz</span>
         </div>
       </div>
     </div>
-    <div class="footer-col">
-      <h5>Company</h5>
-      <ul>
-        <li><a href="/company.html">About Us</a></li>
-        <li><a href="/company-careers.html">Careers</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Insurance</h5>
-      <ul>
-        <li><a href="/auto-insurance.html">Auto Insurance</a></li>
-        <li><a href="/individual-risks.html">Individual Risks</a></li>
-        <li><a href="/transport-insurance.html">Transport Insurance</a></li>
-        <li><a href="/technical-risks.html">Technical Risks</a></li>
-        <li><a href="/industrial-risks.html">Industrial Risks</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h5>Follow Us</h5>
-      <div class="social-row"><div class="s-icon">f</div></div>
-    </div>
   </div>
-  <div class="footer-bottom">© 2026 CAAR. All rights reserved.</div>
+  <div class="footer-bottom">© 2026 CAAR — Compagnie Algérienne d'Assurances et de Réassurances. All rights reserved.</div>
 </footer>
+
+<script>
+  // Language switcher
+  var currentLang = document.getElementById('currentLang');
+  document.querySelectorAll('[data-lang]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentLang.textContent = this.getAttribute('data-lang');
+    });
+  });
+  // Search button
+  document.getElementById('searchBtn').addEventListener('click', function() {
+    alert('Search coming soon');
+  });
+</script>
 
 </body>
 </html>
