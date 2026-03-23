@@ -38,7 +38,7 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
   border-right: 1px solid var(--border);
 }
-.logo-img { width: 100px; height: 100px; object-fit: contain; }
+.logo-img { width:140px; height:140px; object-fit:contain; }
 .right-side { display: flex; flex-direction: column; flex: 1; }
 .top-row {
   display: flex; justify-content: flex-end; align-items: center;
@@ -135,7 +135,7 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   padding: 70px 48px;
   border-bottom: 1px solid #eee;
-  min-height: 460px;
+  min-height: 500px;
 }
 
 .hero-deco {
@@ -199,23 +199,27 @@ img { max-width: 100%; display: block; }
 /* Replace this block with your actual image/illustration later */
 .hero-right {
   flex-shrink: 0;
-  width: 360px;
-  height: 300px;
-  border-radius: 20px;
-  background: #f5f0e8;
-  border: 2px dashed #d4c4a8;
+  width: 420px;          /* was 360px — bigger */
+  height: 340px;         /* was 300px */
+  border-radius: 0;      /* was 20px */
+  background: transparent;   /* was #f5f0e8 — removes the beige bg */
+  border: none;          /* removes dashed orange border */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: #b8a88a;
+  gap: 0;
+  color: transparent;
+  /* Shift slightly left within the right half */
+  margin-right: -20px;
+  margin-left: -40px;
 }
-
-.hero-right svg {
-  opacity: 0.45;
+.hero-right img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
-
 .hero-right-label {
   font-size: 0.8rem;
   font-weight: 500;
@@ -339,7 +343,7 @@ img { max-width: 100%; display: block; }
   text-decoration: none;
   transition: background .18s;
 }
-.product-online-card-btn:hover { background: var(--orange-lt); }
+.product-online-card-btn:hover { background: #ffffff; }
 
 /* CIB logo image — set src to your CIB bank logo */
 .product-online-card-btn-logo {
@@ -351,21 +355,28 @@ img { max-width: 100%; display: block; }
 
 .product-online-card-btn-text {
   display: flex;
-  flex-direction: column;
+  flex-direction: row ;
+  gap: 8px;
   align-items: flex-start;
   line-height: 1.25;
 }
 .product-online-card-btn-label {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: #1a1a1a;
+  /* allow the two-line "Subscribe\nCATNAT" to stack */
+  white-space: pre-line;
+  line-height: 1.3;
 }
+ 
 .product-online-card-btn-arrow {
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   color: var(--hdr-orange);
   font-weight: 700;
+  flex-shrink: 0;
+  /* keep arrow vertically centered next to label */
+  align-self: center;
 }
-
 /* ============================================================
    FOOTER
 ============================================================ */

@@ -691,7 +691,7 @@
   /* Tighter logo on mobile */
   .header-inner { padding: 0 16px; }
   .logo-block   { padding: 8px 12px 8px 0; border-right: 1px solid var(--border); }
-  .logo-img     { width: 72px; height: 72px; }
+  .logo-img { width:140px; height:140px; object-fit:contain; }
 
   /* ── Hero: stack vertically ── */
   .contact-hero { padding: 0 16px; }

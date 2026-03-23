@@ -50,11 +50,7 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
   border-right: 1px solid var(--border);
 }
-.logo-img {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-}
+.logo-img { width:140px; height:140px; object-fit:contain; }
 .right-side { display: flex; flex-direction: column; flex: 1; }
 .top-row {
   display: flex;
@@ -1125,6 +1121,8 @@ img { max-width: 100%; display: block; }
 
   .network-hero { padding: 28px 28px 24px; }
   .network-hero-inner {
+
+
     grid-template-columns: 1fr;
     gap: 20px;
   }
@@ -1172,6 +1170,7 @@ img { max-width: 100%; display: block; }
   .logo-img { width: 64px; height: 64px; }
   .right-side { width: 100%; }
   .top-row { padding: 8px 0; gap: 8px; }
+
   .btn-top { padding: 7px 14px; font-size: 12px; }
   .bottom-row { flex-wrap: wrap; }
   .nav-links { display: none; } /* hide full nav on mobile */
