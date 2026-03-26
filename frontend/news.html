@@ -262,73 +262,47 @@
   }
 </script>
 <!-- ══ CAAR ARTICLES SECTION ══ -->
-<section class="caar-articles-section">
-  <div class="caar-articles-inner">
+<section class="articles" id="caar-articles">
+  <div class="articles-container">
 
-    <!-- Articles List View -->
-    <div id="articles-list-view">
-      <div class="caar-articles-header">
-        <h2 class="caar-articles-title">CAAR Articles</h2>
-        <p class="caar-articles-subtitle">
-          Recent activities and initiatives carried out by CAAR across the country.
-        </p>
-      </div>
-
-      <div class="articles-cards-grid" id="articles-grid">
-
-        <div class="article-card" onclick="openArticle('agency602')">
-          <span class="date-badge">Sep,24</span>
-          <h3 class="article-card-title">Agency 602 – Didouche Mourad</h3>
-          <p class="article-card-text">
-            CAAR modernized Agency 602 in Didouche Mourad to enhance customer experience and service quality.
-          </p>
-        </div>
-
-        <div class="article-card" onclick="openArticle('agency228')">
-          <span class="date-badge">Sep,25</span>
-          <h3 class="article-card-title">Agency 228 – Larbâa Nath Irathen</h3>
-          <p class="article-card-text">
-            Agency 228 was renovated as part of CAAR's ongoing distribution network modernization.
-          </p>
-        </div>
-
-        <div class="article-card" onclick="openArticle('bejaia')">
-          <span class="date-badge">Oct,04</span>
-          <h3 class="article-card-title">Information Day – Béjaïa</h3>
-          <p class="article-card-text">
-            CAAR organized an information day in Béjaïa to engage with partners during its 60th anniversary.
-          </p>
-        </div>
-
-      </div>
-
-      <!-- Pagination -->
-      <div class="articles-pagination">
-        <button class="page-btn active" onclick="setPage(1, this)">1</button>
-        <button class="page-btn" onclick="setPage(2, this)">2</button>
-      </div>
+    <!-- Header -->
+    <div class="articles-header">
+      <h2 class="articles-title">CAAR Articles</h2>
+      <p class="articles-subtitle">
+        Recent activities and initiatives carried out by CAAR across the country.
+      </p>
     </div>
 
-    <!-- Article Detail View -->
-    <div id="article-detail-view" class="hidden">
+    <!-- Articles list -->
+    <div class="articles-list" id="articles-list"></div>
+
+    <!-- Pagination -->
+    <div class="articles-pagination" id="articles-pagination"></div>
+
+    <!-- Article detail -->
+    <div class="article-detail hidden" id="article-detail">
       <div class="article-detail-card">
-        <a class="back-link" onclick="closeArticle(); return false;" href="#">
+
+        <button class="back-link" onclick="closeArticleDetail()">
           ← Back to advice & articles
-        </a>
+        </button>
+
         <h2 class="article-detail-title" id="detail-title"></h2>
 
         <div class="article-detail-body">
           <div class="article-detail-text" id="detail-text"></div>
-          <div class="article-detail-image-wrap" id="detail-image-wrap">
-            <img class="article-detail-image" id="detail-image" src="" alt=""/>
+
+          <div class="article-detail-img-wrap" id="detail-img-wrap">
+            <img class="article-detail-img" id="detail-img" src="" alt="">
           </div>
         </div>
+
       </div>
     </div>
 
   </div>
 </section>
-
+ 
 <!-- ══ FOOTER (from network.html) ══ -->
 <footer class="footer">
   <div class="footer-inner">
@@ -406,74 +380,6 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') document.getElementById('searchBar').classList.remove('open');
   });
-/* ── CAAR Articles: article data ── */
-  var ARTICLES = {
-    agency602: {
-      title: 'Agency 602 Renovated – Didouche Mourad',
-      image: 'img/photo2.jpg',
-      text: '<p>As part of its network modernization strategy, CAAR has completed the renovation of Agency No. 602, located in Didouche Mourad and attached to the Bouzaréah branch.</p><p>Reopened on September 24, 2023, the agency now features a modern design aligned with CAAR\'s visual identity, offering improved service and customer experience.</p>'
-    },
-    agency228: {
-      title: 'Agency 228 Renovated – Larbâa Nath Irathen',
-      image: 'img/photo1.jpg',
-      text: '<p>CAAR continues the modernization of its distribution network with the renovation of Agency No. 228, located in Larbâa Nath Irathen and affiliated with the Chéraga branch.</p><p>Officially reopened on September 25, 2023, the agency is now better equipped to meet customer needs in an efficient and modern environment.</p>'
-    },
-    bejaia: {
-      title: 'CAAR Information Day in Béjaïa',
-      image: 'img/photo3.jpg',
-      text: '<p>As part of its 60th anniversary celebrations, CAAR organized an information day on October 4, 2023, at the Cristal Hotel in Béjaïa.</p><p>The event brought together key regional partners under the theme: "CAAR listens to its partners."</p>'
-    },
-    sada2025: {
-      title: 'CAAR at the African Business Forum – SADA 2025',
-      image: 'img/photo4.jpg',
-      text: '<p>CAAR participated in the 3rd edition of the African Business Forum (SADA 2025), held at the Rodina Convention Center in Oran from April 26 to April 28, 2025.</p><p>The event provided an opportunity for CAAR to exchange with economic stakeholders and reinforce its role within the African business ecosystem.</p>'
-    },
-    tiziagri: {
-      title: 'TIZI AGRI EXPO 2025',
-      image: 'img/photo6.jpg',
-      text: '<p>CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.</p><p>The expo provided CAAR with an excellent platform to showcase its agricultural insurance products and connect with professionals in the sector across the Kabylie region.</p>'
-    }
-  };
- 
-  /* ── Open article detail ── */
-  function openArticle(id) {
-    var article = ARTICLES[id];
-    if (!article) return;
- 
-    document.getElementById('detail-title').textContent = article.title;
-    document.getElementById('detail-text').innerHTML = article.text;
- 
-    var img = document.getElementById('detail-image');
-    var imgWrap = document.getElementById('detail-image-wrap');
-    if (article.image) {
-      img.src = article.image;
-      img.alt = article.title;
-      imgWrap.style.display = '';
-    } else {
-      imgWrap.style.display = 'none';
-    }
- 
-    document.getElementById('articles-list-view').classList.add('hidden');
-    document.getElementById('article-detail-view').classList.remove('hidden');
- 
-    /* Scroll to the CAAR Articles section */
-    document.querySelector('.caar-articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
- 
-  /* ── Close article detail (back to list) ── */
-  function closeArticle() {
-    document.getElementById('article-detail-view').classList.add('hidden');
-    document.getElementById('articles-list-view').classList.remove('hidden');
-    document.querySelector('.caar-articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
- 
-  /* ── Pagination (visual only — extend with real data if needed) ── */
-  function setPage(num, btn) {
-    document.querySelectorAll('.page-btn').forEach(function(b) {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
-  }
   /* Language switcher */
   document.querySelectorAll('[data-lang]').forEach(function(link) {
     link.addEventListener('click', function(e) {
@@ -492,5 +398,178 @@
     document.body.style.overflow = isOpen ? '' : 'hidden';
   }
 </script>
+<script id="caar-articles-script">
+(function () {
+ 
+  /* ── Article data ─────────────────────────── */
+  var articles = [
+    {
+      id: 'agency602',
+      title: 'Agency 602 Renovated – Didouche Mourad',
+      description: 'CAAR modernized Agency 602 in Didouche Mourad to enhance customer experience and service quality.',
+      date: 'Sep,24',
+      image: 'img/art1.png',
+      content: '<p>As part of its network modernization strategy, CAAR has completed the renovation of Agency No. 602, located in Didouche Mourad and attached to the Bouzaréah branch.</p><p>Reopened on September 24, 2023, the agency now features a modern design aligned with CAAR\'s visual identity, offering improved service and customer experience.</p>'
+    },
+    {
+      id: 'agency228',
+      title: 'Agency 228 Renovated – Larbâa Nath Irathen',
+      description: 'Agency 228 was renovated as part of CAAR\'s ongoing distribution network modernization.',
+      date: 'Sep,25',
+      image: 'img/art2.png',
+      content: '<p>CAAR continues the modernization of its distribution network with the renovation of Agency No. 228, located in Larbâa Nath Irathen and affiliated with the Chéraga branch.</p><p>Officially reopened on September 25, 2023, the agency is now better equipped to meet customer needs in an efficient and modern environment.</p>'
+    },
+    {
+      id: 'bejaia',
+      title: 'CAAR Information Day in Béjaïa',
+      description: 'CAAR organized an information day in Béjaïa to engage with partners during its 60th anniversary.',
+      date: 'Oct,04',
+      image: 'img/art3.png',
+      content: '<p>As part of its 60th anniversary celebrations, CAAR organized an information day on October 4, 2023, at the Cristal Hotel in Béjaïa.</p><p>The event brought together key regional partners under the theme: "CAAR listens to its partners."</p>'
+    },
+    {
+      id: 'sada2025',
+      title: 'CAAR at the African Business Forum – SADA 2025',
+      description: 'CAAR took part in SADA 2025 in Oran, strengthening its presence within the African business community.',
+      date: 'Avr,28',
+      image: 'img/art4.png',
+      content: '<p>CAAR participated in the 3rd edition of the African Business Forum (SADA 2025), held at the Rodina Convention Center in Oran from April 26 to April 28, 2025.</p><p>The event provided an opportunity for CAAR to exchange with economic stakeholders and reinforce its role within the African business ecosystem.</p>'
+    },
+    {
+      id: 'tiziagri',
+      title: 'TIZI AGRI EXPO 2025',
+      description: 'CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.',
+      date: 'Mai,10',
+      image: 'img/art5.png',
+      content: '<p>CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.</p><p>The expo provided CAAR with an excellent platform to showcase its agricultural insurance products and connect with professionals in the sector across the Kabylie region.</p>'
+    }
+  ];
+ 
+  /* ── State ────────────────────────────────── */
+  var PER_PAGE    = 2;
+  var currentPage = 1;
+  var totalPages  = Math.ceil(articles.length / PER_PAGE);
+ 
+  /* ── Element refs ────────────────────────── */
+  var listEl       = document.getElementById('articles-list');
+  var paginationEl = document.getElementById('articles-pagination');
+  var detailEl     = document.getElementById('article-detail');
+  var backBtn      = document.getElementById('back-btn');
+ 
+  /* ── Render cards for a given page ────────── */
+  function renderPage(page) {
+    currentPage = page;
+ 
+    var start   = (page - 1) * PER_PAGE;
+    var slice   = articles.slice(start, start + PER_PAGE);
+ 
+    /* Build cards */
+    listEl.innerHTML = '';
+    slice.forEach(function (art) {
+      var card = document.createElement('div');
+      card.className = 'article-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', 'Read article: ' + art.title);
+ 
+      card.innerHTML =
+        '<span class="date-badge">' + art.date + '</span>' +
+        '<div class="article-card-body">' +
+          '<h3 class="article-card-title">' + art.title + '</h3>' +
+          '<p class="article-card-text">' + art.description + '</p>' +
+        '</div>' +
+        '<button class="article-read-btn" aria-label="Read article: ' + art.title + '">Read article →</button>';
+ 
+      /* Click anywhere on card or button */
+      card.addEventListener('click', function () {
+        openArticleDetail(art.id);
+      });
+ 
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openArticleDetail(art.id);
+        }
+      });
+ 
+      /* Stop button double-firing */
+      card.querySelector('.article-read-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        openArticleDetail(art.id);
+      });
+ 
+      listEl.appendChild(card);
+    });
+ 
+    renderPagination();
+  }
+ 
+  /* ── Render pagination buttons ─────────────── */
+  function renderPagination() {
+    paginationEl.innerHTML = '';
+    for (var i = 1; i <= totalPages; i++) {
+      var btn = document.createElement('button');
+      btn.className    = 'page-btn' + (i === currentPage ? ' active' : '');
+      btn.textContent  = i;
+      btn.setAttribute('aria-label', 'Page ' + i);
+      if (i === currentPage) btn.setAttribute('aria-current', 'page');
+ 
+      btn.addEventListener('click', (function (p) {
+        return function () { renderPage(p); };
+      })(i));
+ 
+      paginationEl.appendChild(btn);
+    }
+  }
+ 
+  /* ── Open detail view ───────────────────────── */
+  function openArticleDetail(id) {
+    var art = articles.find(function (a) { return a.id === id; });
+    if (!art) return;
+ 
+    /* Populate detail */
+    document.getElementById('detail-title').textContent = art.title;
+    document.getElementById('detail-text').innerHTML     = art.content;
+ 
+    var img  = document.getElementById('detail-img');
+    var wrap = document.getElementById('detail-img-wrap');
+ 
+    if (art.image) {
+      img.src             = art.image;
+      img.alt             = art.title;
+      wrap.style.display  = '';
+    } else {
+      wrap.style.display  = 'none';
+    }
+ 
+    /* Swap views */
+    listEl.classList.add('hidden');
+    paginationEl.classList.add('hidden');
+    detailEl.classList.remove('hidden');
+ 
+    /* Scroll to top of section */
+    document.getElementById('caar-articles')
+      .scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+ 
+  /* ── Close detail / back to list ──────────── */
+  function closeArticleDetail() {
+    detailEl.classList.add('hidden');
+    listEl.classList.remove('hidden');
+    paginationEl.classList.remove('hidden');
+ 
+    document.getElementById('caar-articles')
+      .scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+ 
+  /* Expose so the inline onclick still works */
+  window.closeArticleDetail = closeArticleDetail;
+ 
+  /* ── Boot ─────────────────────────────────── */
+  renderPage(1);
+ 
+})();
+</script>
+ 
 </body>
 </html>
