@@ -261,60 +261,71 @@
     if (card) card.classList.add('active');
   }
 </script>
-<!-- ══ ARTICLES GRID ══ -->
-<section class="articles-section">
-  <div class="articles-inner">
+<!-- ══ CAAR ARTICLES SECTION ══ -->
+<section class="caar-articles-section">
+  <div class="caar-articles-inner">
 
-    <div class="articles-header">
-      <h2 class="articles-section-title">Latest Articles</h2>
-      <a href="news.html" class="view-all-link">View all →</a>
+    <!-- Articles List View -->
+    <div id="articles-list-view">
+      <div class="caar-articles-header">
+        <h2 class="caar-articles-title">CAAR Articles</h2>
+        <p class="caar-articles-subtitle">
+          Recent activities and initiatives carried out by CAAR across the country.
+        </p>
+      </div>
+
+      <div class="articles-cards-grid" id="articles-grid">
+
+        <div class="article-card" onclick="openArticle('agency602')">
+          <span class="date-badge">Sep,24</span>
+          <h3 class="article-card-title">Agency 602 – Didouche Mourad</h3>
+          <p class="article-card-text">
+            CAAR modernized Agency 602 in Didouche Mourad to enhance customer experience and service quality.
+          </p>
+        </div>
+
+        <div class="article-card" onclick="openArticle('agency228')">
+          <span class="date-badge">Sep,25</span>
+          <h3 class="article-card-title">Agency 228 – Larbâa Nath Irathen</h3>
+          <p class="article-card-text">
+            Agency 228 was renovated as part of CAAR's ongoing distribution network modernization.
+          </p>
+        </div>
+
+        <div class="article-card" onclick="openArticle('bejaia')">
+          <span class="date-badge">Oct,04</span>
+          <h3 class="article-card-title">Information Day – Béjaïa</h3>
+          <p class="article-card-text">
+            CAAR organized an information day in Béjaïa to engage with partners during its 60th anniversary.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Pagination -->
+      <div class="articles-pagination">
+        <button class="page-btn active" onclick="setPage(1, this)">1</button>
+        <button class="page-btn" onclick="setPage(2, this)">2</button>
+      </div>
     </div>
 
-    <div class="articles-grid">
+    <!-- Article Detail View -->
+    <div id="article-detail-view" class="hidden">
+      <div class="article-detail-card">
+        <a class="back-link" onclick="closeArticle(); return false;" href="#">
+          ← Back to advice & articles
+        </a>
+        <h2 class="article-detail-title" id="detail-title"></h2>
 
-      <article class="article-card">
-        <div class="article-tag">Auto Insurance</div>
-        <h3 class="article-card-title">What to do after a road accident in Algeria</h3>
-        <p class="article-card-excerpt">Step-by-step guidance on reporting, documenting and filing a claim after a traffic incident on Algerian roads.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
-      <article class="article-card">
-        <div class="article-tag">Habitation</div>
-        <h3 class="article-card-title">Understanding your multi-risk home policy</h3>
-        <p class="article-card-excerpt">A clear breakdown of what your MRH policy covers, common exclusions, and how to make sure you are fully protected.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
-      <article class="article-card">
-        <div class="article-tag">CATNAT</div>
-        <h3 class="article-card-title">Natural disaster insurance: your rights and obligations</h3>
-        <p class="article-card-excerpt">Everything you need to know about the mandatory CATNAT coverage, how it works, and how to file a claim after a seismic event.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
-      <article class="article-card">
-        <div class="article-tag">Claims</div>
-        <h3 class="article-card-title">How to file an insurance claim efficiently</h3>
-        <p class="article-card-excerpt">Tips and best practices for preparing your claim file, gathering evidence, and communicating with your CAAR agent.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
-      <article class="article-card">
-        <div class="article-tag">Professional</div>
-        <h3 class="article-card-title">Protecting your business: multi-risk professional insurance</h3>
-        <p class="article-card-excerpt">How MRP insurance shields artisans, traders and liberal professions against fire, theft and civil liability risks.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
-      <article class="article-card">
-        <div class="article-tag">Transport</div>
-        <h3 class="article-card-title">Insuring your goods during transport in Algeria</h3>
-        <p class="article-card-excerpt">An overview of goods transport insurance options available for private and public carriers, and how coverage applies.</p>
-        <a href="#" class="article-read-more">Read article →</a>
-      </article>
-
+        <div class="article-detail-body">
+          <div class="article-detail-text" id="detail-text"></div>
+          <div class="article-detail-image-wrap" id="detail-image-wrap">
+            <img class="article-detail-image" id="detail-image" src="" alt=""/>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 </section>
 
@@ -395,7 +406,74 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') document.getElementById('searchBar').classList.remove('open');
   });
-
+/* ── CAAR Articles: article data ── */
+  var ARTICLES = {
+    agency602: {
+      title: 'Agency 602 Renovated – Didouche Mourad',
+      image: 'img/photo2.jpg',
+      text: '<p>As part of its network modernization strategy, CAAR has completed the renovation of Agency No. 602, located in Didouche Mourad and attached to the Bouzaréah branch.</p><p>Reopened on September 24, 2023, the agency now features a modern design aligned with CAAR\'s visual identity, offering improved service and customer experience.</p>'
+    },
+    agency228: {
+      title: 'Agency 228 Renovated – Larbâa Nath Irathen',
+      image: 'img/photo1.jpg',
+      text: '<p>CAAR continues the modernization of its distribution network with the renovation of Agency No. 228, located in Larbâa Nath Irathen and affiliated with the Chéraga branch.</p><p>Officially reopened on September 25, 2023, the agency is now better equipped to meet customer needs in an efficient and modern environment.</p>'
+    },
+    bejaia: {
+      title: 'CAAR Information Day in Béjaïa',
+      image: 'img/photo3.jpg',
+      text: '<p>As part of its 60th anniversary celebrations, CAAR organized an information day on October 4, 2023, at the Cristal Hotel in Béjaïa.</p><p>The event brought together key regional partners under the theme: "CAAR listens to its partners."</p>'
+    },
+    sada2025: {
+      title: 'CAAR at the African Business Forum – SADA 2025',
+      image: 'img/photo4.jpg',
+      text: '<p>CAAR participated in the 3rd edition of the African Business Forum (SADA 2025), held at the Rodina Convention Center in Oran from April 26 to April 28, 2025.</p><p>The event provided an opportunity for CAAR to exchange with economic stakeholders and reinforce its role within the African business ecosystem.</p>'
+    },
+    tiziagri: {
+      title: 'TIZI AGRI EXPO 2025',
+      image: 'img/photo6.jpg',
+      text: '<p>CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.</p><p>The expo provided CAAR with an excellent platform to showcase its agricultural insurance products and connect with professionals in the sector across the Kabylie region.</p>'
+    }
+  };
+ 
+  /* ── Open article detail ── */
+  function openArticle(id) {
+    var article = ARTICLES[id];
+    if (!article) return;
+ 
+    document.getElementById('detail-title').textContent = article.title;
+    document.getElementById('detail-text').innerHTML = article.text;
+ 
+    var img = document.getElementById('detail-image');
+    var imgWrap = document.getElementById('detail-image-wrap');
+    if (article.image) {
+      img.src = article.image;
+      img.alt = article.title;
+      imgWrap.style.display = '';
+    } else {
+      imgWrap.style.display = 'none';
+    }
+ 
+    document.getElementById('articles-list-view').classList.add('hidden');
+    document.getElementById('article-detail-view').classList.remove('hidden');
+ 
+    /* Scroll to the CAAR Articles section */
+    document.querySelector('.caar-articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+ 
+  /* ── Close article detail (back to list) ── */
+  function closeArticle() {
+    document.getElementById('article-detail-view').classList.add('hidden');
+    document.getElementById('articles-list-view').classList.remove('hidden');
+    document.querySelector('.caar-articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+ 
+  /* ── Pagination (visual only — extend with real data if needed) ── */
+  function setPage(num, btn) {
+    document.querySelectorAll('.page-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+  }
   /* Language switcher */
   document.querySelectorAll('[data-lang]').forEach(function(link) {
     link.addEventListener('click', function(e) {
