@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<!-- ══ HEADER (from network.html) ══ -->
+<!-- ══ HEADER ══ -->
 <header class="header">
   <div class="header-inner">
     <div class="logo-block">
@@ -81,235 +81,160 @@
   </div>
 </header>
 
-<!-- ══ HERO SECTION ══ -->
-<section class="hero-section">
-  <div class="hero-inner">
-
-    <!-- LEFT: Text content -->
-    <div class="hero-text">
-      <h1 class="hero-title">Insurance Advice &amp; Articles</h1>
-      <p class="hero-subtitle">
+<!-- ══ HERO ══ -->
+<section class="news-hero">
+  <div class="news-hero__inner">
+    <div class="news-hero__text">
+      <h1 class="news-hero__title">Insurance Advice &amp; Articles</h1>
+      <p class="news-hero__subtitle">
         Practical insurance advice to help you understand risks,
-        procedures, and your rights, supported by official CAAR
-        articles.
+        procedures, and your rights, supported by official CAAR articles.
       </p>
     </div>
-
-    <!-- RIGHT: Illustration -->
-    <div class="hero-illustration">
-      <!--
-        Replace the src below with the actual illustration path.
-        Example: src="img/articles-illustration.webp"
-      -->
-      <img
-        src="img/new.webp"
-        alt="Insurance Advice Illustration"
-        class="hero-image"
-      />
+    <div class="news-hero__illustration">
+      <img src="img/new.webp" alt="Insurance Advice Illustration" class="news-hero__image"/>
     </div>
-
   </div>
 </section>
-<!-- ══ ADVICE SECTION — "Find our advices for:" ══ -->
+
+<!-- ══ ADVICE SECTION ══ -->
 <section class="advice-section">
-  <div class="advice-inner">
+  <div class="advice-section__inner">
 
-    <!-- Title -->
-    <h2 class="advice-section-title">Find our advices for :</h2>
+    <h2 class="advice-section__title">Find our advices for:</h2>
 
-    <!-- Category Buttons -->
     <div class="advice-categories" role="tablist" aria-label="Insurance advice categories">
       <button
-        class="advice-cat-btn active"
-        role="tab"
-        aria-selected="true"
-        aria-controls="advice-road"
+        class="advice-category-btn is-active"
+        role="tab" aria-selected="true" aria-controls="advice-road"
         onclick="switchAdvice('road', this)"
       >Road Accidents</button>
 
       <button
-        class="advice-cat-btn"
-        role="tab"
-        aria-selected="false"
-        aria-controls="advice-home"
+        class="advice-category-btn"
+        role="tab" aria-selected="false" aria-controls="advice-home"
         onclick="switchAdvice('home', this)"
       >Home Insurance</button>
 
       <button
-        class="advice-cat-btn"
-        role="tab"
-        aria-selected="false"
-        aria-controls="advice-business"
+        class="advice-category-btn"
+        role="tab" aria-selected="false" aria-controls="advice-business"
         onclick="switchAdvice('business', this)"
       >Business Insurance</button>
 
       <button
-        class="advice-cat-btn"
-        role="tab"
-        aria-selected="false"
-        aria-controls="advice-basics"
+        class="advice-category-btn"
+        role="tab" aria-selected="false" aria-controls="advice-basics"
         onclick="switchAdvice('basics', this)"
       >Insurance Basics</button>
     </div>
 
-    <!-- ── CARD: Road Accidents ── -->
-    <article
-      class="advice-card active"
-      id="advice-road"
-      role="tabpanel"
-      aria-labelledby="btn-road"
-    >
-      <h3 class="advice-card-title">What to do after a road accident?</h3>
-      <p class="advice-card-text">
+    <!-- Road Accidents -->
+    <article class="advice-card is-active" id="advice-road" role="tabpanel">
+      <h3 class="advice-card__title">What to do after a road accident?</h3>
+      <p class="advice-card__text">
         Knowing the correct steps to take after a road accident helps protect your
         safety and ensures a smoother insurance process.
       </p>
-      <ul class="advice-card-list">
+      <ul class="advice-card__list">
         <li>Secure the accident area and ensure everyone's safety</li>
         <li>Contact the authorities if necessary</li>
         <li>Document damages and collect information</li>
         <li>Inform your insurance company as soon as possible</li>
       </ul>
-      <a href="#" class="advice-card-btn">Read related article →</a>
+      <a href="#" class="advice-card__btn">Read related article →</a>
     </article>
 
-    <!-- ── CARD: Home Insurance ── -->
-    <article
-      class="advice-card"
-      id="advice-home"
-      role="tabpanel"
-      aria-labelledby="btn-home"
-    >
-      <h3 class="advice-card-title">How to properly protect your home?</h3>
-      <p class="advice-card-text">
+    <!-- Home Insurance -->
+    <article class="advice-card" id="advice-home" role="tabpanel">
+      <h3 class="advice-card__title">How to properly protect your home?</h3>
+      <p class="advice-card__text">
         Home insurance helps protect your property and belongings against common
         risks such as fire, water damage, and theft.
       </p>
-      <ul class="advice-card-list">
+      <ul class="advice-card__list">
         <li>Identify the main risks affecting your home (fire, water damage, theft)</li>
         <li>Insure both the building and its contents when applicable</li>
         <li>Accurately declare the value of your belongings</li>
         <li>Regularly update your insurance contract after renovations or new purchases</li>
       </ul>
-      <a href="#" class="advice-card-btn">Read related article →</a>
+      <a href="#" class="advice-card__btn">Read related article →</a>
     </article>
 
-    <!-- ── CARD: Business Insurance ── -->
-    <article
-      class="advice-card"
-      id="advice-business"
-      role="tabpanel"
-      aria-labelledby="btn-business"
-    >
-      <h3 class="advice-card-title">Why is business insurance essential?</h3>
-      <p class="advice-card-text">
+    <!-- Business Insurance -->
+    <article class="advice-card" id="advice-business" role="tabpanel">
+      <h3 class="advice-card__title">Why is business insurance essential?</h3>
+      <p class="advice-card__text">
         Business insurance protects companies against operational, financial, and
         liability risks that may threaten their activity.
       </p>
-      <ul class="advice-card-list">
+      <ul class="advice-card__list">
         <li>Identify risks related to your business activity and sector</li>
         <li>Insure company assets such as buildings, equipment, and stock</li>
         <li>Protect your business against third-party liability</li>
         <li>Review insurance coverage regularly as the business grows</li>
       </ul>
-      <a href="#" class="advice-card-btn">Read related article →</a>
+      <a href="#" class="advice-card__btn">Read related article →</a>
     </article>
 
-    <!-- ── CARD: Insurance Basics ── -->
-    <article
-      class="advice-card"
-      id="advice-basics"
-      role="tabpanel"
-      aria-labelledby="btn-basics"
-    >
-      <h3 class="advice-card-title">Understanding the basics of insurance</h3>
-      <p class="advice-card-text">
+    <!-- Insurance Basics -->
+    <article class="advice-card" id="advice-basics" role="tabpanel">
+      <h3 class="advice-card__title">Understanding the basics of insurance</h3>
+      <p class="advice-card__text">
         Insurance is a financial protection mechanism that helps individuals and
         businesses manage risks and unforeseen events.
       </p>
-      <ul class="advice-card-list">
+      <ul class="advice-card__list">
         <li>Understand the difference between mandatory and optional insurance</li>
         <li>Know what risks are covered and what exclusions apply</li>
         <li>Choose coverage adapted to your personal or professional situation</li>
         <li>Respect contract conditions to avoid claim rejection</li>
       </ul>
-      <a href="#" class="advice-card-btn">Read related article →</a>
+      <a href="#" class="advice-card__btn">Read related article →</a>
     </article>
 
   </div>
 </section>
 
-<script>
-  function switchAdvice(key, btn) {
-    /* Deactivate all buttons */
-    document.querySelectorAll('.advice-cat-btn').forEach(function(b) {
-      b.classList.remove('active');
-      b.setAttribute('aria-selected', 'false');
-    });
+<!-- ══ ARTICLES SECTION ══ -->
+<section class="articles-section" id="articles-section">
+  <div class="articles-section__container">
 
-    /* Deactivate all cards */
-    document.querySelectorAll('.advice-card').forEach(function(c) {
-      c.classList.remove('active');
-    });
-
-    /* Activate clicked button */
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-
-    /* Activate matching card */
-    var card = document.getElementById('advice-' + key);
-    if (card) card.classList.add('active');
-  }
-</script>
-<!-- ══ CAAR ARTICLES SECTION ══ -->
-<section class="articles" id="caar-articles">
-  <div class="articles-container">
-
-    <!-- Header -->
-    <div class="articles-header">
-      <h2 class="articles-title">CAAR Articles</h2>
-      <p class="articles-subtitle">
+    <div class="articles-section__header">
+      <h2 class="articles-section__title">CAAR Articles</h2>
+      <p class="articles-section__subtitle">
         Recent activities and initiatives carried out by CAAR across the country.
       </p>
     </div>
 
-    <!-- Articles list -->
-    <div class="articles-list" id="articles-list"></div>
+    <!-- Article grid (rendered by JS) -->
+    <div class="articles-grid" id="articles-grid"></div>
 
-    <!-- Pagination -->
+    <!-- Pagination (rendered by JS) -->
     <div class="articles-pagination" id="articles-pagination"></div>
 
-    <!-- Article detail -->
-    <div class="article-detail hidden" id="article-detail">
-      <div class="article-detail-card">
-
-        <button class="back-link" onclick="closeArticleDetail()">
-          ← Back to advice & articles
-        </button>
-
-        <h2 class="article-detail-title" id="detail-title"></h2>
-
-        <div class="article-detail-body">
-          <div class="article-detail-text" id="detail-text"></div>
-
-          <div class="article-detail-img-wrap" id="detail-img-wrap">
-            <img class="article-detail-img" id="detail-img" src="" alt="">
+    <!-- Article detail view (shown/hidden by JS) -->
+    <div class="article-detail is-hidden" id="article-detail">
+      <div class="article-detail__card">
+        <button class="article-back-link" onclick="closeArticleDetail()">← Back to advice &amp; articles</button>
+        <h2 class="article-detail__title" id="detail-title"></h2>
+        <div class="article-detail__body">
+          <div class="article-detail__text" id="detail-text"></div>
+          <div class="article-detail__image-wrap" id="detail-image-wrap">
+            <img class="article-detail__image" id="detail-image" src="" alt=""/>
           </div>
         </div>
-
       </div>
     </div>
 
   </div>
 </section>
- 
-<!-- ══ FOOTER (from network.html) ══ -->
+
+<!-- ══ FOOTER ══ -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-grid">
-      <div class="footer-logo">
-        <img src="img/caarfooter.jpg" alt="CAAR"/>
-      </div>
+      <div class="footer-logo"><img src="img/caarfooter.jpg" alt="CAAR"/></div>
       <div class="footer-col">
         <h4>Company</h4>
         <a href="company.html">About Us</a>
@@ -325,9 +250,7 @@
       </div>
       <div class="footer-col">
         <h4>Follow Us</h4>
-        <div class="footer-social">
-          <a href="#" aria-label="Facebook">f</a>
-        </div>
+        <div class="footer-social"><a href="#" aria-label="Facebook">f</a></div>
       </div>
       <div class="footer-col-1">
         <div class="footer-item">
@@ -361,7 +284,7 @@
   <a href="products.html" onclick="toggleMobileMenu()">Products</a>
   <a href="company.html"  onclick="toggleMobileMenu()">Company</a>
   <a href="network.html"  onclick="toggleMobileMenu()">Network</a>
-  <a href="news.html"     onclick="toggleMobileMenu()">News</a>
+  <a href="news.html" class="active" onclick="toggleMobileMenu()">News</a>
   <a href="contact.html"  onclick="toggleMobileMenu()">Contact</a>
   <div class="mobile-nav-btns">
     <a href="network.html" class="btn-top">Find Agency</a>
@@ -370,7 +293,7 @@
 </nav>
 
 <script>
-  /* Search bar */
+  /* ── Header ── */
   document.getElementById('searchBtn').addEventListener('click', function() {
     document.getElementById('searchBar').classList.toggle('open');
   });
@@ -380,6 +303,7 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') document.getElementById('searchBar').classList.remove('open');
   });
+
   /* Language switcher */
   document.querySelectorAll('[data-lang]').forEach(function(link) {
     link.addEventListener('click', function(e) {
@@ -397,179 +321,161 @@
     overlay.classList.toggle('open', !isOpen);
     document.body.style.overflow = isOpen ? '' : 'hidden';
   }
+
+  /* ── Advice tabs ── */
+  function switchAdvice(key, btn) {
+    document.querySelectorAll('.advice-category-btn').forEach(function(b) {
+      b.classList.remove('is-active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.advice-card').forEach(function(c) {
+      c.classList.remove('is-active');
+    });
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-selected', 'true');
+    var card = document.getElementById('advice-' + key);
+    if (card) card.classList.add('is-active');
+  }
 </script>
-<script id="caar-articles-script">
+
+<script>
 (function () {
- 
-  /* ── Article data ─────────────────────────── */
+  /* ── Article data ── */
   var articles = [
     {
       id: 'agency602',
       title: 'Agency 602 Renovated – Didouche Mourad',
-      description: 'CAAR modernized Agency 602 in Didouche Mourad to enhance customer experience and service quality.',
-      date: 'Sep,24',
+      excerpt: 'CAAR modernized Agency 602 in Didouche Mourad to enhance customer experience and service quality.',
+      date: 'Sep, 24',
       image: 'img/art1.png',
       content: '<p>As part of its network modernization strategy, CAAR has completed the renovation of Agency No. 602, located in Didouche Mourad and attached to the Bouzaréah branch.</p><p>Reopened on September 24, 2023, the agency now features a modern design aligned with CAAR\'s visual identity, offering improved service and customer experience.</p>'
     },
     {
       id: 'agency228',
       title: 'Agency 228 Renovated – Larbâa Nath Irathen',
-      description: 'Agency 228 was renovated as part of CAAR\'s ongoing distribution network modernization.',
-      date: 'Sep,25',
+      excerpt: 'Agency 228 was renovated as part of CAAR\'s ongoing distribution network modernization.',
+      date: 'Sep, 25',
       image: 'img/art2.png',
       content: '<p>CAAR continues the modernization of its distribution network with the renovation of Agency No. 228, located in Larbâa Nath Irathen and affiliated with the Chéraga branch.</p><p>Officially reopened on September 25, 2023, the agency is now better equipped to meet customer needs in an efficient and modern environment.</p>'
     },
     {
       id: 'bejaia',
       title: 'CAAR Information Day in Béjaïa',
-      description: 'CAAR organized an information day in Béjaïa to engage with partners during its 60th anniversary.',
-      date: 'Oct,04',
+      excerpt: 'CAAR organized an information day in Béjaïa to engage with partners during its 60th anniversary.',
+      date: 'Oct, 04',
       image: 'img/art3.png',
       content: '<p>As part of its 60th anniversary celebrations, CAAR organized an information day on October 4, 2023, at the Cristal Hotel in Béjaïa.</p><p>The event brought together key regional partners under the theme: "CAAR listens to its partners."</p>'
     },
     {
       id: 'sada2025',
       title: 'CAAR at the African Business Forum – SADA 2025',
-      description: 'CAAR took part in SADA 2025 in Oran, strengthening its presence within the African business community.',
-      date: 'Avr,28',
+      excerpt: 'CAAR took part in SADA 2025 in Oran, strengthening its presence within the African business community.',
+      date: 'Apr, 28',
       image: 'img/art4.png',
       content: '<p>CAAR participated in the 3rd edition of the African Business Forum (SADA 2025), held at the Rodina Convention Center in Oran from April 26 to April 28, 2025.</p><p>The event provided an opportunity for CAAR to exchange with economic stakeholders and reinforce its role within the African business ecosystem.</p>'
     },
     {
       id: 'tiziagri',
       title: 'TIZI AGRI EXPO 2025',
-      description: 'CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.',
-      date: 'Mai,10',
+      excerpt: 'CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.',
+      date: 'May, 10',
       image: 'img/art5.png',
       content: '<p>CAAR participated in the 1st edition of TIZI AGRI EXPO, supporting the livestock and dairy sector in Tizi Ouzou.</p><p>The expo provided CAAR with an excellent platform to showcase its agricultural insurance products and connect with professionals in the sector across the Kabylie region.</p>'
     }
   ];
- 
-  /* ── State ────────────────────────────────── */
+
   var PER_PAGE    = 2;
   var currentPage = 1;
   var totalPages  = Math.ceil(articles.length / PER_PAGE);
- 
-  /* ── Element refs ────────────────────────── */
-  var listEl       = document.getElementById('articles-list');
+
+  var gridEl       = document.getElementById('articles-grid');
   var paginationEl = document.getElementById('articles-pagination');
   var detailEl     = document.getElementById('article-detail');
-  var backBtn      = document.getElementById('back-btn');
- 
-  /* ── Render cards for a given page ────────── */
+
   function renderPage(page) {
     currentPage = page;
- 
-    var start   = (page - 1) * PER_PAGE;
-    var slice   = articles.slice(start, start + PER_PAGE);
- 
-    /* Build cards */
-    listEl.innerHTML = '';
-    slice.forEach(function (art) {
+    var slice   = articles.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+    gridEl.innerHTML = '';
+    slice.forEach(function(art) {
       var card = document.createElement('div');
       card.className = 'article-card';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', 'Read article: ' + art.title);
- 
       card.innerHTML =
-        '<span class="date-badge">' + art.date + '</span>' +
-        '<div class="article-card-body">' +
-          '<h3 class="article-card-title">' + art.title + '</h3>' +
-          '<p class="article-card-text">' + art.description + '</p>' +
+        '<span class="article-card__date-badge">' + art.date + '</span>' +
+        '<div class="article-card__body">' +
+          '<h3 class="article-card__title">' + art.title + '</h3>' +
+          '<p class="article-card__excerpt">' + art.excerpt + '</p>' +
         '</div>' +
-        '<button class="article-read-btn" aria-label="Read article: ' + art.title + '">Read article →</button>';
- 
-      /* Click anywhere on card or button */
-      card.addEventListener('click', function () {
-        openArticleDetail(art.id);
+        '<button class="article-card__read-btn">Read article →</button>';
+
+      card.addEventListener('click', function() { openDetail(art.id); });
+      card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(art.id); }
       });
- 
-      card.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openArticleDetail(art.id);
-        }
-      });
- 
-      /* Stop button double-firing */
-      card.querySelector('.article-read-btn').addEventListener('click', function (e) {
+      card.querySelector('.article-card__read-btn').addEventListener('click', function(e) {
         e.stopPropagation();
-        openArticleDetail(art.id);
+        openDetail(art.id);
       });
- 
-      listEl.appendChild(card);
+
+      gridEl.appendChild(card);
     });
- 
+
     renderPagination();
   }
- 
-  /* ── Render pagination buttons ─────────────── */
+
   function renderPagination() {
     paginationEl.innerHTML = '';
     for (var i = 1; i <= totalPages; i++) {
       var btn = document.createElement('button');
-      btn.className    = 'page-btn' + (i === currentPage ? ' active' : '');
-      btn.textContent  = i;
+      btn.className   = 'pagination-btn' + (i === currentPage ? ' is-active' : '');
+      btn.textContent = i;
       btn.setAttribute('aria-label', 'Page ' + i);
       if (i === currentPage) btn.setAttribute('aria-current', 'page');
- 
-      btn.addEventListener('click', (function (p) {
-        return function () { renderPage(p); };
+      btn.addEventListener('click', (function(p) {
+        return function() { renderPage(p); };
       })(i));
- 
       paginationEl.appendChild(btn);
     }
   }
- 
-  /* ── Open detail view ───────────────────────── */
-  function openArticleDetail(id) {
-    var art = articles.find(function (a) { return a.id === id; });
+
+  function openDetail(id) {
+    var art = articles.find(function(a) { return a.id === id; });
     if (!art) return;
- 
-    /* Populate detail */
+
     document.getElementById('detail-title').textContent = art.title;
-    document.getElementById('detail-text').innerHTML     = art.content;
- 
-    var img  = document.getElementById('detail-img');
-    var wrap = document.getElementById('detail-img-wrap');
- 
+    document.getElementById('detail-text').innerHTML    = art.content;
+
+    var img  = document.getElementById('detail-image');
+    var wrap = document.getElementById('detail-image-wrap');
     if (art.image) {
-      img.src             = art.image;
-      img.alt             = art.title;
-      wrap.style.display  = '';
+      img.src = art.image;
+      img.alt = art.title;
+      wrap.style.display = '';
     } else {
-      wrap.style.display  = 'none';
+      wrap.style.display = 'none';
     }
- 
-    /* Swap views */
-    listEl.classList.add('hidden');
-    paginationEl.classList.add('hidden');
-    detailEl.classList.remove('hidden');
- 
-    /* Scroll to top of section */
-    document.getElementById('caar-articles')
-      .scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    gridEl.classList.add('is-hidden');
+    paginationEl.classList.add('is-hidden');
+    detailEl.classList.remove('is-hidden');
+
+    document.getElementById('articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
- 
-  /* ── Close detail / back to list ──────────── */
+
   function closeArticleDetail() {
-    detailEl.classList.add('hidden');
-    listEl.classList.remove('hidden');
-    paginationEl.classList.remove('hidden');
- 
-    document.getElementById('caar-articles')
-      .scrollIntoView({ behavior: 'smooth', block: 'start' });
+    detailEl.classList.add('is-hidden');
+    gridEl.classList.remove('is-hidden');
+    paginationEl.classList.remove('is-hidden');
+    document.getElementById('articles-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
- 
-  /* Expose so the inline onclick still works */
+
   window.closeArticleDetail = closeArticleDetail;
- 
-  /* ── Boot ─────────────────────────────────── */
+
   renderPage(1);
- 
 })();
 </script>
- 
+
 </body>
 </html>
