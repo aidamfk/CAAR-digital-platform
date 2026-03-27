@@ -1,15 +1,20 @@
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-grid">
+      <!-- Col 1 row 1: logo -->
       <div class="footer-logo">
         <img src="img/caarfooter.jpg" alt="CAAR"/>
       </div>
+
+      <!-- Col 2: Company links (spans both rows via .footer-col) -->
       <div class="footer-col">
         <h4>Company</h4>
         <a href="company.html">About Us</a>
         <a href="company-careers.html">Careers</a>
         <a href="news.html">News</a>
       </div>
+
+      <!-- Col 3: Insurance links (spans both rows) -->
       <div class="footer-col">
         <h4>Insurance</h4>
         <a href="auto-insurance.html">Auto Insurance</a>
@@ -17,12 +22,16 @@
         <a href="individual-risks.html">Natural Catastrophe Insurance</a>
         <a href="individual-risks.html">Multi-risk insurance for merchants</a>
       </div>
+
+      <!-- Col 4: Social (spans both rows) -->
       <div class="footer-col">
         <h4>Follow Us</h4>
         <div class="footer-social">
           <a href="#" aria-label="Facebook">f</a>
         </div>
       </div>
+
+      <!-- Col 1 row 2: contact block -->
       <div class="footer-col-1">
         <div class="footer-item">
           <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>

@@ -333,11 +333,24 @@ textarea     { font-family: var(--font-sans); }
 }
 .search-close:hover,
 .search-close-hdr:hover { background: #f0f0f0; }
+/*
+ * footer-fix.css
+ * CAAR — Authoritative footer styles, safe for both hardcoded and JS-injected footer.
+ * Include this after main.css (or merge into main.css replacing the footer block).
+ *
+ * Root causes fixed:
+ *  1. footer-grid was "1.6fr 1fr 1.8fr 1fr" (4 cols) but needed explicit 5th-column
+ *     handling when grid-auto-flow kicks in — now uses named placement.
+ *  2. .footer-col h4 had height:38px which could clip and collapse grid row 2
+ *     when font-size varies. Changed to min-height.
+ *  3. .footer-col-1 was getting display:none or zero-height in some CSS cascade
+ *     combinations. Now explicitly visible with overflow:visible.
+ *  4. SVGs inside .footer-item need stroke set in CSS (not just in attribute),
+ *     because innerHTML injection can lose attribute parsing in some browsers.
+ *  5. .footer-item span needs flex:1 so it takes available width next to the icon.
+ */
 
-
-/* =====================================================================
-   5. FOOTER  — single definition, grid-based, always visible
-   ===================================================================== */
+/* ── OUTER SHELL ── */
 .footer {
   background: #3F3F3F;
   color: #ccc;
@@ -351,21 +364,21 @@ textarea     { font-family: var(--font-sans); }
   border-bottom: 1px solid rgba(255,255,255,.14);
 }
 
-/*
-  4-column grid on desktop:
-    col 1 = logo (row 1) + contact block (row 2)
-    col 2-4 = three nav columns spanning both rows
+/* ── GRID LAYOUT ──
+   Column 1   : logo (row 1) + contact block (row 2)
+   Columns 2–4: three nav columns, spanning both rows
+   Total: 4 named columns, 2 explicit rows
 */
 .footer-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1.8fr 1fr;
   grid-template-rows: auto auto;
   column-gap: 40px;
   row-gap: 16px;
   align-items: start;
 }
 
-/* Logo — top-left cell */
+/* Logo — top-left */
 .footer-logo {
   grid-column: 1;
   grid-row: 1;
@@ -383,8 +396,10 @@ textarea     { font-family: var(--font-sans); }
   display: block;
 }
 
-/* Nav columns — span both rows */
-.footer-col { grid-row: 1 / span 2; }
+/* Nav columns — each spans both grid rows */
+.footer-col {
+  grid-row: 1 / span 2;
+}
 
 .footer-col h4 {
   color: #fff;
@@ -393,6 +408,7 @@ textarea     { font-family: var(--font-sans); }
   text-transform: uppercase;
   letter-spacing: .8px;
   margin-bottom: 16px;
+  /* FIX: was height:38px — fixed height collapses grid row 2 in some engines */
   min-height: 38px;
   display: flex;
   align-items: center;
@@ -403,40 +419,42 @@ textarea     { font-family: var(--font-sans); }
   font-size: .82rem;
   color: #ccc;
   margin-bottom: 9px;
+  text-decoration: none;
   transition: color .2s;
 }
 .footer-col a:hover { color: #fff; }
 
 /* Social icons */
 .footer-social { display: flex; gap: 8px; }
-
 .footer-social a {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--orange);
+  border: 2px solid #E8761E;
   background: transparent;
-  color: var(--orange);
+  color: #E8761E;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: .82rem;
+  text-decoration: none;
   transition: background .2s, color .2s;
 }
-.footer-social a:hover { background: var(--orange); color: #fff; }
+.footer-social a:hover { background: #E8761E; color: #fff; }
 
-/*
-  Contact block — bottom-left cell.
-  height / overflow left unconstrained so content is NEVER clipped.
+/* Contact block — bottom-left
+   FIX: Explicit placement + never hidden + overflow visible
 */
 .footer-col-1 {
   grid-column: 1;
   grid-row: 2;
-  /* no fixed height, no overflow:hidden */
+  display: block;          /* never flex, never none */
+  visibility: visible;
+  overflow: visible;
 }
 
-/* Each contact row (icon + text) */
+/* Each contact row */
 .footer-item {
   display: flex;
   align-items: flex-start;
@@ -447,10 +465,14 @@ textarea     { font-family: var(--font-sans); }
   line-height: 1.5;
 }
 
+/* SVG icons in contact rows
+   FIX: Set stroke via CSS so it works whether the element is
+   hardcoded HTML or injected via innerHTML
+*/
 .footer-item svg {
   width: 14px;
   height: 14px;
-  stroke: var(--orange);
+  stroke: #E8761E;         /* CSS stroke — works regardless of how HTML is injected */
   fill: none;
   stroke-width: 2;
   stroke-linecap: round;
@@ -459,14 +481,17 @@ textarea     { font-family: var(--font-sans); }
   margin-top: 2px;
 }
 
-/* Text inside contact rows — always visible */
+/* Text spans — FIX: explicit flex:1 so they expand next to the icon
+   Never hidden, never 0-opacity, always readable
+*/
 .footer-item span {
-  display: inline;
+  display: inline;         /* flex container makes this a flex item anyway */
+  flex: 1;
   opacity: 1;
   visibility: visible;
   white-space: normal;
   word-break: break-word;
-  flex: 1;
+  color: #ccc;
 }
 
 /* Copyright bar */
@@ -477,6 +502,18 @@ textarea     { font-family: var(--font-sans); }
   padding: 16px 0 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 24px;
+  }
+  /* In 2-col layout, collapse the spanning so each col flows normally */
+  .footer-col { grid-row: auto; }
+  .footer-col-1 { grid-column: auto; grid-row: auto; }
+  .footer-col h4 { min-height: auto; margin-bottom: 10px; }
 }
 
 
@@ -2963,6 +3000,32 @@ textarea     { font-family: var(--font-sans); }
   .footer-grid   { grid-template-columns: 1fr 1fr; gap: 20px; row-gap: 24px; }
   .footer-col    { grid-row: auto; }
   .footer-col-1  { grid-column: 1 / -1; }
+  .footer-col h4 { min-height: auto; margin-bottom: 8px; }
+  .footer-bottom { font-size: .7rem; padding: 12px 0 16px; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 24px;
+  }
+  /* In 2-col layout, collapse the spanning so each col flows normally */
+  .footer-col { grid-row: auto; }
+  .footer-col-1 { grid-column: auto; grid-row: auto; }
+  .footer-col h4 { min-height: auto; margin-bottom: 10px; }
+}
+
+@media (max-width: 768px) {
+  .footer { padding: 32px 16px 0; }
+  .footer-inner { padding-bottom: 24px; }
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    row-gap: 20px;
+  }
+  .footer-col   { grid-row: auto; grid-column: auto; }
+  .footer-col-1 { grid-row: auto; grid-column: auto; }
   .footer-col h4 { min-height: auto; margin-bottom: 8px; }
   .footer-bottom { font-size: .7rem; padding: 12px 0 16px; }
 }

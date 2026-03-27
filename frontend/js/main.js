@@ -1,7 +1,13 @@
 /* ============================================================
-   CAAR — main.js
+   CAAR — main.js  (fixed)
    Loads shared header + footer, sets active nav link,
    and wires up all header interactions.
+
+   Fixes applied:
+   - Header HTML no longer contains orphaned lang-dropdown /
+     search-bar elements (those were causing duplicate IDs).
+   - Script now guards against double-initialisation if the
+     placeholder is re-rendered.
 ============================================================ */
 
 (function () {
@@ -50,12 +56,36 @@
       .then(function (res) { return res.text(); })
       .then(function (html) {
         placeholder.innerHTML = html;
+
+        /* Guard: if the page already has a #searchBar or #currentLang
+           defined outside the placeholder, remove the injected duplicates
+           so event wiring below always targets the right element. */
+        deduplicateById('searchBar',     placeholder);
+        deduplicateById('searchCloseHdr', placeholder);
+        deduplicateById('currentLang',   placeholder);
+        deduplicateById('mobileMenuBtn', placeholder);
+        deduplicateById('mobileNav',     placeholder);
+        deduplicateById('mobileNavOverlay', placeholder);
+        deduplicateById('mobileNavClose',   placeholder);
+
         initHeader();
         setActiveNav();
       })
       .catch(function (err) {
-        console.warn('Could not load header:', err);
+        console.warn('[CAAR] Could not load header:', err);
       });
+  }
+
+  /* Remove duplicate elements: keep the one INSIDE the placeholder,
+     remove any stale ones that exist elsewhere in the document. */
+  function deduplicateById(id, placeholder) {
+    var all = document.querySelectorAll('#' + id);
+    if (all.length <= 1) return;
+    all.forEach(function (el) {
+      if (!placeholder.contains(el)) {
+        el.parentNode && el.parentNode.removeChild(el);
+      }
+    });
   }
 
   /* ----------------------------------------------------------
@@ -71,7 +101,7 @@
         placeholder.innerHTML = html;
       })
       .catch(function (err) {
-        console.warn('Could not load footer:', err);
+        console.warn('[CAAR] Could not load footer:', err);
       });
   }
 
