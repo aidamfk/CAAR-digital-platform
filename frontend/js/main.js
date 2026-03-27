@@ -1,13 +1,9 @@
 /* ============================================================
-   CAAR — main.js  (fixed)
-   Loads shared header + footer, sets active nav link,
-   and wires up all header interactions.
+   CAAR — main.js
+   Loads shared header, sets active nav link,
+   and wires up ALL header interactions (search, lang, mobile menu).
 
-   Fixes applied:
-   - Header HTML no longer contains orphaned lang-dropdown /
-     search-bar elements (those were causing duplicate IDs).
-   - Script now guards against double-initialisation if the
-     placeholder is re-rendered.
+   Pages should NOT duplicate any of this logic inline.
 ============================================================ */
 
 (function () {
@@ -57,16 +53,13 @@
       .then(function (html) {
         placeholder.innerHTML = html;
 
-        /* Guard: if the page already has a #searchBar or #currentLang
-           defined outside the placeholder, remove the injected duplicates
-           so event wiring below always targets the right element. */
-        deduplicateById('searchBar',     placeholder);
-        deduplicateById('searchCloseHdr', placeholder);
-        deduplicateById('currentLang',   placeholder);
-        deduplicateById('mobileMenuBtn', placeholder);
-        deduplicateById('mobileNav',     placeholder);
-        deduplicateById('mobileNavOverlay', placeholder);
-        deduplicateById('mobileNavClose',   placeholder);
+        /* Guard: if somehow duplicate IDs exist outside the placeholder,
+           remove them so event wiring below always targets the right element. */
+        var guarded = [
+          'searchBar', 'searchCloseHdr', 'currentLang',
+          'mobileMenuBtn', 'mobileNav', 'mobileNavOverlay', 'mobileNavClose'
+        ];
+        guarded.forEach(function (id) { deduplicateById(id, placeholder); });
 
         initHeader();
         setActiveNav();
@@ -76,8 +69,7 @@
       });
   }
 
-  /* Remove duplicate elements: keep the one INSIDE the placeholder,
-     remove any stale ones that exist elsewhere in the document. */
+  /* Remove duplicates: keep the one INSIDE the placeholder. */
   function deduplicateById(id, placeholder) {
     var all = document.querySelectorAll('#' + id);
     if (all.length <= 1) return;
@@ -88,9 +80,8 @@
     });
   }
 
-
   /* ----------------------------------------------------------
-     4. SET ACTIVE NAV LINK
+     3. SET ACTIVE NAV LINK
   ---------------------------------------------------------- */
   function setActiveNav() {
     var activePage = getActivePage();
@@ -106,7 +97,10 @@
   }
 
   /* ----------------------------------------------------------
-     5. WIRE UP HEADER INTERACTIONS
+     4. WIRE UP ALL HEADER INTERACTIONS
+     (search bar, language switcher, mobile nav drawer)
+     This is the SINGLE source of truth — pages must not
+     duplicate these listeners inline.
   ---------------------------------------------------------- */
   function initHeader() {
 
@@ -170,11 +164,11 @@
   }
 
   /* ----------------------------------------------------------
-     6. BOOT
+     5. BOOT
   ---------------------------------------------------------- */
   document.addEventListener('DOMContentLoaded', function () {
     loadHeader();
-    loadFooter();
+    /* Footer is hardcoded per page — no dynamic load needed. */
   });
 
 })();

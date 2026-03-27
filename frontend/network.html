@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <link rel="stylesheet" href="main.css"/>
+  <link rel="stylesheet" href="css/footer-fix.css"/>
   <link rel="stylesheet" href="css/network.css"/>
 
   <style>
@@ -25,9 +26,8 @@
       font-size: 0.84rem;
       color: rgba(255,255,255,0.8);
     }
-    .crossnav-banner-text strong {
-      color: #fff;
-    }
+    .crossnav-banner-text strong { color: #fff; }
+
     .btn-crossnav-banner {
       padding: 8px 20px;
       background: var(--hdr-orange);
@@ -55,10 +55,7 @@
       color: #555;
     }
     .focus-banner.show { display: flex; }
-    .focus-banner-pin {
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
+    .focus-banner-pin { font-size: 1rem; flex-shrink: 0; }
     .focus-banner strong { color: var(--hdr-orange); }
     .focus-banner-dismiss {
       margin-left: auto;
@@ -73,89 +70,20 @@
     }
     .focus-banner-dismiss:hover { color: #555; background: #f0dcc8; }
 
-    /* Highlighted marker animation */
     @keyframes markerPulse {
       0%   { transform: scale(1);    }
       50%  { transform: scale(1.25); }
       100% { transform: scale(1);    }
     }
-    .marker-pulse {
-      animation: markerPulse 0.6s ease 3;
-    }
+    .marker-pulse { animation: markerPulse 0.6s ease 3; }
   </style>
 </head>
 <body>
 
-<!-- ══ HEADER ══ -->
-<header class="header">
-  <div class="header-inner">
-    <div class="logo-block">
-      <a href="index.html">
-        <img src="img/grand_logo.png" alt="CAAR" class="logo-img"/>
-      </a>
-    </div>
-    <div class="right-side">
-      <div class="top-row">
-        <a href="network.html" class="btn-top">Find Agency</a>
-        <a href="contact.html" class="btn-top">Contact Us</a>
-      </div>
-      <hr class="top-divider"/>
-      <div class="bottom-row">
-        <ul class="nav-links">
-          <li><a href="index.html" class="nav-link">Home</a></li>
-          <li class="dropdown">
-            <a href="products.html" class="nav-link">Products <span class="arrow">▾</span></a>
-            <ul class="dropdown-menu">
-              <li><a href="individual-risks.html">Individual Risks</a></li>
-              <li><a href="auto-insurance.html">Auto Insurance</a></li>
-              <li><a href="transport-insurance.html">Transport Insurance</a></li>
-              <li><a href="technical-risks.html">Technical Risks</a></li>
-              <li><a href="industrial-risks.html">Industrial Risks</a></li>
-            </ul>
-          </li>
-          <li class="dropdown">
-            <a href="company.html" class="nav-link">Company <span class="arrow">▾</span></a>
-            <ul class="dropdown-menu">
-              <li><a href="company.html">About Us</a></li>
-              <li><a href="company-careers.html">Careers</a></li>
-            </ul>
-          </li>
-          <li><a href="network.html" class="nav-link active">Network</a></li>
-          <li><a href="news.html" class="nav-link">News</a></li>
-          <li><a href="contact.html" class="nav-link">Contact</a></li>
-        </ul>
-        <div class="nav-icons">
-          <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Menu">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
-              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
-          <button class="icon-btn" id="searchBtn">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
-          <div class="lang-dropdown">
-            <button class="icon-btn">
-              <span class="lang-label" id="currentLang">EN</span>
-            </button>
-            <ul class="lang-menu">
-              <li><a href="#" data-lang="FR">Français (FR)</a></li>
-              <li><a href="#" data-lang="EN">English (EN)</a></li>
-              <li><a href="#" data-lang="AR">عربي (AR)</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="search-bar" id="searchBar">
-    <input type="text" placeholder="Search CAAR..." class="hdr-search-input"/>
-    <button class="search-close-hdr" id="searchCloseHdr">✕</button>
-  </div>
-</header>
+<!-- ══ HEADER — loaded dynamically by main.js ══ -->
+<div id="site-header"></div>
 
-<!-- ══ CROSS-NAV BANNER: Need help instead? ══ -->
+<!-- ══ CROSS-NAV BANNER ══ -->
 <div class="crossnav-banner">
   <div class="crossnav-banner-text">
     <strong>Prefer to send a message?</strong> &nbsp;Our team responds within 24 hours.
@@ -163,7 +91,7 @@
   <a href="contact.html" class="btn-crossnav-banner">Send a Request →</a>
 </div>
 
-<!-- ══ FOCUS BANNER (shown when coming from contact page) ══ -->
+<!-- ══ FOCUS BANNER (shown when coming from contact page with ?focus=hq) ══ -->
 <div class="focus-banner" id="focusBanner">
   <span class="focus-banner-pin">📍</span>
   <span>Showing <strong>CAAR Headquarters</strong> — 48 Rue Didouche Mourad, Algiers</span>
@@ -192,7 +120,6 @@
         <div class="auto-list" id="autoList"></div>
       </div>
 
-      <!-- Use my location button -->
       <button class="s-locate-btn" id="locateBtn" onclick="useMyLocation()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/>
@@ -215,7 +142,9 @@
   <div class="filter-bar-row">
 
     <div class="fd-search-wrap">
-      <svg viewBox="0 0 24 24" class="fd-search-ico" stroke="#999" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg viewBox="0 0 24 24" class="fd-search-ico" stroke="#999" fill="none" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
       <input class="fd-search-input" id="fdSearchInput" type="text"
         placeholder="Search agency name…" autocomplete="off"
         oninput="setSearchFilter(this.value)"/>
@@ -293,7 +222,6 @@
     </div>
   </div>
 
-  <!-- Cross-nav inside filter section: "Need help instead?" -->
   <div style="padding:16px 24px;background:#fafafa;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
     <span style="font-size:0.82rem;color:#666;">Can't find what you need? Our team is here to help.</span>
     <a href="contact.html" style="font-size:0.78rem;font-weight:700;color:var(--hdr-orange);text-decoration:none;border:1.5px solid var(--hdr-orange);padding:6px 16px;border-radius:20px;transition:all 0.2s;"
@@ -407,29 +335,15 @@
   </div>
 </footer>
 
-<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
-<nav class="mobile-nav" id="mobileNav">
-  <div class="mobile-nav-header">
-    <span class="mobile-nav-title">Menu</span>
-    <button onclick="toggleMobileMenu()" class="mobile-nav-close">✕</button>
-  </div>
-  <a href="index.html" onclick="toggleMobileMenu()">Home</a>
-  <a href="products.html" onclick="toggleMobileMenu()">Products</a>
-  <a href="company.html" onclick="toggleMobileMenu()">Company</a>
-  <a href="network.html" class="active" onclick="toggleMobileMenu()">Network</a>
-  <a href="news.html" onclick="toggleMobileMenu()">News</a>
-  <a href="contact.html" onclick="toggleMobileMenu()">Contact</a>
-  <div class="mobile-nav-btns">
-    <a href="network.html" class="btn-top">Find Agency</a>
-    <a href="contact.html" class="btn-top">Contact Us</a>
-  </div>
-</nav>
-
+<!-- ══ SCRIPTS ══ -->
+<!-- main.js handles: header injection, search toggle, language switcher, mobile nav -->
+<script src="js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
 /* ============================================================
-   AGENCY DATA
+   PAGE-SPECIFIC: AGENCY DATA & MAP LOGIC
+   (Header/nav/search/mobile-menu logic is in js/main.js only)
 ============================================================ */
 const AGENCIES = [
   {id:1,  name:'Kouba',                    city:'Kouba',                  wilaya:'Alger',      address:'Cité Serbat Bâtiment A9 Garidi, Kouba — Alger',                                     director:'Mr Lawachra',             type:'Main Agency',    services:['Auto','Habitation','Transport','Industrial'],  lat:36.730082, lng:3.061648},
@@ -569,7 +483,6 @@ function makeHeroDotIcon() {
 }
 
 function makeHQDotIcon() {
-  // Larger, gold star for HQ
   return L.divIcon({
     className: '',
     html: '<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="#C9601A" stroke="white" stroke-width="2"/><text x="9" y="13" text-anchor="middle" font-size="9" fill="white">★</text></svg>',
@@ -618,7 +531,7 @@ function makePopup(ag) {
       '<div class="popup-addr">' + ag.address + '</div>' +
       '<div class="popup-actions">' +
         '<button class="popup-btn pbtn-dir" onclick="window.open(\'https://www.google.com/maps/dir/?api=1&destination=' + ag.lat + ',' + ag.lng + '\',\'_blank\')">&#128506; Directions</button>' +
-        (isHQ ? '<button class="popup-btn pbtn-call" onclick="window.location.href=\'tel:+213216320072\'">&#128222; Call HQ</button>' : '') +
+        (isHQ ? '<button class="popup-btn pbtn-call" onclick="window.location.href=\'tel:+213213410016\'">&#128222; Call HQ</button>' : '') +
       '</div>' +
       (isHQ ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;"><a href="contact.html" style="font-size:0.68rem;color:#E8761E;font-weight:700;text-decoration:none;">✉ Send a message instead →</a></div>' : '') +
     '</div>' +
@@ -653,7 +566,6 @@ function initHeroMap() {
     heroMarkerMap[ag.id] = m;
   });
 
-  // If focus=hq, fly to HQ on hero map too
   if (focusParam === 'hq' && HQ_AGENCY) {
     setTimeout(function() {
       heroMap.flyTo([HQ_AGENCY.lat, HQ_AGENCY.lng], 15, { animate: true, duration: 1.8 });
@@ -689,37 +601,21 @@ function initFilterMap() {
 
   renderFilterCards(AGENCIES);
 
-  // Handle ?focus=hq URL param
   if (focusParam === 'hq' && HQ_AGENCY) {
-    setTimeout(function() {
-      focusOnHQ();
-    }, 600);
+    setTimeout(function() { focusOnHQ(); }, 600);
   }
 }
 
 /* ============================================================
-   FOCUS ON HQ (called when ?focus=hq)
+   FOCUS ON HQ
 ============================================================ */
 function focusOnHQ() {
-  // Show focus banner
   document.getElementById('focusBanner').classList.add('show');
-
-  // Fly filter map to HQ
   filterMap.flyTo([HQ_AGENCY.lat, HQ_AGENCY.lng], 15, { animate: true, duration: 1.5 });
-
-  // Highlight HQ marker
   resetFilterIcons();
   filterMarkerMap[39].setIcon(makeHQFilterIcon(true));
-
-  // Open popup after fly
-  setTimeout(function() {
-    filterMarkerMap[39].openPopup();
-  }, 1600);
-
-  // Highlight card
+  setTimeout(function() { filterMarkerMap[39].openPopup(); }, 1600);
   highlightFilterCard(39);
-
-  // Scroll to filter section
   setTimeout(function() {
     document.getElementById('filterSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 300);
@@ -775,7 +671,7 @@ function renderFilterCards(list) {
       '<div class="fc-btns" onclick="event.stopPropagation()">' +
         '<button class="fc-btn fc-btn-map" onclick="flyToFilterAgency(' + ag.id + ')">View on map</button>' +
         '<button class="fc-btn fc-btn-dir" onclick="window.open(\'https://www.google.com/maps/dir/?api=1&destination=' + ag.lat + ',' + ag.lng + '\',\'_blank\')">Directions</button>' +
-        '<button class="fc-btn fc-btn-call" onclick="window.location.href=\'tel:+213216320072\'">📞 Call</button>' +
+        '<button class="fc-btn fc-btn-call" onclick="window.location.href=\'tel:+213213410016\'">📞 Call</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -1068,25 +964,6 @@ function resetFilters() {
 }
 
 /* ============================================================
-   HEADER SEARCH + MOBILE NAV
-============================================================ */
-document.getElementById('searchBtn').addEventListener('click', function() {
-  document.getElementById('searchBar').classList.toggle('open');
-});
-document.getElementById('searchCloseHdr').addEventListener('click', function() {
-  document.getElementById('searchBar').classList.remove('open');
-});
-
-function toggleMobileMenu() {
-  var nav = document.getElementById('mobileNav');
-  var overlay = document.getElementById('mobileNavOverlay');
-  var isOpen = nav.classList.contains('open');
-  nav.classList.toggle('open', !isOpen);
-  overlay.classList.toggle('open', !isOpen);
-  document.body.style.overflow = isOpen ? '' : 'hidden';
-}
-
-/* ============================================================
    GEOLOCATION
 ============================================================ */
 function useMyLocation() {
@@ -1122,7 +999,7 @@ function useMyLocation() {
 }
 
 /* ============================================================
-   BOOT
+   BOOT — page-specific only
 ============================================================ */
 window.addEventListener('load', function() {
   buildWilayaDropdown();
