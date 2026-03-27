@@ -628,6 +628,10 @@
 </footer>
 
 
+<!-- ============================================================
+     PAGE-SPECIFIC SCRIPT — NO header/search/language/mobile-nav
+     logic here. All of that is handled exclusively by main.js.
+============================================================ -->
 <script>
 /* ============================================================
    STATE
@@ -638,40 +642,19 @@ var currentStep   = 1;
 var countdownTimer = null;
 
 /* ============================================================
-   HEADER SEARCH
-   ============================================================ */
-document.getElementById('searchBtn').addEventListener('click', function() {
-  document.getElementById('searchBar').classList.toggle('open');
-});
-document.getElementById('searchClose').addEventListener('click', function() {
-  document.getElementById('searchBar').classList.remove('open');
-});
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') document.getElementById('searchBar').classList.remove('open');
-});
-document.querySelectorAll('[data-lang]').forEach(function(link) {
-  link.addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('currentLang').textContent = this.getAttribute('data-lang');
-  });
-});
-
-/* ============================================================
    PLAN SELECTION
    ============================================================ */
 function selectPlan(name, price) {
   selectedPlan  = name;
   selectedPrice = price;
 
-  // Update card styles
   ['basic', 'plus', 'premium'].forEach(function(p) {
-    document.getElementById('plan-' + p.toLowerCase()).classList.remove('selected');
-    var radio = document.querySelector('#plan-' + p.toLowerCase() + ' input[type="radio"]');
+    document.getElementById('plan-' + p).classList.remove('selected');
+    var radio = document.querySelector('#plan-' + p + ' input[type="radio"]');
     if (radio) radio.checked = false;
   });
 
-  var cardId = 'plan-' + name.toLowerCase();
-  var card = document.getElementById(cardId);
+  var card = document.getElementById('plan-' + name.toLowerCase());
   if (card) {
     card.classList.add('selected');
     var radio = card.querySelector('input[type="radio"]');
@@ -692,9 +675,9 @@ function formatDZD(n) {
    UPDATE SUMMARY BAR (Step 1)
    ============================================================ */
 function updateSummary() {
-  var planNameEl  = document.getElementById('sum-plan-name');
-  var annualEl    = document.getElementById('sum-annual');
-  var totalEl     = document.getElementById('sum-total-step1');
+  var planNameEl = document.getElementById('sum-plan-name');
+  var annualEl   = document.getElementById('sum-annual');
+  var totalEl    = document.getElementById('sum-total-step1');
 
   if (selectedPlan) {
     planNameEl.textContent = selectedPlan;
@@ -761,12 +744,12 @@ function populateStep2Summary() {
    POPULATE REVIEW
    ============================================================ */
 function populateReview() {
-  var brand  = document.getElementById('vehicle_brand').value || '—';
-  var model  = document.getElementById('vehicle_model').value || '—';
-  var year   = document.getElementById('vehicle_year').value || '—';
-  var plate  = document.getElementById('license_plate').value || '—';
+  var brand    = document.getElementById('vehicle_brand').value || '—';
+  var model    = document.getElementById('vehicle_model').value || '—';
+  var year     = document.getElementById('vehicle_year').value || '—';
+  var plate    = document.getElementById('license_plate').value || '—';
   var wilayaEl = document.getElementById('wilaya');
-  var wilaya = wilayaEl.options[wilayaEl.selectedIndex].text;
+  var wilaya   = wilayaEl.options[wilayaEl.selectedIndex].text;
 
   var titleEl = document.getElementById('title');
   var title   = titleEl.options[titleEl.selectedIndex].text;
@@ -778,23 +761,19 @@ function populateReview() {
   var startD = getStartDate();
   var endD   = getEndDate();
 
-  // Vehicle
   document.getElementById('rv-brand').textContent  = brand;
   document.getElementById('rv-model').textContent  = model;
   document.getElementById('rv-year').textContent   = year;
   document.getElementById('rv-plate').textContent  = plate;
   document.getElementById('rv-wilaya').textContent = wilaya;
 
-  // Driver
   document.getElementById('rv-name').textContent  = (title + ' ' + last + ' ' + first).trim() || '—';
   document.getElementById('rv-phone').textContent = mob1 || '—';
   document.getElementById('rv-email').textContent = email || '—';
 
-  // Plan
   document.getElementById('rv-plan').textContent  = selectedPlan || '—';
   document.getElementById('rv-price').textContent = formatDZD(selectedPrice);
 
-  // Contract
   document.getElementById('rv-start').textContent = formatDate(startD);
   document.getElementById('rv-end').textContent   = formatDate(endD);
   document.getElementById('rv-total').textContent = formatDZD(selectedPrice);
@@ -865,11 +844,11 @@ function validateStep1() {
   var model = document.getElementById('vehicle_model').value.trim();
   var year  = document.getElementById('vehicle_year').value;
 
-  if (!plate)           { alert('Please enter your license plate number.'); return false; }
-  if (!brand)           { alert('Please select your vehicle brand.'); return false; }
-  if (!model)           { alert('Please enter your vehicle model.'); return false; }
-  if (!year)            { alert('Please select the year of manufacture.'); return false; }
-  if (!selectedPlan)    { alert('Please select an assistance plan to continue.'); return false; }
+  if (!plate)        { alert('Please enter your license plate number.'); return false; }
+  if (!brand)        { alert('Please select your vehicle brand.'); return false; }
+  if (!model)        { alert('Please enter your vehicle model.'); return false; }
+  if (!year)         { alert('Please select the year of manufacture.'); return false; }
+  if (!selectedPlan) { alert('Please select an assistance plan to continue.'); return false; }
   if (!document.getElementById('terms-consent').checked) {
     alert('Please accept the general terms and conditions to continue.');
     return false;
@@ -929,11 +908,11 @@ function validatePayment() {
 }
 
 function resetPaymentForm() {
-  ['card_number','cvv2','cardholder_name'].forEach(function(id) {
+  ['card_number', 'cvv2', 'cardholder_name'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['expiry_month','expiry_year'].forEach(function(id) {
+  ['expiry_month', 'expiry_year'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
@@ -968,6 +947,8 @@ function downloadCertificate() {
    ============================================================ */
 selectPlan('Plus', 7900);
 </script>
+
+<!-- main.js LAST — handles header injection, search, language, mobile nav -->
 <script src="js/main.js"></script>
 </body>
 </html>

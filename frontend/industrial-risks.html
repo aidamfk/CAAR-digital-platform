@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CAAR — Industrial Risks</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
-
   <link rel="stylesheet" href="main.css"/>
 </head>
 <body>
@@ -74,7 +73,6 @@
 </div>
 </div></div>
 
-<!-- 2 Footer placeholder — --> 
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-grid">
@@ -115,7 +113,7 @@
   <div class="footer-bottom">
     &copy; 2026 CAAR &mdash; Compagnie Alg&eacute;rienne d&rsquo;Assurances et de R&eacute;assurances. All rights reserved.
   </div>
-</footer>div></footer>
+</footer>
 
 <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
 <nav class="mobile-nav" id="mobileNav"><div class="mobile-nav-header"><span class="mobile-nav-title">Menu</span><button onclick="toggleMobileMenu()" class="mobile-nav-close">✕</button></div><a href="index.html" onclick="toggleMobileMenu()">Home</a><a href="products.html" onclick="toggleMobileMenu()">Products</a><a href="news.html" onclick="toggleMobileMenu()">News</a><a href="contact.html" onclick="toggleMobileMenu()">Contact</a><div class="mobile-nav-btns"><a href="network.html" class="btn-top">Find Agency</a><a href="contact.html" class="btn-top">Contact Us</a></div></nav>
@@ -123,9 +121,6 @@
 <script>
 var ids=['mb','dec','rc'],labels={'mb':'Machinery Breakdown Insurance','dec':'Decennial Civil Liability','rc':'RC Pro for Contractors'};
 function show(k,btn){ids.forEach(function(i){document.getElementById('d-'+i).classList.remove('on');});document.querySelectorAll('.sidebar-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('d-'+k).classList.add('on');btn.classList.add('active');document.getElementById('bc').textContent=labels[k];}
-document.getElementById('searchBtn').addEventListener('click',function(){document.getElementById('searchBar').classList.toggle('open');});
-document.getElementById('searchCloseHdr').addEventListener('click',function(){document.getElementById('searchBar').classList.remove('open');});
-document.querySelectorAll('[data-lang]').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();document.getElementById('currentLang').textContent=this.getAttribute('data-lang');});});
 function toggleMobileMenu(){var n=document.getElementById('mobileNav'),o=document.getElementById('mobileNavOverlay'),i=n.classList.contains('open');n.classList.toggle('open',!i);o.classList.toggle('open',!i);document.body.style.overflow=i?'':'hidden';}
 </script>
 </body>
