@@ -13,28 +13,27 @@
     var path = window.location.pathname;
     var file = path.split('/').pop().replace('.html', '') || 'index';
 
-    // Map file names to data-page keys
     var map = {
-      'index':              'index',
-      '':                   'index',
-      'products':           'products',
-      'individual-risks':   'products',
-      'auto-insurance':     'products',
-      'transport-insurance':'products',
-      'technical-risks':    'products',
-      'industrial-risks':   'products',
-      'company':            'company',
-      'company-careers':    'company',
-      'network':            'network',
-      'news':               'news',
-      'article-accident':   'news',
-      'article-home':       'news',
-      'article-business':   'news',
-      'article-basics':     'news',
-      'contact':            'contact',
-      'Online_subscription':'products',
-      'catnat-subscription':'products',
-      'roads':              'products',
+      'index':               'index',
+      '':                    'index',
+      'products':            'products',
+      'individual-risks':    'products',
+      'auto-insurance':      'products',
+      'transport-insurance': 'products',
+      'technical-risks':     'products',
+      'industrial-risks':    'products',
+      'company':             'company',
+      'company-careers':     'company',
+      'network':             'network',
+      'news':                'news',
+      'article-accident':    'news',
+      'article-home':        'news',
+      'article-business':    'news',
+      'article-basics':      'news',
+      'contact':             'contact',
+      'Online_subscription': 'products',
+      'catnat-subscription': 'products',
+      'roads':               'products',
     };
 
     return map[file] || '';
@@ -78,18 +77,15 @@
 
   /* ----------------------------------------------------------
      4. SET ACTIVE NAV LINK
-     Runs after header HTML is injected into the DOM.
   ---------------------------------------------------------- */
   function setActiveNav() {
     var activePage = getActivePage();
     if (!activePage) return;
 
-    // Desktop nav links
     document.querySelectorAll('.nav-link[data-page]').forEach(function (link) {
       link.classList.toggle('active', link.getAttribute('data-page') === activePage);
     });
 
-    // Mobile nav links
     document.querySelectorAll('.mobile-nav a[data-page]').forEach(function (link) {
       link.classList.toggle('active', link.getAttribute('data-page') === activePage);
     });
@@ -97,15 +93,13 @@
 
   /* ----------------------------------------------------------
      5. WIRE UP HEADER INTERACTIONS
-     Search bar, language switcher, mobile drawer.
-     Called after header HTML lands in the DOM.
   ---------------------------------------------------------- */
   function initHeader() {
 
     /* ── Search bar ── */
-    var searchBtn     = document.getElementById('searchBtn');
-    var searchBar     = document.getElementById('searchBar');
-    var searchClose   = document.getElementById('searchCloseHdr');
+    var searchBtn   = document.getElementById('searchBtn');
+    var searchBar   = document.getElementById('searchBar');
+    var searchClose = document.getElementById('searchCloseHdr');
 
     if (searchBtn && searchBar) {
       searchBtn.addEventListener('click', function () {
@@ -133,19 +127,19 @@
     });
 
     /* ── Mobile nav drawer ── */
-    var mobileMenuBtn  = document.getElementById('mobileMenuBtn');
-    var mobileNav      = document.getElementById('mobileNav');
-    var mobileOverlay  = document.getElementById('mobileNavOverlay');
-    var mobileClose    = document.getElementById('mobileNavClose');
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNav     = document.getElementById('mobileNav');
+    var mobileOverlay = document.getElementById('mobileNavOverlay');
+    var mobileClose   = document.getElementById('mobileNavClose');
 
     function openMobileMenu() {
-      if (mobileNav)    mobileNav.classList.add('open');
+      if (mobileNav)     mobileNav.classList.add('open');
       if (mobileOverlay) mobileOverlay.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
 
     function closeMobileMenu() {
-      if (mobileNav)    mobileNav.classList.remove('open');
+      if (mobileNav)     mobileNav.classList.remove('open');
       if (mobileOverlay) mobileOverlay.classList.remove('open');
       document.body.style.overflow = '';
     }
@@ -154,7 +148,6 @@
     if (mobileClose)    mobileClose.addEventListener('click',   closeMobileMenu);
     if (mobileOverlay)  mobileOverlay.addEventListener('click', closeMobileMenu);
 
-    // Close drawer when a mobile nav link is tapped
     if (mobileNav) {
       mobileNav.querySelectorAll('a').forEach(function (link) {
         link.addEventListener('click', closeMobileMenu);
