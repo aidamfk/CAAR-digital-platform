@@ -8,7 +8,8 @@ const roadsideRoutes    = require('./routes/roadsideRoutes');
 const dashboardRoutes   = require('./routes/dashboardRoutes');
 const messageRoutes     = require('./routes/messageRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
-const claimsRoutes      = require('./routes/claimsRoutes');      // ← NEW
+const claimsRoutes      = require('./routes/claimsRoutes');
+const agencyRoutes      = require('./routes/agencyRoutes');      // ← NEW
 
 const app = express();
 
@@ -29,7 +30,8 @@ app.use('/api/roadside',     roadsideRoutes);
 app.use('/api/dashboard',    dashboardRoutes);
 app.use('/api/messages',     messageRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/claims',       claimsRoutes);                      // ← NEW
+app.use('/api/claims',       claimsRoutes);
+app.use('/api/agencies',     agencyRoutes);                      // ← NEW
 
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/', (req, res) => {

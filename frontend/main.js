@@ -1064,32 +1064,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
 })();
 
-
 /* ============================================================
    NETWORK PAGE — carte Leaflet + filtres
+   Agencies are now loaded from GET /api/agencies instead of
+   a hardcoded array.  Everything else is unchanged.
 ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
   if (!document.getElementById('filterMap')) return;
 
+  // ── Agencies: populated by the fetch below, shared across all helpers ──
+  var AGENCIES = [];
+
   function initNetworkMaps() {
     if (typeof L === 'undefined') { setTimeout(initNetworkMaps, 300); return; }
 
-    var AGENCIES = [
-      {id:1,  name:'Kouba',           city:'Kouba',       wilaya:'Alger',    type:'Main Agency',  services:['Auto','Habitation'],          lat:36.730082, lng:3.061648},
-      {id:2,  name:'Baraki',          city:'Baraki',      wilaya:'Alger',    type:'Main Agency',  services:['Auto','Agricultural'],        lat:36.665377, lng:3.100241},
-      {id:3,  name:'Hussein Dey',     city:'Hussein Dey', wilaya:'Alger',    type:'Main Agency',  services:['Auto','Claims'],              lat:36.739471, lng:3.101946},
-      {id:4,  name:'Rouiba',          city:'Rouiba',      wilaya:'Alger',    type:'Main Agency',  services:['Auto','Industrial'],          lat:36.736302, lng:3.280987},
-      {id:5,  name:'Cheraga',         city:'Cheraga',     wilaya:'Alger',    type:'Main Agency',  services:['Auto','Business'],            lat:36.759842, lng:2.964191},
-      {id:6,  name:'Bab Ezzouar',     city:'Bab Ezzouar', wilaya:'Alger',    type:'Main Agency',  services:['Auto','Habitation'],          lat:36.719245, lng:3.182567},
-      {id:7,  name:'El Harrach',      city:'El Harrach',  wilaya:'Alger',    type:'Main Agency',  services:['Auto','Claims'],              lat:36.718446, lng:3.139838},
-      {id:8,  name:'Ain Naadja',      city:'Ain Naadja',  wilaya:'Alger',    type:'Main Agency',  services:['Auto','Habitation'],          lat:36.693697, lng:3.064214},
-      {id:9,  name:'Alger Centre',    city:'Alger',       wilaya:'Alger',    type:'Main Agency',  services:['Auto','Business','Transport'],lat:36.766752, lng:3.053129},
-      {id:19, name:'Belouizded',      city:'Alger',       wilaya:'Alger',    type:'Main Agency',  services:['Auto','Business'],            lat:36.758606, lng:3.055839},
-      {id:20, name:'Quartier Seghir', city:'Bejaia',      wilaya:'Bejaia',   type:'Regional Office',services:['Auto','Habitation'],       lat:36.748530, lng:5.055731},
-      {id:25, name:'Lakhdaria',       city:'Lakhdaria',   wilaya:'Bouira',   type:'Sub Agency',   services:['Auto','Habitation'],          lat:36.564176, lng:3.596628},
-      {id:32, name:'Larbaa Nath Irathen',city:'Larbaa',   wilaya:'Tizi Ouzou',type:'Agency',      services:['Auto','Agricultural'],        lat:36.642939, lng:4.201181},
-      {id:39, name:'Siège Social CAAR',city:'Alger',      wilaya:'Alger',    type:'Headquarters', services:['Auto','Habitation','Business','Claims'], lat:36.767043, lng:3.052792}
-    ];
+    // NOTE: AGENCIES is declared in the outer scope and filled by the fetch.
+    //       No hardcoded array here anymore.
 
     var activeFilters = { wilaya:'', city:'', type:'', service:'', search:'' };
     var filterMarkers = {};
@@ -1105,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function makePopup(ag) {
-      return '<div class="popup-head"><div class="popup-head-code">'+ag.type+' • '+ag.wilaya+'</div><div class="popup-head-name">CAAR — '+ag.name+'</div></div><div class="popup-body"><div class="popup-addr">'+ag.city+'</div><div class="popup-actions"><button class="popup-btn pbtn-dir" onclick="window.open(\'https://www.google.com/maps/dir/?api=1&destination='+ag.lat+','+ag.lng+'\',\'_blank\')">🧭 Directions</button></div></div>';
+      return '<div class="popup-head"><div class="popup-head-code">'+ag.type+' • '+ag.wilaya+'</div><div class="popup-head-name">CAAR — '+ag.name+'</div></div><div class="popup-body"><div class="popup-addr">'+ag.city+'</div>'+(ag.phone?'<div class="popup-ph">📞 '+ag.phone+'</div>':'')+'<div class="popup-actions"><button class="popup-btn pbtn-dir" onclick="window.open(\'https://www.google.com/maps/dir/?api=1&destination='+ag.lat+','+ag.lng+'\',\'_blank\')">🧭 Directions</button></div></div>';
     }
 
     /* Hero map */
@@ -1139,6 +1129,28 @@ document.addEventListener('DOMContentLoaded', function () {
       renderCards(AGENCIES);
     }
 
+    /* ── Populate wilaya / city dropdowns dynamically from real data ── */
+    var wilayas = [], cities = [];
+    AGENCIES.forEach(function(ag){
+      if(ag.wilaya && wilayas.indexOf(ag.wilaya)===-1) wilayas.push(ag.wilaya);
+      if(ag.city   && cities.indexOf(ag.city)===-1)   cities.push(ag.city);
+    });
+    wilayas.sort(); cities.sort();
+    var fdmWilaya = document.getElementById('fdm-wilaya');
+    if(fdmWilaya){
+      fdmWilaya.innerHTML = '<div class="fd-item fd-item-all active" onclick="setFilter(\'wilaya\',\'\',this)">All Wilayas</div>';
+      wilayas.forEach(function(w){
+        fdmWilaya.innerHTML += '<div class="fd-item" onclick="setFilter(\'wilaya\',\''+w+'\',this)">'+w+'</div>';
+      });
+    }
+    var fdmCity = document.getElementById('fdm-city');
+    if(fdmCity){
+      fdmCity.innerHTML = '<div class="fd-item fd-item-all active" onclick="setFilter(\'city\',\'\',this)">All Cities</div>';
+      cities.forEach(function(c){
+        fdmCity.innerHTML += '<div class="fd-item" onclick="setFilter(\'city\',\''+c+'\',this)">'+c+'</div>';
+      });
+    }
+
     function renderCards(list) {
       var container=document.getElementById('filterCardList');
       var noRes=document.getElementById('filterNoResults');
@@ -1151,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return '<div class="filter-card" data-id="'+ag.id+'">'
                +'<div class="fc-header"><div class="fc-name">CAAR — '+ag.name+'</div><div class="fc-code">'+(ag.type==='Headquarters'?'⭐':'📍')+'</div></div>'
                +'<div class="fc-wilaya">'+ag.city+', '+ag.wilaya+'</div>'
+               +(ag.phone?'<div class="fc-phone"><span class="fc-phone-icon">📞</span>'+ag.phone+'</div>':'')
                +'<div class="fc-btns"><button class="fc-btn fc-btn-map">View on map</button><button class="fc-btn fc-btn-dir">Directions</button></div>'
                +'</div>';
       }).join('');
@@ -1161,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if(bm) bm.addEventListener('click', function(e){ e.stopPropagation(); flyTo(id); });
         if(bd) bd.addEventListener('click', function(e){ e.stopPropagation(); var ag=AGENCIES.find(function(a){return a.id===id;}); if(ag) window.open('https://www.google.com/maps/dir/?api=1&destination='+ag.lat+','+ag.lng,'_blank'); });
       });
-      /* Sync markers */
+      /* Sync markers visibility */
       var vis={}; list.forEach(function(a){vis[a.id]=true;});
       Object.keys(filterMarkers).forEach(function(id){ var m=filterMarkers[id]; if(vis[id]){if(!filterMap.hasLayer(m))m.addTo(filterMap);}else{if(filterMap.hasLayer(m))filterMap.removeLayer(m);} });
     }
@@ -1243,7 +1256,41 @@ document.addEventListener('DOMContentLoaded', function () {
     if(window.location.search.includes('focus=hq')){
       var hq=AGENCIES.find(function(a){return a.type==='Headquarters';}); if(hq){ var banner=document.getElementById('focusBanner'); if(banner) banner.classList.add('show'); setTimeout(function(){if(filterMap) filterMap.flyTo([hq.lat,hq.lng],15,{animate:true,duration:1.5}); flyTo(hq.id);},600); }
     }
-  }
+  } // end initNetworkMaps
 
-  initNetworkMaps();
+  /* ────────────────────────────────────────────────────────────────────────
+     LOAD AGENCIES FROM API, THEN BOOT THE MAPS
+     ──────────────────────────────────────────────────────────────────────── */
+  fetch('http://localhost:3000/api/agencies')
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      /* Map DB columns to the shape the rest of the code expects:
+         DB:  latitude / longitude / services (comma string) / address / phone
+         Map: lat      / lng       / services (array)        / address / phone  */
+      AGENCIES = data.map(function (a) {
+        return {
+          id:       a.id,
+          name:     a.name     || '',
+          address:  a.address  || '',
+          phone:    a.phone    || '',
+          city:     a.city     || '',
+          wilaya:   a.wilaya   || '',
+          type:     a.type     || 'Agency',
+          services: a.services
+                      ? a.services.split(',').map(function (s) { return s.trim(); })
+                      : [],
+          lat: parseFloat(a.latitude)  || 0,
+          lng: parseFloat(a.longitude) || 0,
+        };
+      });
+      initNetworkMaps();
+    })
+    .catch(function (err) {
+      console.error('[CAAR] Could not load agencies from API:', err.message);
+      // Boot with empty data so the page doesn't crash
+      initNetworkMaps();
+    });
 });
