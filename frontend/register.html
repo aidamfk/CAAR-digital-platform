@@ -370,27 +370,31 @@ document.getElementById('regForm').addEventListener('submit', async function (e)
   btn.textContent = 'Création en cours...';
   btn.classList.add('loading');
 
-  await new Promise(r => setTimeout(r, 1000));
+const res  = await fetch('http://localhost:3000/api/auth/register', {
+  method:  'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    first_name: name.split(' ')[0],
+    last_name:  name.split(' ').slice(1).join(' ') || name.split(' ')[0],
+    email:      email,
+    password:   password,
+    phone:      phone || null
+  })
+});
+const data = await res.json();
 
-  /* ── Créer utilisateur (role toujours "client" pour l'inscription) ── */
-  const user = {
-    name: name,
-    role: 'client'
-  };
-
-  /* ── Stocker dans localStorage — compatible avec renderUserState() ── */
-  localStorage.setItem('user', JSON.stringify(user));
-
-  /* ── Afficher succès ── */
-  btn.disabled = false;
-  btn.textContent = '✓ Compte créé !';
-  btn.classList.remove('loading');
+if (!res.ok) {
+  btn.disabled = false; btn.textContent = 'Créer mon compte';
+  document.getElementById('successMsg').textContent = data.error || 'Registration failed.';
+  document.getElementById('successMsg').style.color = '#e53e3e';
   document.getElementById('successMsg').classList.add('visible');
+  return;
+}
 
-  /* ── Redirection vers login après 1.5s ── */
-  setTimeout(() => {
-    window.location.href = 'login.html';
-  }, 1500);
+btn.disabled = false; btn.textContent = '✓ Compte créé !';
+document.getElementById('successMsg').classList.add('visible');
+setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+
 });
 
 </script>

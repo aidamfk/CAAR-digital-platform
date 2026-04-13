@@ -362,16 +362,6 @@ document.getElementById('loginPassword').addEventListener('input', () => {
 });
 
 /* ══════════════════════════════════════
-   RÔLE SELON EMAIL
-══════════════════════════════════════ */
-function getRoleFromEmail(email) {
-  const e = email.toLowerCase();
-  if (e.includes('admin'))  return 'admin';
-  if (e.includes('expert')) return 'expert';
-  return 'client';
-}
-
-/* ══════════════════════════════════════
    SUBMIT
 ══════════════════════════════════════ */
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
@@ -382,38 +372,50 @@ document.getElementById('loginForm').addEventListener('submit', async function (
   const password = document.getElementById('loginPassword').value;
   const btn      = document.getElementById('submitBtn');
 
-  /* Validation */
   let hasError = false;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    setFieldError('loginEmail', 'err-email', true);
-    hasError = true;
+    setFieldError('loginEmail', 'err-email', true); hasError = true;
   }
   if (!password) {
-    setFieldError('loginPassword', 'err-password', true);
-    hasError = true;
+    setFieldError('loginPassword', 'err-password', true); hasError = true;
   }
   if (hasError) return;
 
-  /* Loading */
-  btn.disabled = true;
-  btn.textContent = 'Logging in...';
-  btn.classList.add('loading');
+  btn.disabled = true; btn.textContent = 'Logging in…'; btn.classList.add('loading');
 
-  /* Simulation délai API */
-  await new Promise(r => setTimeout(r, 1000));
+  try {
+    const res  = await fetch('http://localhost:3000/api/auth/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password })
+    });
+    const data = await res.json();
 
-  /* Créer et stocker l'utilisateur */
-  const role = getRoleFromEmail(email);
-  const user = {
-    name: email.split('@')[0],
-    role: role
-  };
+    if (!res.ok) {
+      showGlobalError(data.error || 'Invalid email or password.');
+      return;
+    }
 
-  /* ✅ Compatible avec renderUserState() du header */
-  localStorage.setItem('user', JSON.stringify(user));
+    // Store auth data
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role',  data.user.role);
+    localStorage.setItem('user',  JSON.stringify(data.user));
+    // Keep legacy key so dashboard.js guard still works during transition
+    localStorage.setItem('caar_auth_token', data.token);
 
-  /* Redirection */
-  window.location.href = 'index.html';
+    // Redirect by role
+    const map = {
+      client: 'client-dashboard.html',
+      admin:  'admin-dashboard.html',
+      expert: 'expert-dashboard.html'
+    };
+    window.location.href = map[data.user.role] || 'client-dashboard.html';
+
+  } catch (err) {
+    showGlobalError('Server error. Please try again later.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Login'; btn.classList.remove('loading');
+  }
 });
 
 </script>

@@ -200,7 +200,7 @@
 <!-- ════════════════════════════════════════════
      SCRIPTS
 ════════════════════════════════════════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 
@@ -222,50 +222,13 @@ const DASHBOARD_ROUTES = {
 
 /* ── Rendu de l'état ── */
 function renderUserState() {
-  const loginBtn   = document.getElementById('loginBtn');
-  const userMenu   = document.getElementById('userMenu');
-  const userAvatar = document.getElementById('userAvatar');
-  const userName   = document.getElementById('userName');
-  const dropName   = document.getElementById('dropUserName');
-  const dropRole   = document.getElementById('dropUserRole');
-  const dashLink   = document.getElementById('dashboardLink');
-
-  if (currentUser) {
-    loginBtn.style.display = 'none';
-    userMenu.style.display = 'block';
-    const initials = currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase();
-    userAvatar.textContent = initials;
-    userName.textContent   = currentUser.name.split(' ')[0];
-    dropName.textContent   = currentUser.name;
-    dropRole.textContent   = currentUser.role;
-    dashLink.href          = DASHBOARD_ROUTES[currentUser.role] || '/dashboard';
-  } else {
-    loginBtn.style.display = 'inline-block';
-    userMenu.style.display = 'none';
-  }
+  if (typeof renderAuthHeader === 'function') renderAuthHeader();
 }
 
 /* ── Toggle dropdown ── */
 function initUserMenu() {
-  const trigger   = document.getElementById('userTrigger');
-  const menu      = document.getElementById('userMenu');
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (!trigger) return;
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu.classList.toggle('open');
-  });
-
-  document.addEventListener('click', () => menu.classList.remove('open'));
-
-  logoutBtn.addEventListener('click', () => {
-    currentUser = null;
-    menu.classList.remove('open');
-    renderUserState();
-  });
+  if (typeof initUserMenuToggle === 'function') initUserMenuToggle();
 }
-
 /* ══════════════════════════════════════
    MOBILE NAV
 ══════════════════════════════════════ */
