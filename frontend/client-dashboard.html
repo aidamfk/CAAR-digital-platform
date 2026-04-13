@@ -7,13 +7,219 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="main.css"/>
   <link rel="stylesheet" href="dashboard.css"/>
+  <style>
+    /* ── New Claim Modal ──────────────────────────────────── */
+    .nc-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 600;
+      backdrop-filter: blur(3px);
+      align-items: center;
+      justify-content: center;
+    }
+    .nc-modal-overlay.open { display: flex; }
 
+    .nc-modal {
+      background: #fff;
+      border-radius: 18px;
+      padding: 32px 32px 28px;
+      width: 100%;
+      max-width: 520px;
+      margin: 16px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.18);
+      animation: ncSlideIn .28s ease;
+    }
+    @keyframes ncSlideIn {
+      from { opacity:0; transform:translateY(-20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .nc-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .nc-modal-title {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    .nc-modal-close {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      font-size: .9rem;
+      color: var(--gray);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .nc-modal-close:hover { background: #f0f0f0; color: var(--dark); }
+
+    .nc-field { margin-bottom: 16px; }
+    .nc-field label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+    .nc-field label .req { color: var(--orange); }
+    .nc-select, .nc-input, .nc-textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .86rem;
+      font-family: var(--font-sans);
+      color: var(--dark);
+      background: #fff;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .nc-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23999' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+    }
+    .nc-select:focus, .nc-input:focus, .nc-textarea:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(232,118,30,.1);
+    }
+    .nc-textarea { min-height: 90px; resize: vertical; }
+    .nc-hint {
+      font-size: .72rem;
+      color: var(--gray);
+      margin-top: 4px;
+    }
+    .nc-error {
+      display: none;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #be123c;
+      margin-bottom: 14px;
+    }
+    .nc-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .nc-btn-submit {
+      flex: 1;
+      padding: 12px;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: .88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .nc-btn-submit:hover:not(:disabled) { background: var(--orange-dark); }
+    .nc-btn-submit:disabled { opacity: .7; cursor: wait; }
+    .nc-btn-cancel {
+      padding: 12px 20px;
+      background: #fff;
+      color: var(--dark);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .nc-btn-cancel:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Contracts grid inside section ────────────────────── */
+    #contracts-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+  </style>
 </head>
 <body>
-<!-- Claim Detail Panel Overlay -->
+
+<!-- ═══ NEW CLAIM MODAL ═══════════════════════════════════════════════════ -->
+<div class="nc-modal-overlay" id="newClaimModal" onclick="handleModalBgClick(event)">
+  <div class="nc-modal" role="dialog" aria-labelledby="ncModalTitle" aria-modal="true">
+
+    <div class="nc-modal-header">
+      <div class="nc-modal-title" id="ncModalTitle">
+        <svg style="width:18px;height:18px;stroke:var(--orange);fill:none;stroke-width:2;
+             vertical-align:middle;margin-right:7px;" viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        File a New Claim
+      </div>
+      <button class="nc-modal-close" onclick="closeNewClaimModal()" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Error banner -->
+    <div class="nc-error" id="claimFormError"></div>
+
+    <!-- Step 1: Contract selection (CONTRACT-FIRST) -->
+    <div class="nc-field">
+      <label for="ncContractSelect">
+        Select Contract <span class="req">*</span>
+      </label>
+      <select class="nc-select" id="ncContractSelect">
+        <option value="">— Loading your contracts… —</option>
+      </select>
+      <div class="nc-hint">
+        Only active contracts are shown. The backend will verify ownership.
+      </div>
+    </div>
+
+    <!-- Step 2: Incident details -->
+    <div class="nc-field">
+      <label for="ncDescription">
+        Description <span class="req">*</span>
+      </label>
+      <textarea class="nc-textarea" id="ncDescription"
+        placeholder="Describe the incident in detail (minimum 10 characters)…"
+        maxlength="2000"></textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="nc-field">
+        <label for="ncClaimDate">Incident Date <span class="req">*</span></label>
+        <input type="date" class="nc-input" id="ncClaimDate"/>
+      </div>
+      <div class="nc-field">
+        <label for="ncLocation">Location (optional)</label>
+        <input type="text" class="nc-input" id="ncLocation"
+          placeholder="Street / area / landmark"/>
+      </div>
+    </div>
+
+    <div class="nc-actions">
+      <button class="nc-btn-cancel" onclick="closeNewClaimModal()">Cancel</button>
+      <button class="nc-btn-submit" id="ncSubmitBtn" onclick="submitNewClaim()">
+        Submit Claim
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ CLAIM DETAIL PANEL ════════════════════════════════════════════════ -->
 <div class="claim-panel-overlay" id="claimPanelOverlay" onclick="closeClaimPanel()"></div>
- 
-<!-- Claim Detail Panel -->
 <div class="claim-detail-panel" id="claimDetailPanel">
   <div class="cdp-header">
     <div class="cdp-header-left">
@@ -22,22 +228,21 @@
     </div>
     <button class="btn-close-panel" onclick="closeClaimPanel()" aria-label="Close">✕</button>
   </div>
- 
-  <div class="cdp-body" id="cdpBody">
-    <!-- Populated by JS -->
-  </div>
- 
+  <div class="cdp-body" id="cdpBody"></div>
   <div class="cdp-footer">
     <button class="btn-cdp-secondary" onclick="closeClaimPanel()">Close</button>
-    <button class="btn-cdp-primary" onclick="alert('Document upload coming soon.')">📎 Attach Document</button>
+    <button class="btn-cdp-primary"
+      onclick="alert('Document upload will be available in a future update.')">
+      📎 Attach Document
+    </button>
   </div>
 </div>
- 
+
 <div class="dash-sidebar-overlay" id="dashSidebarOverlay" onclick="closeSidebar()"></div>
 
 <div class="dashboard-root">
 
-  <!-- ═══════ SIDEBAR ═══════ -->
+  <!-- ═══ SIDEBAR ══════════════════════════════════════════════════════════ -->
   <aside class="dash-sidebar" id="dashSidebar">
 
     <div class="dash-sidebar__logo">
@@ -50,51 +255,50 @@
     </div>
 
     <div class="dash-sidebar__user">
-      <div class="dash-sidebar__avatar">AB</div>
+      <div class="dash-sidebar__avatar">?</div>
       <div class="dash-sidebar__user-info">
-        <span class="dash-sidebar__user-name">Ahmed Benali</span>
-        <span class="dash-sidebar__user-role">Client</span>
+        <span class="dash-sidebar__user-name">Loading…</span>
+        <span class="dash-sidebar__user-role">client</span>
       </div>
     </div>
 
     <div class="dash-sidebar__nav-label">Navigation</div>
 
     <nav class="dash-sidebar__nav">
-
       <a href="#" class="dash-nav-item active" data-section="dashboard"
         onclick="switchSection('dashboard', this); return false;">
         <span class="dash-nav-item__icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/></svg>
         </span>
         Dashboard
       </a>
-
       <a href="#" class="dash-nav-item" data-section="claims"
         onclick="switchSection('claims', this); return false;">
         <span class="dash-nav-item__icon">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/></svg>
         </span>
         My Claims
-        <span class="dash-nav-item__badge">2</span>
+        <span class="dash-nav-item__badge"></span>
       </a>
-
       <a href="#" class="dash-nav-item" data-section="roadside"
         onclick="switchSection('roadside', this); return false;">
         <span class="dash-nav-item__icon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+          <polygon points="10 8 16 12 10 16 10 8"/></svg>
         </span>
         Request Roadside
       </a>
-
       <a href="#" class="dash-nav-item" data-section="messages"
         onclick="switchSection('messages', this); return false;">
         <span class="dash-nav-item__icon">
-          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <svg viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </span>
         Messages
-        <span class="dash-nav-item__badge">1</span>
       </a>
-
       <a href="#" class="dash-nav-item" data-section="contracts"
         onclick="switchSection('contracts', this); return false;">
         <span class="dash-nav-item__icon">
@@ -102,240 +306,179 @@
         </span>
         My Contracts
       </a>
-
       <a href="#" class="dash-nav-item" data-section="profile"
         onclick="switchSection('profile', this); return false;">
         <span class="dash-nav-item__icon">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/></svg>
         </span>
         Profile
       </a>
-
     </nav>
 
     <div class="dash-sidebar__bottom">
       <a href="contact.html" class="dash-sidebar__help">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Need help? Contact us
       </a>
     </div>
 
   </aside>
 
-  <!-- ═══════ MAIN ═══════ -->
+  <!-- ═══ MAIN ═════════════════════════════════════════════════════════════ -->
   <div class="dash-main">
 
     <!-- TOP BAR -->
     <header class="dash-topbar">
       <div class="dash-topbar__left">
-        <button class="dash-topbar__hamburger" id="dashHamburger" onclick="openSidebar()" aria-label="Open menu">
-          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <button class="dash-topbar__hamburger" id="dashHamburger"
+          onclick="openSidebar()" aria-label="Open menu">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div class="dash-topbar__page-icon" id="topbarIcon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/></svg>
         </div>
         <div class="dash-topbar__title-group">
           <div class="dash-topbar__title" id="topbarTitle">Dashboard</div>
-          <div class="dash-topbar__breadcrumb">CAAR &rsaquo; Client Space &rsaquo; <span id="topbarBreadcrumb">Dashboard</span></div>
+          <div class="dash-topbar__breadcrumb">
+            CAAR &rsaquo; Client Space &rsaquo;
+            <span id="topbarBreadcrumb">Dashboard</span>
+          </div>
         </div>
       </div>
       <div class="dash-topbar__right">
         <button class="dash-topbar__btn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="dash-topbar__btn-dot"></span>
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
-        <div class="dash-topbar__user" title="Ahmed Benali — Client">
-          <div class="dash-topbar__user-avatar">AB</div>
-          <span class="dash-topbar__user-name">Ahmed Benali</span>
-          <svg class="dash-topbar__user-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="dash-topbar__user">
+          <div class="dash-topbar__user-avatar">?</div>
+          <span class="dash-topbar__user-name">Loading…</span>
+          <svg class="dash-topbar__user-chevron" viewBox="0 0 24 24">
+          <polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="dash-topbar__divider"></div>
         <a href="index.html" class="dash-topbar__return">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
           <span>Return to site</span>
         </a>
-        <a href="login.html" class="dash-topbar__logout">
-          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <a href="login.html" class="dash-topbar__logout"
+          onclick="localStorage.clear(); return true;">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span>Logout</span>
         </a>
       </div>
     </header>
 
-    <!-- ── CONTENT ── -->
+    <!-- ═══ CONTENT ══════════════════════════════════════════════════════ -->
     <main class="dash-content">
 
-      <!-- ══════════════════════════════════════
-           SECTION: DASHBOARD
-      ══════════════════════════════════════════ -->
+      <!-- SECTION: DASHBOARD ──────────────────────────────────────────── -->
       <div class="dash-section active" id="dashboard-section">
 
         <div class="dash-content__header">
-          <h1 class="dash-content__header-title">Welcome back, Ahmed 👋</h1>
-          <p class="dash-content__header-sub">Here's an overview of your CAAR account and recent activity.</p>
+          <h1 class="dash-content__header-title">Welcome back 👋</h1>
+          <p class="dash-content__header-sub">
+            Here's an overview of your CAAR account and recent activity.
+          </p>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Cards (values populated by loadDashboardStats()) -->
         <div class="summary-cards">
-
           <div class="summary-card summary-card--orange">
             <div class="sc-icon sc-icon--orange">
-              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
             </div>
             <div class="sc-label">Total Claims</div>
-            <div class="sc-value">3</div>
-            <div class="sc-sub">
-              <span class="sc-sub-dot sc-sub-dot--gray"></span>
-              All time
-            </div>
+            <div class="sc-value">—</div>
+            <div class="sc-sub"><span class="sc-sub-dot sc-sub-dot--gray"></span>All time</div>
           </div>
-
           <div class="summary-card summary-card--amber">
             <div class="sc-icon sc-icon--amber">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="sc-label">Active Claims</div>
-            <div class="sc-value">2</div>
-            <div class="sc-sub">
-              <span class="sc-sub-dot sc-sub-dot--amber"></span>
-              Pending review
-            </div>
+            <div class="sc-value">—</div>
+            <div class="sc-sub"><span class="sc-sub-dot sc-sub-dot--amber"></span>Pending review</div>
           </div>
-
           <div class="summary-card summary-card--blue">
             <div class="sc-icon sc-icon--blue">
               <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
             <div class="sc-label">Contracts</div>
-            <div class="sc-value">2</div>
-            <div class="sc-sub">
-              <span class="sc-sub-dot sc-sub-dot--green"></span>
-              Both active
-            </div>
+            <div class="sc-value">—</div>
+            <div class="sc-sub"><span class="sc-sub-dot sc-sub-dot--green"></span>Loaded from API</div>
           </div>
-
           <div class="summary-card summary-card--green">
             <div class="sc-icon sc-icon--green">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/></svg>
             </div>
-            <div class="sc-label">Pending Requests</div>
-            <div class="sc-value">1</div>
-            <div class="sc-sub">
-              <span class="sc-sub-dot sc-sub-dot--amber"></span>
-              Awaiting action
-            </div>
+            <div class="sc-label">Payments</div>
+            <div class="sc-value">—</div>
+            <div class="sc-sub"><span class="sc-sub-dot sc-sub-dot--amber"></span>Total count</div>
           </div>
-
         </div>
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-          <a href="#" class="btn-qa-primary" onclick="switchSection('claims', document.querySelector('[data-section=claims]')); return false;">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <!-- ✅ FIX: now calls the contract-first flow -->
+          <a href="#" class="btn-qa-primary" onclick="openNewClaimModalGeneric(); return false;">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Claim
           </a>
-          <a href="#" class="btn-qa-secondary" onclick="switchSection('roadside', document.querySelector('[data-section=roadside]')); return false;">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <a href="#" class="btn-qa-secondary"
+            onclick="switchSection('roadside', document.querySelector('[data-section=roadside]')); return false;">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8"/></svg>
             Request Roadside
           </a>
           <a href="contact.html" class="btn-qa-secondary">
-            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Contact Advisor
           </a>
         </div>
 
-        <!-- Activity + Widgets -->
+        <!-- Content Grid -->
         <div class="dash-content-grid">
-
-          <!-- Recent Activity -->
           <div class="activity-card">
             <div class="activity-card-header">
               <div class="activity-card-title">Recent Activity</div>
-              <span class="activity-card-link">View all →</span>
+              <span class="activity-card-link"
+                onclick="switchSection('claims', null)" style="cursor:pointer;">
+                View all →
+              </span>
             </div>
             <div class="activity-list">
-
               <div class="activity-item">
                 <div class="activity-dot activity-dot--amber">
-                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
                 </div>
                 <div class="activity-body">
-                  <div class="activity-body-title">Claim #CLM-2026-031 submitted</div>
-                  <div class="activity-body-sub">Auto insurance · Under review</div>
+                  <div class="activity-body-title">Open "My Claims" to view your history</div>
+                  <div class="activity-body-sub">Data loads from the API when you open the section</div>
                 </div>
-                <div class="activity-time">2 days ago</div>
               </div>
-
-              <div class="activity-item">
-                <div class="activity-dot activity-dot--green">
-                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <div class="activity-body">
-                  <div class="activity-body-title">Payment confirmed — Roadside Assistance</div>
-                  <div class="activity-body-sub">Contract RSA-20260310-0024 · 7,900 DZD</div>
-                </div>
-                <div class="activity-time">1 week ago</div>
-              </div>
-
-              <div class="activity-item">
-                <div class="activity-dot activity-dot--blue">
-                  <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                </div>
-                <div class="activity-body">
-                  <div class="activity-body-title">Contract renewed — CATNAT</div>
-                  <div class="activity-body-sub">Policy CATNAT-2026-0071 · Valid until Mar 2027</div>
-                </div>
-                <div class="activity-time">2 weeks ago</div>
-              </div>
-
-              <div class="activity-item">
-                <div class="activity-dot activity-dot--orange">
-                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <div class="activity-body">
-                  <div class="activity-body-title">Message received from CAAR advisor</div>
-                  <div class="activity-body-sub">Re: Claim #CLM-2026-028 update</div>
-                </div>
-                <div class="activity-time">3 weeks ago</div>
-              </div>
-
-              <div class="activity-item">
-                <div class="activity-dot activity-dot--green">
-                  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <div class="activity-body">
-                  <div class="activity-body-title">Claim #CLM-2026-028 closed</div>
-                  <div class="activity-body-sub">Home insurance · Resolved</div>
-                </div>
-                <div class="activity-time">1 month ago</div>
-              </div>
-
             </div>
           </div>
 
-          <!-- Right widgets -->
           <div>
-            <!-- Active Contracts -->
-            <div class="dash-widget">
-              <div class="dash-widget-header">Active Contracts</div>
-              <div class="dash-widget-body">
-                <div class="contract-item">
-                  <div>
-                    <div class="contract-name">Roadside Assistance</div>
-                    <div class="contract-dates">Expires 09 Mar 2027</div>
-                  </div>
-                  <span class="contract-badge contract-badge--active">Active</span>
-                </div>
-                <div class="contract-item">
-                  <div>
-                    <div class="contract-name">CATNAT Insurance</div>
-                    <div class="contract-dates">Expires 15 Mar 2027</div>
-                  </div>
-                  <span class="contract-badge contract-badge--active">Active</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Support -->
             <div class="dash-widget">
               <div class="dash-widget-header">Quick Support</div>
               <div class="dash-widget-body">
@@ -344,532 +487,345 @@
                   <span>+213 (0)21 63 20 72</span>
                 </div>
                 <div class="support-line">
-                  <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/></svg>
                   <span>contact@caar.dz</span>
                 </div>
                 <div class="support-line">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg>
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg>
                   <span>Sun–Thu · 08:30–17:00</span>
                 </div>
               </div>
             </div>
           </div>
-
         </div>
       </div><!-- /dashboard-section -->
 
 
-<div class="dash-section" id="claims-section">
- 
-  <div class="dash-content__header">
-    <h1 class="dash-content__header-title">My Claims</h1>
-    <p class="dash-content__header-sub">Track your insurance claims, check statuses, and manage documents. Click any row to view full details.</p>
-  </div>
- 
-  <!-- Controls bar -->
-  <div class="claims-controls-bar">
-    <div class="claims-controls-left">
-      <span class="claims-filter-label">Filter by:</span>
-      <select class="claims-filter-select" id="claimsFilterSelect" onchange="filterClaims(this.value)">
-        <option value="all">All Statuses</option>
-        <option value="pending">Pending</option>
-        <option value="under_review">Under Review</option>
-        <option value="expert_assigned">Expert Assigned</option>
-        <option value="approved">Approved / Closed</option>
-        <option value="rejected">Rejected</option>
-      </select>
-      <span class="claims-result-count" id="claimsResultCount">
-        Showing <strong id="claimsCountNum">—</strong> claims
-      </span>
-    </div>
-    <button class="btn-new-claim" onclick="alert('New claim form — submit via your nearest agency or online portal.')">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New Claim
-    </button>
-  </div>
- 
-  <!-- Table card -->
-  <div class="claims-table-card">
-    <div class="claims-table-scroll">
-      <table class="claims-tbl" id="claimsTable">
-        <thead>
-          <tr>
-            <th>Claim ID</th>
-            <th>Date Filed</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="claimsTableBody">
-          <!-- Populated by JS -->
-        </tbody>
-      </table>
-    </div>
- 
-    <!-- Empty state (hidden when rows exist) -->
-    <div class="claims-empty" id="claimsEmpty" style="display:none;">
-      <div class="claims-empty-icon">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>
-      <div class="claims-empty-title">No claims found</div>
-      <div class="claims-empty-sub">No claims match the selected filter.</div>
-    </div>
-  </div>
- 
-</div><!-- /claims-section -->
-
-
-      <!-- ══════════════════════════════════════
-           SECTION: ROADSIDE
-      ══════════════════════════════════════════ -->
- 
-<div class="dash-section" id="roadside-section">
- 
-  <div class="dash-content__header">
-    <h1 class="dash-content__header-title">Request Roadside Assistance</h1>
-    <p class="dash-content__header-sub">Fill in the form below and our team will dispatch assistance as fast as possible.</p>
-  </div>
- 
-  <!-- Emergency alert -->
-  <div class="roadside-alert">
-    <div class="roadside-alert-icon">🆘</div>
-    <div class="roadside-alert-text">
-      <div class="roadside-alert-title">Emergency? Call us first!</div>
-      <div class="roadside-alert-sub">
-        For immediate roadside danger, call our 24/7 hotline directly.
-        <span class="roadside-alert-phone">📞 +213 (0)21 63 20 72</span>
-      </div>
-    </div>
-  </div>
- 
-  <div class="roadside-request-wrap">
- 
-    <!-- Left: form -->
-    <div>
-      <div class="roadside-form-card">
-        <div class="roadside-form-header">
-          <div class="roadside-form-header-icon">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-          </div>
-          <div>
-            <div class="roadside-form-header-title">Assistance Request Form</div>
-            <div class="roadside-form-header-sub">Response time: under 45 minutes</div>
-          </div>
+      <!-- SECTION: MY CLAIMS ──────────────────────────────────────────── -->
+      <div class="dash-section" id="claims-section">
+        <div class="dash-content__header">
+          <h1 class="dash-content__header-title">My Claims</h1>
+          <p class="dash-content__header-sub">
+            Track your insurance claims and check their current status.
+            Click any row to view full details.
+          </p>
         </div>
- 
-        <!-- Form body -->
-        <div class="roadside-form-body" id="roadsideFormBody">
- 
-          <!-- Problem type -->
-          <div class="rf-group-title">Type of Problem</div>
-          <div class="rf-problem-chips" id="rfProblemChips">
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Breakdown')" data-value="Breakdown">
-              <span class="chip-icon">⚙️</span> Breakdown
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Flat Tyre')" data-value="Flat Tyre">
-              <span class="chip-icon">🔧</span> Flat Tyre
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Battery Dead')" data-value="Battery Dead">
-              <span class="chip-icon">🔋</span> Battery Dead
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Accident')" data-value="Accident">
-              <span class="chip-icon">🚨</span> Accident
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Locked Out')" data-value="Locked Out">
-              <span class="chip-icon">🔑</span> Locked Out
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Out of Fuel')" data-value="Out of Fuel">
-              <span class="chip-icon">⛽</span> Out of Fuel
-            </div>
-            <div class="rf-problem-chip" onclick="selectProblemChip(this, 'Other')" data-value="Other">
-              <span class="chip-icon">❓</span> Other
-            </div>
+
+        <div class="claims-controls-bar">
+          <div class="claims-controls-left">
+            <span class="claims-filter-label">Filter by:</span>
+            <select class="claims-filter-select" id="claimsFilterSelect"
+              onchange="filterClaims(this.value)">
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="under_review">Under Review</option>
+              <option value="expert_assigned">Expert Assigned</option>
+              <option value="reported">Reported</option>
+              <option value="closed">Closed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <span class="claims-result-count">
+              Showing <strong id="claimsCountNum">—</strong> claims
+            </span>
           </div>
-          <input type="hidden" id="rfProblemType" value=""/>
- 
-          <!-- Vehicle info -->
-          <div class="rf-group-title">Vehicle Information</div>
-          <div class="rf-grid">
-            <div class="rf-field">
-              <label for="rfLicensePlate">License Plate <span class="req">*</span></label>
-              <input type="text" class="rf-input" id="rfLicensePlate" placeholder="e.g. 12345-16-001"/>
-            </div>
-            <div class="rf-field">
-              <label for="rfBrand">Brand / Model</label>
-              <input type="text" class="rf-input" id="rfBrand" placeholder="e.g. Renault Clio"/>
-            </div>
-          </div>
- 
-          <!-- Contract ref -->
-          <div class="rf-grid">
-            <div class="rf-field rf-full">
-              <label for="rfContractRef">Policy / Contract Reference</label>
-              <input type="text" class="rf-input" id="rfContractRef" placeholder="e.g. RSA-20260310-0024" value="RSA-20260310-0024"/>
-            </div>
-          </div>
- 
-          <!-- Location -->
-          <div class="rf-group-title">Your Location</div>
-          <div class="rf-grid">
-            <div class="rf-field">
-              <label for="rfWilaya">Wilaya <span class="req">*</span></label>
-              <select class="rf-select" id="rfWilaya">
-                <option value="">Select wilaya…</option>
-                <option value="16">16 — Alger</option>
-                <option value="09">09 — Blida</option>
-                <option value="02">02 — Chlef</option>
-                <option value="05">05 — Batna</option>
-                <option value="25">25 — Constantine</option>
-                <option value="31">31 — Oran</option>
-                <option value="06">06 — Béjaïa</option>
-                <option value="23">23 — Annaba</option>
-                <option value="19">19 — Sétif</option>
-                <option value="15">15 — Tizi Ouzou</option>
-                <option value="30">30 — Ouargla</option>
-                <option value="07">07 — Biskra</option>
-              </select>
-            </div>
-            <div class="rf-field">
-              <label for="rfCity">Nearest City / Area</label>
-              <input type="text" class="rf-input" id="rfCity" placeholder="e.g. Bab El Oued"/>
-            </div>
-          </div>
- 
-          <div class="rf-grid">
-            <div class="rf-field rf-full">
-              <label for="rfAddress">Street / Landmark <span class="req">*</span></label>
-              <input type="text" class="rf-input" id="rfAddress" placeholder="Nearest landmark or road name…"/>
-            </div>
-          </div>
- 
-          <!-- Problem description -->
-          <div class="rf-group-title">Problem Description</div>
-          <div class="rf-field">
-            <label for="rfDescription">Describe the issue <span class="req">*</span></label>
-            <textarea class="rf-textarea" id="rfDescription" placeholder="Briefly describe what happened and the current state of your vehicle…"></textarea>
-          </div>
- 
-          <!-- Phone -->
-          <div class="rf-group-title">Contact</div>
-          <div class="rf-grid">
-            <div class="rf-field">
-              <label for="rfPhone">Your Phone <span class="req">*</span></label>
-              <input type="tel" class="rf-input" id="rfPhone" placeholder="05XX XX XX XX"/>
-            </div>
-            <div class="rf-field">
-              <label for="rfPassengers">Number of Passengers</label>
-              <select class="rf-select" id="rfPassengers">
-                <option value="0">Driver only</option>
-                <option value="1">1 passenger</option>
-                <option value="2">2 passengers</option>
-                <option value="3">3 passengers</option>
-                <option value="4+">4 or more</option>
-              </select>
-            </div>
-          </div>
- 
-          <!-- Submit -->
-          <button class="btn-roadside-submit" id="btnRoadsideSubmit" onclick="submitRoadsideRequest()">
-            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12.7"/><path d="M1 12s4-8 11-8 11 8 11 8"/></svg>
-            Send Assistance Request
+          <!-- ✅ FIX: contract-first flow -->
+          <button class="btn-new-claim" onclick="openNewClaimModalGeneric()">
+            <svg viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            New Claim
           </button>
- 
-        </div><!-- /roadsideFormBody -->
- 
-        <!-- Success state -->
-        <div class="roadside-success" id="roadsideSuccess">
-          <div class="roadside-success-icon">✓</div>
-          <div class="roadside-success-title">Request Sent!</div>
-          <div class="roadside-success-sub">
-            Our team has received your request and will contact you within <strong>15 minutes</strong>.
-            A technician will be dispatched to your location.
-          </div>
-          <div class="roadside-success-ref" id="rsRequestRef">REF — —</div>
-          <div class="roadside-success-actions">
-            <button class="btn-rs-success-primary" onclick="alert('Certificate will be sent by SMS and email.')">
-              📲 Track My Request
-            </button>
-            <button class="btn-rs-success-secondary" onclick="resetRoadsideForm()">
-              Submit Another
-            </button>
-          </div>
         </div>
- 
-      </div><!-- /roadside-form-card -->
-    </div><!-- /left -->
- 
-    <!-- Right sidebar -->
-    <div class="roadside-sidebar">
- 
-      <!-- Your active plan -->
-      <div class="roadside-info-card">
-        <div class="roadside-info-card-header">
-          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Your Active Plan
-        </div>
-        <div class="roadside-info-card-body">
-          <div class="rdinfo-row">
-            <span class="rdinfo-icon">🎫</span>
-            <div class="rdinfo-content">
-              <div class="rdinfo-label">Policy</div>
-              <div class="rdinfo-value">RSA-20260310-0024</div>
-            </div>
+
+        <div class="claims-table-card">
+          <div class="claims-table-scroll">
+            <table class="claims-tbl" id="claimsTable">
+              <thead>
+                <tr>
+                  <th>Claim ID</th>
+                  <th>Date Filed</th>
+                  <th>Contract</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="claimsTableBody"></tbody>
+            </table>
           </div>
-          <div class="rdinfo-row">
-            <span class="rdinfo-icon">⭐</span>
-            <div class="rdinfo-content">
-              <div class="rdinfo-label">Plan</div>
-              <div class="rdinfo-value">Plus — 150 km towing</div>
+          <div class="claims-empty" id="claimsEmpty" style="display:none;">
+            <div class="claims-empty-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
             </div>
-          </div>
-          <div class="rdinfo-row">
-            <span class="rdinfo-icon">📅</span>
-            <div class="rdinfo-content">
-              <div class="rdinfo-label">Valid until</div>
-              <div class="rdinfo-value">09 Mar 2027</div>
-            </div>
-          </div>
-          <div class="rdinfo-row">
-            <span class="rdinfo-icon">🔄</span>
-            <div class="rdinfo-content">
-              <div class="rdinfo-label">Interventions remaining</div>
-              <div class="rdinfo-value">2 of 3 this year</div>
+            <div class="claims-empty-title">No claims yet</div>
+            <div class="claims-empty-sub">
+              File your first claim using the "New Claim" button above.
             </div>
           </div>
         </div>
-      </div>
- 
-      <!-- Tips -->
-      <div class="roadside-tips-card">
-        <div class="roadside-tips-title">⚠️ Safety reminders</div>
-        <ul class="roadside-tips-list">
-          <li>Turn on hazard lights immediately</li>
-          <li>Move the vehicle off the road if safe</li>
-          <li>Place warning triangle 50m behind</li>
-          <li>Stay behind barriers, not on the road</li>
-          <li>Keep passengers away from traffic</li>
-        </ul>
-      </div>
- 
-    </div><!-- /sidebar -->
- 
-  </div><!-- /roadside-request-wrap -->
- 
-</div><!-- /roadside-section -->
+      </div><!-- /claims-section -->
 
 
-      <!-- ══════════════════════════════════════
-           SECTION: MESSAGES
-      ══════════════════════════════════════════ -->
+      <!-- SECTION: ROADSIDE ───────────────────────────────────────────── -->
+      <div class="dash-section" id="roadside-section">
+        <div class="dash-content__header">
+          <h1 class="dash-content__header-title">Request Roadside Assistance</h1>
+          <p class="dash-content__header-sub">
+            Fill in the form and our team will dispatch assistance as quickly as possible.
+          </p>
+        </div>
+        <div class="roadside-alert">
+          <div class="roadside-alert-icon">🆘</div>
+          <div class="roadside-alert-text">
+            <div class="roadside-alert-title">Emergency? Call us first!</div>
+            <div class="roadside-alert-sub">
+              For immediate roadside danger, call our 24/7 hotline directly.
+              <span class="roadside-alert-phone">📞 +213 (0)21 63 20 72</span>
+            </div>
+          </div>
+        </div>
+        <div class="roadside-request-wrap">
+          <div>
+            <div class="roadside-form-card">
+              <div class="roadside-form-header">
+                <div class="roadside-form-header-icon">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                  <polygon points="10 8 16 12 10 16 10 8"/></svg>
+                </div>
+                <div>
+                  <div class="roadside-form-header-title">Assistance Request Form</div>
+                  <div class="roadside-form-header-sub">Response time: under 45 minutes</div>
+                </div>
+              </div>
+              <div class="roadside-form-body" id="roadsideFormBody">
+                <div class="rf-group-title">Type of Problem</div>
+                <div class="rf-problem-chips" id="rfProblemChips">
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Breakdown')"><span class="chip-icon">⚙️</span> Breakdown</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Flat Tyre')"><span class="chip-icon">🔧</span> Flat Tyre</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Battery Dead')"><span class="chip-icon">🔋</span> Battery Dead</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Accident')"><span class="chip-icon">🚨</span> Accident</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Locked Out')"><span class="chip-icon">🔑</span> Locked Out</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Out of Fuel')"><span class="chip-icon">⛽</span> Out of Fuel</div>
+                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Other')"><span class="chip-icon">❓</span> Other</div>
+                </div>
+                <input type="hidden" id="rfProblemType" value=""/>
+                <div class="rf-group-title">Vehicle Information</div>
+                <div class="rf-grid">
+                  <div class="rf-field">
+                    <label for="rfLicensePlate">License Plate <span class="req">*</span></label>
+                    <input type="text" class="rf-input" id="rfLicensePlate" placeholder="e.g. 12345-16-001"/>
+                  </div>
+                  <div class="rf-field">
+                    <label for="rfBrand">Brand / Model</label>
+                    <input type="text" class="rf-input" id="rfBrand" placeholder="e.g. Renault Clio"/>
+                  </div>
+                </div>
+                <div class="rf-group-title">Your Location</div>
+                <div class="rf-grid">
+                  <div class="rf-field">
+                    <label for="rfWilaya">Wilaya <span class="req">*</span></label>
+                    <select class="rf-select" id="rfWilaya">
+                      <option value="">Select wilaya…</option>
+                      <option value="16">16 — Alger</option>
+                      <option value="09">09 — Blida</option>
+                      <option value="25">25 — Constantine</option>
+                      <option value="31">31 — Oran</option>
+                    </select>
+                  </div>
+                  <div class="rf-field">
+                    <label for="rfCity">Nearest City / Area</label>
+                    <input type="text" class="rf-input" id="rfCity" placeholder="e.g. Bab El Oued"/>
+                  </div>
+                </div>
+                <div class="rf-grid">
+                  <div class="rf-field rf-full">
+                    <label for="rfAddress">Street / Landmark <span class="req">*</span></label>
+                    <input type="text" class="rf-input" id="rfAddress" placeholder="Nearest landmark or road name…"/>
+                  </div>
+                </div>
+                <div class="rf-group-title">Problem Description</div>
+                <div class="rf-field">
+                  <label for="rfDescription">Describe the issue <span class="req">*</span></label>
+                  <textarea class="rf-textarea" id="rfDescription"
+                    placeholder="Briefly describe what happened…"></textarea>
+                </div>
+                <div class="rf-group-title">Contact</div>
+                <div class="rf-grid">
+                  <div class="rf-field">
+                    <label for="rfPhone">Your Phone <span class="req">*</span></label>
+                    <input type="tel" class="rf-input" id="rfPhone" placeholder="05XX XX XX XX"/>
+                  </div>
+                </div>
+                <button class="btn-roadside-submit" id="btnRoadsideSubmit"
+                  onclick="submitRoadsideRequest()">
+                  <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>
+                  Send Assistance Request
+                </button>
+              </div>
+              <div class="roadside-success" id="roadsideSuccess">
+                <div class="roadside-success-icon">✓</div>
+                <div class="roadside-success-title">Request Sent!</div>
+                <div class="roadside-success-sub">Our team will contact you within <strong>15 minutes</strong>.</div>
+                <div class="roadside-success-ref" id="rsRequestRef">REF — —</div>
+                <div class="roadside-success-actions">
+                  <button class="btn-rs-success-secondary" onclick="resetRoadsideForm()">Submit Another</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /roadside-section -->
+
+
+      <!-- SECTION: MESSAGES ───────────────────────────────────────────── -->
       <div class="dash-section" id="messages-section">
-
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">Messages</h1>
-          <p class="dash-content__header-sub">Your correspondence with CAAR advisors and support team.</p>
+          <p class="dash-content__header-sub">Your correspondence with CAAR advisors.</p>
         </div>
-
         <div class="section-placeholder">
           <div class="sp-icon">
-            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <div class="sp-title">1 unread message</div>
-          <div class="sp-text">You have a message from your CAAR advisor regarding claim CLM-2026-031. Full messaging inbox is coming soon.</div>
+          <div class="sp-title">Messaging inbox</div>
+          <div class="sp-text">Full messaging functionality is coming soon.</div>
           <span class="sp-badge">Coming Soon</span>
         </div>
-
       </div><!-- /messages-section -->
 
 
-      <!-- ══════════════════════════════════════
-           SECTION: MY CONTRACTS
-      ══════════════════════════════════════════ -->
-   <div class="dash-section" id="contracts-section">
-
-  <div class="dash-content__header">
-    <h1 class="dash-content__header-title">My Contracts</h1>
-    <p class="dash-content__header-sub">All your active and past insurance policies.</p>
-  </div>
-
-  <div class="contracts-cards-grid">
-
-    <div class="contract-full-card">
-      <div class="cfc-header">
-        <div class="cfc-icon cfc-icon--blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      <!-- SECTION: MY CONTRACTS ───────────────────────────────────────── -->
+      <div class="dash-section" id="contracts-section">
+        <div class="dash-content__header">
+          <h1 class="dash-content__header-title">My Contracts</h1>
+          <p class="dash-content__header-sub">
+            All your active and past insurance policies.
+            Click "File a Claim" on an active contract to create a claim for it.
+          </p>
         </div>
-        <div class="cfc-meta">
-          <div class="cfc-type">Roadside Assistance</div>
-          <div class="cfc-ref">RSA-20260310-0024</div>
-        </div>
-        <span class="cfc-badge cfc-badge--active">Active</span>
-      </div>
-      <div class="cfc-body">
-        <div class="cfc-row"><span class="cfc-label">Plan</span><span class="cfc-value">Plus — 150 km towing</span></div>
-        <div class="cfc-row"><span class="cfc-label">Start date</span><span class="cfc-value">10 Mar 2026</span></div>
-        <div class="cfc-row"><span class="cfc-label">End date</span><span class="cfc-value">09 Mar 2027</span></div>
-        <div class="cfc-row"><span class="cfc-label">Premium</span><span class="cfc-value">7,900 DZD / year</span></div>
-      </div>
-      <div class="cfc-footer">
-        <button class="cfc-btn-doc" onclick="alert('Document not available yet.')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          View Document
-        </button>
-        <button class="cfc-btn-sec" onclick="alert('Contact your agency to renew.')">Renew</button>
-      </div>
-    </div>
-
-    <div class="contract-full-card">
-      <div class="cfc-header">
-        <div class="cfc-icon cfc-icon--orange">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <div class="cfc-meta">
-          <div class="cfc-type">Natural Disaster (CATNAT)</div>
-          <div class="cfc-ref">CATNAT-2026-0071</div>
-        </div>
-        <span class="cfc-badge cfc-badge--active">Active</span>
-      </div>
-      <div class="cfc-body">
-        <div class="cfc-row"><span class="cfc-label">Coverage</span><span class="cfc-value">Earthquakes + Floods</span></div>
-        <div class="cfc-row"><span class="cfc-label">Start date</span><span class="cfc-value">15 Mar 2026</span></div>
-        <div class="cfc-row"><span class="cfc-label">End date</span><span class="cfc-value">14 Mar 2027</span></div>
-        <div class="cfc-row"><span class="cfc-label">Premium</span><span class="cfc-value">12,400 DZD / year</span></div>
-      </div>
-      <div class="cfc-footer">
-        <button class="cfc-btn-doc" onclick="alert('Document not available yet.')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          View Document
-        </button>
-        <button class="cfc-btn-sec" onclick="alert('Contact your agency to renew.')">Renew</button>
-      </div>
-    </div>
-
-    <div class="contract-full-card contract-full-card--expired">
-      <div class="cfc-header">
-        <div class="cfc-icon cfc-icon--gray">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <div class="cfc-meta">
-          <div class="cfc-type">Natural Disaster (CATNAT)</div>
-          <div class="cfc-ref">CATNAT-2025-0041</div>
-        </div>
-        <span class="cfc-badge cfc-badge--expired">Expired</span>
-      </div>
-      <div class="cfc-body">
-        <div class="cfc-row"><span class="cfc-label">Coverage</span><span class="cfc-value">Earthquakes</span></div>
-        <div class="cfc-row"><span class="cfc-label">Start date</span><span class="cfc-value">15 Mar 2025</span></div>
-        <div class="cfc-row"><span class="cfc-label">End date</span><span class="cfc-value">14 Mar 2026</span></div>
-        <div class="cfc-row"><span class="cfc-label">Premium</span><span class="cfc-value">11,200 DZD / year</span></div>
-      </div>
-      <div class="cfc-footer">
-        <button class="cfc-btn-doc" onclick="alert('Document not available yet.')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          View Document
-        </button>
-      </div>
-    </div>
-
-  </div>
-</div><!-- /contracts-section -->
-
-<div class="dash-section" id="profile-section">
-
-  <div class="dash-content__header">
-    <h1 class="dash-content__header-title">My Profile</h1>
-    <p class="dash-content__header-sub">Manage your personal information and account settings.</p>
-  </div>
-
-  <div class="profile-new-layout">
-
-    <!-- LEFT: Avatar card -->
-    <div class="profile-avatar-card">
-      <div class="pac-circle">AB</div>
-      <div class="pac-name">Ahmed Benali</div>
-      <div class="pac-role">Client</div>
-      <div class="pac-number">CAAR-20260310-A4F2</div>
-      <div class="pac-meta">
-        <div class="pac-meta-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Member since March 2026
-        </div>
-        <div class="pac-meta-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Alger, Algeria
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Forms -->
-    <div class="profile-forms-col">
-
-      <!-- Personal info form -->
-      <div class="profile-form-block">
-        <div class="pfb-title">Personal Information</div>
-        <div class="pfb-grid">
-          <div class="pfb-field">
-            <label>First Name</label>
-            <input class="pfb-input" type="text" id="pf-first" value="Ahmed"/>
-          </div>
-          <div class="pfb-field">
-            <label>Last Name</label>
-            <input class="pfb-input" type="text" id="pf-last" value="Benali"/>
-          </div>
-          <div class="pfb-field pfb-field--full">
-            <label>Email Address</label>
-            <input class="pfb-input" type="email" id="pf-email" value="ahmed.benali@email.com"/>
-          </div>
-          <div class="pfb-field pfb-field--full">
-            <label>Phone Number</label>
-            <input class="pfb-input" type="tel" id="pf-phone" value="0552 XX XX XX"/>
+        <!-- ✅ FIX: populated dynamically by loadContracts() — no hardcoded data -->
+        <div id="contracts-cards-grid">
+          <div style="padding:40px;text-align:center;color:#999;font-size:.84rem;grid-column:1/-1;">
+            Open this section to load your contracts.
           </div>
         </div>
-        <div class="pfb-actions">
-          <button class="pfb-btn-primary" onclick="saveProfile()">Save Changes</button>
-          <button class="pfb-btn-secondary" onclick="cancelProfile()">Cancel</button>
-        </div>
-        <div class="pfb-success" id="pfb-success" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Profile updated successfully.
-        </div>
-      </div>
+      </div><!-- /contracts-section -->
 
-      <!-- Change password form -->
-      <div class="profile-form-block">
-        <div class="pfb-title">Change Password</div>
-        <div class="pfb-grid">
-          <div class="pfb-field pfb-field--full">
-            <label>Current Password</label>
-            <input class="pfb-input" type="password" id="pf-pw-current" placeholder="••••••••"/>
-          </div>
-          <div class="pfb-field">
-            <label>New Password</label>
-            <input class="pfb-input" type="password" id="pf-pw-new" placeholder="Min 8 characters"/>
-          </div>
-          <div class="pfb-field">
-            <label>Confirm New Password</label>
-            <input class="pfb-input" type="password" id="pf-pw-confirm" placeholder="Repeat new password"/>
-          </div>
-        </div>
-        <div class="pfb-hint">Password must be at least 8 characters and include one number.</div>
-        <div class="pfb-actions">
-          <button class="pfb-btn-primary" onclick="changePassword()">Update Password</button>
-        </div>
-        <div class="pfb-success" id="pfb-pw-success" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Password changed successfully.
-        </div>
-        <div class="pfb-error" id="pfb-pw-error" style="display:none;">Passwords do not match.</div>
-      </div>
 
-    </div><!-- /profile-forms-col -->
-  </div>
-
-</div><!-- /profile-section -->
+      <!-- SECTION: PROFILE ────────────────────────────────────────────── -->
+      <div class="dash-section" id="profile-section">
+        <div class="dash-content__header">
+          <h1 class="dash-content__header-title">My Profile</h1>
+          <p class="dash-content__header-sub">Manage your personal information and account settings.</p>
+        </div>
+        <div class="profile-new-layout">
+          <div class="profile-avatar-card">
+            <div class="pac-circle">?</div>
+            <div class="pac-name">—</div>
+            <div class="pac-role">client</div>
+          </div>
+          <div class="profile-forms-col">
+            <div class="profile-form-block">
+              <div class="pfb-title">Personal Information</div>
+              <div class="pfb-grid">
+                <div class="pfb-field">
+                  <label>First Name</label>
+                  <input class="pfb-input" type="text" id="pf-first" value=""/>
+                </div>
+                <div class="pfb-field">
+                  <label>Last Name</label>
+                  <input class="pfb-input" type="text" id="pf-last" value=""/>
+                </div>
+                <div class="pfb-field pfb-field--full">
+                  <label>Email Address</label>
+                  <input class="pfb-input" type="email" id="pf-email" value=""/>
+                </div>
+                <div class="pfb-field pfb-field--full">
+                  <label>Phone Number</label>
+                  <input class="pfb-input" type="tel" id="pf-phone" value=""/>
+                </div>
+              </div>
+              <div class="pfb-actions">
+                <button class="pfb-btn-primary" onclick="saveProfile()">Save Changes</button>
+                <button class="pfb-btn-secondary" onclick="cancelProfile()">Cancel</button>
+              </div>
+              <div class="pfb-success" id="pfb-success" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/></svg>
+                Profile updated successfully.
+              </div>
+            </div>
+            <div class="profile-form-block">
+              <div class="pfb-title">Change Password</div>
+              <div class="pfb-grid">
+                <div class="pfb-field pfb-field--full">
+                  <label>Current Password</label>
+                  <input class="pfb-input" type="password" id="pf-pw-current" placeholder="••••••••"/>
+                </div>
+                <div class="pfb-field">
+                  <label>New Password</label>
+                  <input class="pfb-input" type="password" id="pf-pw-new" placeholder="Min 8 characters"/>
+                </div>
+                <div class="pfb-field">
+                  <label>Confirm New Password</label>
+                  <input class="pfb-input" type="password" id="pf-pw-confirm" placeholder="Repeat new password"/>
+                </div>
+              </div>
+              <div class="pfb-actions">
+                <button class="pfb-btn-primary" onclick="changePassword()">Update Password</button>
+              </div>
+              <div class="pfb-success" id="pfb-pw-success" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/></svg>
+                Password changed successfully.
+              </div>
+              <div class="pfb-error" id="pfb-pw-error" style="display:none;">
+                Passwords do not match.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /profile-section -->
 
     </main>
   </div><!-- /dash-main -->
 </div><!-- /dashboard-root -->
+
+<script>
+  /* Close modal if user clicks outside the inner box */
+  function handleModalBgClick(e) {
+    if (e.target === document.getElementById('newClaimModal')) {
+      closeNewClaimModal();
+    }
+  }
+
+  /* Pre-fill profile fields from localStorage on page load */
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.first_name) document.getElementById('pf-first').value = u.first_name;
+      if (u.last_name)  document.getElementById('pf-last').value  = u.last_name;
+      if (u.email)      document.getElementById('pf-email').value = u.email;
+      if (u.phone)      document.getElementById('pf-phone').value = u.phone;
+
+      // Avatar in profile
+      const pac = document.querySelector('.pac-circle');
+      if (pac) {
+        const initials = ((u.first_name || '?')[0] + (u.last_name || '?')[0]).toUpperCase();
+        pac.textContent = initials;
+      }
+      const pacName = document.querySelector('.pac-name');
+      if (pacName) pacName.textContent = (u.first_name + ' ' + u.last_name).trim() || u.email || '—';
+    } catch (_) {}
+  });
+</script>
+
 <script src="dashboard.js"></script>
 </body>
 </html>

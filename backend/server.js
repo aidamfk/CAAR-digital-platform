@@ -2,14 +2,16 @@ const express = require('express');
 const cors    = require('cors');
 require('dotenv').config({ path: '../.env' });
 require('./db');
+
 // ── Route imports ──────────────────────────────────────────────────────────
 const authRoutes        = require('./routes/auth');
 const roadsideRoutes    = require('./routes/roadsideRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
+const dashboardRoutes   = require('./routes/dashboardRoutes');
 const messageRoutes     = require('./routes/messageRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const claimsRoutes      = require('./routes/claimsRoutes');
-const agencyRoutes      = require('./routes/agencyRoutes');      // ← NEW
+const agencyRoutes      = require('./routes/agencyRoutes');
+const contractsRoutes   = require('./routes/Contractsroutes'); // ← NEW
 
 const app = express();
 
@@ -27,11 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.use('/api/auth',         authRoutes);
 app.use('/api/roadside',     roadsideRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard',    dashboardRoutes);
 app.use('/api/messages',     messageRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/claims',       claimsRoutes);
-app.use('/api/agencies',     agencyRoutes);                      // ← NEW
+app.use('/api/agencies',     agencyRoutes);
+app.use('/api/contracts',    contractsRoutes); // ← NEW
 
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
