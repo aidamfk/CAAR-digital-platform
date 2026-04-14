@@ -1,5 +1,13 @@
 /* ============================================================
-   CAAR — main.js  (REFACTORED — v4)
+   CAAR — main.js  (REFACTORED — v4, FIXED)
+
+   FIXES IN THIS VERSION:
+   1. Removed stray console.log at end of file that referenced
+      `base` outside boot(), causing ReferenceError on every page.
+   2. Updated injected search-bar CSS:
+      - justify-content:center on .search-bar
+      - width:100%; max-width:700px on .hdr-search-input
+      - border-radius:50px (pill shape)
 
    RESPONSIBILITIES:
      • Load header/footer HTML components via fetch
@@ -59,8 +67,8 @@
   }
 
   /* ============================================================
-     BOOT FUNCTION
-     Injects header → calls Header.init() → injects footer
+     BOOT FUNCTION — ALL component loading is inside here.
+     base is defined here and NEVER referenced outside this fn.
   ============================================================ */
   function boot() {
     var base = resolveBase();
@@ -95,6 +103,8 @@
 /* ============================================================
    INJECTED CSS
    Only rules that cannot live in main.css (dynamic additions).
+   FIX: search bar now uses justify-content:center + max-width
+        so the input is properly centred and sized.
 ============================================================ */
 (function () {
   var style = document.createElement('style');
@@ -114,27 +124,31 @@
     '  opacity:1; transform:translateY(0); pointer-events:auto;',
     '}',
 
-    /* Search bar */
+    /* ── Search bar — FIX: centred input with max-width ── */
     '.search-bar {',
-    '  display:flex; align-items:center; gap:12px;',
-    '  padding:0 40px; background:#fff; border-top:1px solid #e8e0d8;',
+    '  display:flex; align-items:center; justify-content:center; gap:12px;',
+    '  padding:0 40px; background:#fff; border-top:1.5px solid #e8e0d8;',
     '  max-height:0; opacity:0; transform:translateY(-8px);',
     '  pointer-events:none; overflow:hidden;',
     '  transition:max-height .3s ease, opacity .3s ease, transform .3s ease, padding .3s ease;',
     '}',
     '.search-bar.open {',
-    '  max-height:72px; opacity:1; transform:translateY(0);',
+    '  max-height:80px; opacity:1; transform:translateY(0);',
     '  pointer-events:auto; padding:14px 40px;',
     '}',
+    /* ── Search input — FIX: full width up to 700px, pill shape ── */
     '.hdr-search-input {',
-    '  flex:1; padding:11px 22px;',
-    '  border:1.5px solid #E8761E; border-radius:40px;',
-    '  font-size:.9rem; font-family:inherit;',
+    '  width:100%; max-width:700px; padding:12px 22px;',
+    '  border:1.5px solid #E8761E; border-radius:50px;',
+    '  font-size:.92rem; font-family:inherit;',
     '  background:#f8f5f0; outline:none; color:#1c1c1c;',
-    '  transition:box-shadow .2s;',
+    '  transition:box-shadow .2s ease, border-color .2s ease;',
     '}',
-    '.hdr-search-input:focus { box-shadow:0 0 0 3px rgba(232,118,30,.15); }',
-    '.hdr-search-input::placeholder { color:#bbb; }',
+    '.hdr-search-input:focus {',
+    '  box-shadow:0 0 0 3px rgba(232,118,30,0.15); border-color:#c96000;',
+    '}',
+    '.hdr-search-input::placeholder { color:#bbb; font-style:italic; }',
+
     '.search-close-hdr {',
     '  background:none; border:none; cursor:pointer;',
     '  font-size:1.1rem; color:#999; padding:6px 8px;',
@@ -170,6 +184,7 @@
     '  .mobile-menu-btn { display:flex !important; }',
     '  .logo-img { width:72px; height:72px; }',
     '  .search-bar.open { padding:10px 16px; }',
+    '  .hdr-search-input { max-width:100%; }',
     '}',
 
   ].join('\n');
@@ -835,7 +850,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   window.formatCardNumber = function (input) { var v = input.value.replace(/\D/g, '').slice(0, 16); input.value = (v.match(/.{1,4}/g) || []).join(' '); };
-  window.resetPaymentForm  = function () { ['card_number', 'cvv2', 'cardholder_name'].forEach(function (id) { var e = getEl(id); if (e) e.value = ''; }); ['expiry_month', 'expiry_year'].forEach(function (id) { var e = getEl(id); if (e) e.selectedIndex = 0; }); };
+  window.resetPaymentForm  = function () { ['card_number', 'cvv2', 'cardholder_name'].forEach(function (id) { var el = getEl(id); if (el) el.value = ''; }); ['expiry_month', 'expiry_year'].forEach(function (id) { var el = getEl(id); if (el) el.selectedIndex = 0; }); };
 
   function startCountdown(seconds) {
     clearInterval(countdownTimer);
@@ -864,4 +879,3 @@ document.addEventListener('DOMContentLoaded', function () {
     if (getEl('plan-plus') && !selectedPlan) window.selectPlan('Plus', 7900);
   });
 })();
-console.log('[DEBUG] loading header from:', base + 'components/header.html');
