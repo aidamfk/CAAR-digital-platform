@@ -1,29 +1,58 @@
-/* ============================================================
-   CAAR — header-controller.js
-   Single source of truth for all header behaviour.
-
-   LOAD ORDER (every HTML page):
-     <script src="app-state.js"></script>
-     <script src="auth.js"></script>
-     <script src="header-controller.js"></script>   ← NEW (before main.js)
-     <script src="main.js"></script>
-   ============================================================ */
-
 'use strict';
+
+/* ============================================================
+   CAAR — header-controller.js  (REFACTORED — v4)
+
+   SINGLE SOURCE OF TRUTH for all header behaviour.
+
+   RESPONSIBILITIES:
+     • Resolve auth state from JWT (via app-state.js)
+     • Render login/user UI in the injected header HTML
+     • Bind ALL header events exactly once (_initialized guard)
+     • Manage every interactive state via CSS class toggles:
+         - .open  on #userDropdown
+         - .open  on #searchBar  (via header-extras.css)
+         - .show  on #langDropdownMenu
+         - .open  on #mobileNav
+     • Set active nav link from current URL
+     • Expose:  Header.init()  Header.render(user)
+
+   NOT responsible for:
+     • Auth storage      → app-state.js
+     • Component inject  → main.js
+     • Page utilities    → main.js
+   ============================================================ */
 
 const Header = (() => {
 
-  /* ── Guard: bindEvents runs ONCE per page lifetime ── */
+  /* ── State ─────────────────────────────────────────────── */
   let _initialized = false;
 
-  /* ── Single source of truth for auth state ── */
-  const AuthState = {
-    user:            null,
-    isAuthenticated: false,
+  /* ── PAGE → NAV section map ────────────────────────────── */
+  const PAGE_MAP = {
+    'index':               'index',
+    '':                    'index',
+    'products':            'products',
+    'individual-risks':    'products',
+    'auto-insurance':      'products',
+    'transport-insurance': 'products',
+    'technical-risks':     'products',
+    'industrial-risks':    'products',
+    'Online_subscription': 'products',
+    'catnat-subscription': 'products',
+    'roads':               'products',
+    'company':             'company',
+    'company-careers':     'company',
+    'network':             'network',
+    'news':                'news',
+    'article-accident':    'news',
+    'article-home':        'news',
+    'article-business':    'news',
+    'article-basics':      'news',
+    'contact':             'contact',
   };
 
-  /* ── Helpers ─────────────────────────────────────────────────── */
-
+  /* ── Helpers ────────────────────────────────────────────── */
   function _log(action, data) {
     console.log('[HEADER]', action, data !== undefined ? data : '');
   }
@@ -42,42 +71,24 @@ const Header = (() => {
       .slice(0, 2) || '?';
   }
 
-  function _resolveUserFromJWT() {
-    const user = (typeof window.getUser === 'function') ? window.getUser() : null;
-    AuthState.user            = user;
-    AuthState.isAuthenticated = !!user;
-    _log('AuthState resolved →', AuthState.isAuthenticated
-      ? (user.email + ' / ' + user.role)
-      : 'guest'
-    );
-    return user;
-  }
-
-  /* ── resetState: close EVERYTHING ───────────────────────────── */
-
+  /* ── Close everything ───────────────────────────────────── */
   function resetState() {
-    /* Dropdown — toggle ONLY on #userDropdown, never on #userMenu */
-    const dropdown = document.getElementById('userDropdown');
-    if (dropdown) dropdown.classList.remove('open');
+    /* Dropdown */
+    document.getElementById('userDropdown')?.classList.remove('open');
 
     /* Search bar */
-    const searchBar = document.getElementById('searchBar');
-    if (searchBar) {
-      searchBar.classList.remove('open');
-      searchBar.setAttribute('aria-hidden', 'true');
-    }
+    const sb = document.getElementById('searchBar');
+    if (sb) { sb.classList.remove('open'); sb.setAttribute('aria-hidden', 'true'); }
 
-    /* Language menu */
-    const langMenu     = document.getElementById('langDropdownMenu');
-    const langDropdown = document.getElementById('langDropdown');
-    if (langMenu)     langMenu.classList.remove('show');
-    if (langDropdown) langDropdown.classList.remove('lang-open');
+    /* Lang */
+    document.getElementById('langDropdownMenu')?.classList.remove('show');
+    document.getElementById('langDropdown')?.classList.remove('lang-open');
 
-    /* Mobile nav */
-    const mobileNav     = document.getElementById('mobileNav');
-    const mobileOverlay = document.getElementById('mobileNavOverlay');
-    if (mobileNav)     { mobileNav.classList.remove('open'); mobileNav.setAttribute('aria-hidden', 'true'); }
-    if (mobileOverlay)   mobileOverlay.classList.remove('open');
+    /* Mobile */
+    const mn = document.getElementById('mobileNav');
+    const mo = document.getElementById('mobileNavOverlay');
+    if (mn) { mn.classList.remove('open'); mn.setAttribute('aria-hidden', 'true'); }
+    if (mo) mo.classList.remove('open');
     document.body.style.overflow = '';
 
     /* Touch dropdowns */
@@ -86,8 +97,7 @@ const Header = (() => {
     });
   }
 
-  /* ── render(user): update auth UI — NO DOM replacement ──────── */
-
+  /* ── render(user) — update auth UI in-place ─────────────── */
   function render(user) {
     _log('render →', user ? user.email : 'guest');
 
@@ -95,19 +105,18 @@ const Header = (() => {
     const userMenu = document.getElementById('userMenu');
 
     if (!loginBtn || !userMenu) {
-      _log('render: DOM not ready yet, aborting');
+      _log('render: DOM not ready (header not injected yet)');
       return;
     }
 
-    /* ── Guest state ── */
+    /* Guest */
     if (!user) {
       loginBtn.style.display = 'inline-flex';
       userMenu.style.display = 'none';
-      _log('render: displayed as guest');
       return;
     }
 
-    /* ── Authenticated state ── */
+    /* Authenticated */
     loginBtn.style.display = 'none';
     userMenu.style.display = 'block';
 
@@ -121,7 +130,7 @@ const Header = (() => {
       ? window.DASHBOARD_MAP[role]
       : 'client-dashboard.html';
 
-    /* Fill elements directly — no cloneNode, no replaceChild */
+    /* Fill without cloneNode / replaceChild */
     _setText('userName',     name.split(' ')[0]);
     _setText('userAvatar',   initials);
     _setText('dropUserName', name);
@@ -130,11 +139,20 @@ const Header = (() => {
     const dashLink = document.getElementById('dashboardLink');
     if (dashLink) dashLink.href = dashHref;
 
-    _log('render: displayed as authenticated', { name, initials, role, dashHref });
+    _log('render: authenticated', { name, initials, role, dashHref });
   }
 
-  /* ── bindEvents: attach listeners ONCE ──────────────────────── */
+  /* ── setActiveNav — mark current page in nav ────────────── */
+  function _setActiveNav() {
+    const file = window.location.pathname.split('/').pop().replace('.html', '') || '';
+    const page = PAGE_MAP[file] || '';
+    if (!page) return;
+    document.querySelectorAll('[data-page]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-page') === page);
+    });
+  }
 
+  /* ── bindEvents — attach listeners ONCE ─────────────────── */
   function bindEvents() {
     if (_initialized) {
       _log('bindEvents: already initialized — skip');
@@ -143,7 +161,7 @@ const Header = (() => {
     _initialized = true;
     _log('bindEvents: attaching all listeners');
 
-    /* ── 1. User dropdown toggle ─────────────────────────────── */
+    /* 1. User dropdown ──────────────────────────────────── */
     const userTrigger  = document.getElementById('userTrigger');
     const userDropdown = document.getElementById('userDropdown');
 
@@ -151,12 +169,10 @@ const Header = (() => {
       userTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
         const wasOpen = userDropdown.classList.contains('open');
-        resetState();                     // close everything else first
+        resetState();
         if (!wasOpen) {
           userDropdown.classList.add('open');
           _log('dropdown: opened');
-        } else {
-          _log('dropdown: closed (toggle)');
         }
       });
     }
@@ -166,28 +182,22 @@ const Header = (() => {
       const um = document.getElementById('userMenu');
       if (um && !um.contains(e.target)) {
         const dd = document.getElementById('userDropdown');
-        if (dd && dd.classList.contains('open')) {
+        if (dd?.classList.contains('open')) {
           dd.classList.remove('open');
-          _log('dropdown: closed (outside click)');
         }
       }
     });
 
-    /* ── 2. Logout ───────────────────────────────────────────── */
-    /*
-      Attach directly — NO cloneNode, NO replaceChild.
-      Works because bindEvents() is called exactly once
-      after header HTML is injected.
-    */
+    /* 2. Logout ─────────────────────────────────────────── */
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
-        _log('logout: triggered');
+        _log('logout triggered');
         if (typeof window.logout === 'function') window.logout();
       });
     }
 
-    /* ── 3. Search bar ───────────────────────────────────────── */
+    /* 3. Search bar ─────────────────────────────────────── */
     const searchBtn   = document.getElementById('searchBtn');
     const searchBar   = document.getElementById('searchBar');
     const searchClose = document.getElementById('searchCloseHdr');
@@ -209,19 +219,16 @@ const Header = (() => {
 
     if (searchClose) {
       searchClose.addEventListener('click', () => {
-        if (searchBar) {
-          searchBar.classList.remove('open');
-          searchBar.setAttribute('aria-hidden', 'true');
-        }
+        if (searchBar) { searchBar.classList.remove('open'); searchBar.setAttribute('aria-hidden', 'true'); }
         _log('search: closed');
       });
     }
 
-    /* ── 4. Language dropdown ────────────────────────────────── */
-    const langToggle   = document.getElementById('langToggleBtn');
-    const langMenu     = document.getElementById('langDropdownMenu');
-    const langDropdown = document.getElementById('langDropdown');
-    const currentLang  = document.getElementById('currentLang');
+    /* 4. Language dropdown ──────────────────────────────── */
+    const langToggle  = document.getElementById('langToggleBtn');
+    const langMenu    = document.getElementById('langDropdownMenu');
+    const langDrop    = document.getElementById('langDropdown');
+    const currentLang = document.getElementById('currentLang');
 
     if (langToggle && langMenu) {
       langToggle.addEventListener('click', (e) => {
@@ -230,8 +237,8 @@ const Header = (() => {
         resetState();
         if (!wasOpen) {
           langMenu.classList.add('show');
-          if (langDropdown) langDropdown.classList.add('lang-open');
-          _log('lang dropdown: opened');
+          if (langDrop) langDrop.classList.add('lang-open');
+          _log('lang: opened');
         }
       });
 
@@ -240,44 +247,39 @@ const Header = (() => {
           e.preventDefault();
           if (currentLang) currentLang.textContent = link.getAttribute('data-lang');
           langMenu.classList.remove('show');
-          if (langDropdown) langDropdown.classList.remove('lang-open');
-          _log('lang: selected', link.getAttribute('data-lang'));
+          if (langDrop) langDrop.classList.remove('lang-open');
         });
       });
     }
 
-    /* ── 5. Mobile nav ───────────────────────────────────────── */
+    /* 5. Mobile nav ─────────────────────────────────────── */
     const mobileBtn     = document.getElementById('mobileMenuBtn');
     const mobileNav     = document.getElementById('mobileNav');
     const mobileOverlay = document.getElementById('mobileNavOverlay');
     const mobileClose   = document.getElementById('mobileNavClose');
 
     function openMobile() {
-      if (mobileNav)     { mobileNav.classList.add('open');     mobileNav.setAttribute('aria-hidden', 'false'); }
+      if (mobileNav)     { mobileNav.classList.add('open');    mobileNav.setAttribute('aria-hidden', 'false'); }
       if (mobileOverlay)   mobileOverlay.classList.add('open');
       if (mobileBtn)       mobileBtn.setAttribute('aria-expanded', 'true');
       document.body.style.overflow = 'hidden';
-      _log('mobile nav: opened');
     }
 
     function closeMobile() {
-      if (mobileNav)     { mobileNav.classList.remove('open');  mobileNav.setAttribute('aria-hidden', 'true'); }
+      if (mobileNav)     { mobileNav.classList.remove('open'); mobileNav.setAttribute('aria-hidden', 'true'); }
       if (mobileOverlay)   mobileOverlay.classList.remove('open');
       if (mobileBtn)       mobileBtn.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
-      _log('mobile nav: closed');
     }
 
     if (mobileBtn)     mobileBtn.addEventListener('click', openMobile);
     if (mobileClose)   mobileClose.addEventListener('click', closeMobile);
     if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobile);
     if (mobileNav) {
-      mobileNav.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', closeMobile);
-      });
+      mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobile));
     }
 
-    /* ── 6. Touch-friendly desktop dropdowns ─────────────────── */
+    /* 6. Touch-friendly desktop dropdowns ──────────────── */
     document.querySelectorAll('.dropdown').forEach(dd => {
       dd.addEventListener('touchstart', (e) => {
         const wasOpen = dd.classList.contains('touch-open');
@@ -285,91 +287,59 @@ const Header = (() => {
           if (x !== dd) x.classList.remove('touch-open');
         });
         if (!wasOpen) { e.preventDefault(); dd.classList.add('touch-open'); }
-        else            dd.classList.remove('touch-open');
+        else dd.classList.remove('touch-open');
       }, { passive: false });
     });
 
     document.addEventListener('touchstart', (e) => {
-      if (!e.target.closest || !e.target.closest('.dropdown')) {
+      if (!e.target.closest?.('.dropdown')) {
         document.querySelectorAll('.dropdown.touch-open').forEach(dd => {
           dd.classList.remove('touch-open');
         });
       }
     }, { passive: true });
 
-    /* ── 7. Escape key: close everything ─────────────────────── */
+    /* 7. Escape key — close everything ─────────────────── */
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        resetState();
-        _log('escape: all panels closed');
-      }
+      if (e.key === 'Escape') resetState();
     });
 
-    /* ── 8. Active nav link ──────────────────────────────────── */
+    /* 8. Active nav ─────────────────────────────────────── */
     _setActiveNav();
 
     _log('bindEvents: complete');
   }
 
-  /* ── Active nav helper ───────────────────────────────────────── */
-
-  function _setActiveNav() {
-    const PAGE_MAP = {
-      'index': 'index',               '': 'index',
-      'products': 'products',         'individual-risks': 'products',
-      'auto-insurance': 'products',   'transport-insurance': 'products',
-      'technical-risks': 'products',  'industrial-risks': 'products',
-      'Online_subscription': 'products',
-      'catnat-subscription': 'products',
-      'roads': 'products',
-      'company': 'company',           'company-careers': 'company',
-      'network': 'network',
-      'news': 'news',                 'article-accident': 'news',
-      'article-home': 'news',         'article-business': 'news',
-      'article-basics': 'news',
-      'contact': 'contact',
-    };
-
-    const file = window.location.pathname.split('/').pop().replace('.html', '') || '';
-    const page = PAGE_MAP[file] || '';
-    if (!page) return;
-
-    document.querySelectorAll('[data-page]').forEach(el => {
-      el.classList.toggle('active', el.getAttribute('data-page') === page);
-    });
-  }
-
-  /* ── Public: init (called once after header HTML is injected) ── */
-
+  /* ── init() — called once after header HTML is injected ── */
   function init() {
     _log('init: starting');
-    const user = _resolveUserFromJWT();
-    bindEvents();   // attaches listeners exactly once
-    render(user);   // sets correct auth UI
+
+    /* Resolve current auth state */
+    const user = (typeof window.getUser === 'function') ? window.getUser() : null;
+
+    /* Wire up all events */
+    bindEvents();
+
+    /* Render login / user UI */
+    render(user);
+
+    /* Signal that the header is ready for renderAuthHeader() calls */
     window.__caarHeaderReady = true;
-    _log('init: complete');
+
+    _log('init: complete —', user ? 'authenticated as ' + user.role : 'guest');
   }
 
-  /* ── Expose public API ───────────────────────────────────────── */
+  /* ── Public API ──────────────────────────────────────────── */
   return { init, render, resetState };
 
 })();
 
-/* ── Global exposure ─────────────────────────────────────────────────────── */
+/* ── Global exposure ─────────────────────────────────────── */
 window.Header = Header;
 
-/*
-  renderAuthHeader() — backwards-compatible shim.
-  All existing onclick="logout()" etc. still work.
-  Delegates to Header.render() instead of duplicating logic.
-*/
+/* ── Backward-compat shim ────────────────────────────────── */
 window.renderAuthHeader = function () {
-  _log_compat('renderAuthHeader (legacy compat) called');
-  if (!window.__caarHeaderReady) return; // header not injected yet — init() will handle it
+  if (!window.__caarHeaderReady) return;
   const user = (typeof window.getUser === 'function') ? window.getUser() : null;
   Header.render(user);
 };
-
-function _log_compat(msg) {
-  console.log('[HEADER]', msg);
-}

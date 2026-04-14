@@ -6,12 +6,19 @@
   <title>CAAR — Compagnie Algérienne d'Assurances et de Réassurance</title>
   <link rel="stylesheet" href="main.css"/>
   <link rel="stylesheet" href="header-extras.css"/>
+  <!--
+    DO NOT add a static <header> element.
+    The header is injected from components/header.html by main.js.
+    CSS for the header lives in header.css (imported by main.css)
+    and header-extras.css.
+  -->
 </head>
 <body>
-<!-- ===== PARTIE 1 : HEADER ===== -->
-<div id="site-header"></div>
-<!-- ===== PARTIE 2 : HERO ===== -->
 
+<!-- ═══ HEADER PLACEHOLDER — injected by main.js ═══ -->
+<div id="site-header"></div>
+
+<!-- ═══ HERO ═══ -->
 <section class="caar-hero caar-hero--products">
   <img src="img/fleche.png" class="hero-deco" alt="" aria-hidden="true"/>
   <div class="caar-hero__inner">
@@ -34,7 +41,7 @@
   </div>
 </section>
 
-<!-- ===== PARTIE 3 : OUR INSURANCE PRODUCTS ===== -->
+<!-- ═══ OUR INSURANCE PRODUCTS ═══ -->
 <section class="products">
   <div class="products-header">
     <div class="products-header__label">What we offer</div>
@@ -68,7 +75,8 @@
     </a>
   </div>
 </section>
-<!-- ===== PARTIE 4 : WHY CHOOSE CAAR ===== -->
+
+<!-- ═══ WHY CHOOSE CAAR ═══ -->
 <section class="why">
   <div class="why-header">
     <div class="why-header__label">Our commitment</div>
@@ -78,7 +86,9 @@
   <div class="why-grid">
     <div class="why-card">
       <div class="why-card__icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
       </div>
       <h3>Built for Individuals</h3>
       <ul>
@@ -89,7 +99,10 @@
     </div>
     <div class="why-card">
       <div class="why-card__icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
       </div>
       <h3>Built for Professionals &amp; Businesses</h3>
       <ul>
@@ -100,7 +113,9 @@
     </div>
     <div class="why-card">
       <div class="why-card__icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
       </div>
       <h3>Built for Industrial &amp; Strategic Risks</h3>
       <ul>
@@ -116,17 +131,12 @@
     </div>
   </div>
 </section>
-<!-- ===== PARTIE 5 : NETWORK + NEWS ===== -->
+
+<!-- ═══ NETWORK + NEWS ═══ -->
 <section class="network-news">
   <div class="network-outer">
-
-    <!-- Layout : gauche (tout le contenu) | droite (homme) -->
     <div class="network-main">
-
-      <!-- GAUCHE -->
       <div class="network-left">
-
-        <!-- Ligne 1 : pin + titre -->
         <div class="network-title-group">
           <svg class="network-pin" viewBox="0 0 50 62" fill="none">
             <path d="M25 2C13.954 2 5 10.954 5 22C5 36.5 25 60 25 60C25 60 45 36.5 45 22C45 10.954 36.046 2 25 2Z" fill="#E8761E" fill-opacity=".2" stroke="#E8761E" stroke-width="2.5"/>
@@ -134,20 +144,14 @@
           </svg>
           <h2>A network that stays close to you.</h2>
         </div>
-
-        <!-- Ligne 2 : description + bouton Find an Agency -->
         <div class="network-desc-row">
           <p class="network-desc">Access our network of agencies across the country for personalized service.</p>
           <a href="network.html" class="network-btn">Find an Agency</a>
         </div>
-
-        <!-- Ligne 3 : Latest News header -->
         <div class="news-header">
           <h3>Latest News &amp; Announcements</h3>
           <a href="news.html" class="news-all">View All News →</a>
         </div>
-
-        <!-- Ligne 4 : 3 news cards -->
         <div class="news-grid">
           <div class="news-card">
             <span class="news-date">September 25, 2025</span>
@@ -165,18 +169,15 @@
             <a href="#">Read more</a>
           </div>
         </div>
-
-      </div><!-- fin network-left -->
-
-      <!-- DROITE : homme occupe toute la hauteur -->
-      <div class="network-illustration">
-        <img src="img/hero.webp" alt="CAAR agent">
       </div>
-
+      <div class="network-illustration">
+        <img src="img/hero.webp" alt="CAAR agent"/>
+      </div>
     </div>
   </div>
 </section>
-<!-- ===== PARTIE 6 : CTA ===== -->
+
+<!-- ═══ CTA ═══ -->
 <section class="cta">
   <div class="cta-inner">
     <h2>Need more information? Contact CAAR.</h2>
@@ -184,15 +185,26 @@
     <a href="contact.html" class="cta-btn">Contact Us</a>
   </div>
 </section>
-<!-- Footer dynamique -->
-<div id="site-footer"></div>
-<!-- 1. State engine — must be FIRST -->
-<script src="app-state.js"></script>
 
-<!-- 2. Backward-compat wrapper -->
+<!-- ═══ FOOTER PLACEHOLDER — injected by main.js ═══ -->
+<div id="site-footer"></div>
+
+<!--
+  ══════════════════════════════════════════════
+  MANDATORY SCRIPT LOAD ORDER — DO NOT CHANGE
+  ══════════════════════════════════════════════
+  1. app-state.js      → JWT auth primitives, apiRequest, loadContracts
+  2. auth.js           → backward-compat shims (getRole, isLoggedIn, etc.)
+  3. header-controller.js → all header behaviour (events, render, init)
+  4. main.js           → boot: injects header/footer, calls Header.init()
+                          + page utilities (product panels, forms, etc.)
+
+  NEVER add a 5th "legacy" header script.
+  NEVER call initHeader(), renderUserState(), or initUserMenu() — they are GONE.
+-->
+<script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
-<!-- 3. Header + global utilities -->
 <script src="main.js"></script>
 
 </body>
