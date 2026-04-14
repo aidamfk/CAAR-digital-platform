@@ -129,9 +129,14 @@
   <div id="site-footer"></div>
 
 <!-- Shared header logic (search, lang, mobile nav) -->
-<script src="main.js"></script>
+<!-- 1. State engine — must be FIRST -->
+<script src="app-state.js"></script>
 
-<!-- Page-specific: scroll reveal for article sections -->
+<!-- 2. Backward-compat wrapper -->
+<script src="auth.js"></script>
+
+<!-- 3. Header + global utilities -->
+<script src="main.js"></script>
 
 </body>
 </html>

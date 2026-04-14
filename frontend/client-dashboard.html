@@ -826,6 +826,16 @@
   });
 </script>
 
-<script src="dashboard.js"></script>
+<!-- 1. State engine — must be FIRST -->
+<script src="app-state.js"></script>
+
+<!-- 2. Backward-compat wrapper -->
+<script src="auth.js"></script>
+
+<!-- 3. Header + global utilities -->
+<script src="main.js"></script>
+
+<!-- 4. Page-specific script (if any) -->
+<script src="dashboard.js"></script>  <!-- dashboard pages only -->
 </body>
 </html>

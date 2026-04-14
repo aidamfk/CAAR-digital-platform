@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CAAR — Compagnie Algérienne d'Assurances et de Réassurance</title>
   <link rel="stylesheet" href="main.css"/>
-  <link rel="stylesheet" href="components/header-extras.css"/>
+  <link rel="stylesheet" href="header-extras.css"/>
 </head>
 <body>
 <!-- ===== PARTIE 1 : HEADER ===== -->
@@ -186,6 +186,14 @@
 </section>
 <!-- Footer dynamique -->
 <div id="site-footer"></div>
+<!-- 1. State engine — must be FIRST -->
+<script src="app-state.js"></script>
+
+<!-- 2. Backward-compat wrapper -->
+<script src="auth.js"></script>
+
+<!-- 3. Header + global utilities -->
 <script src="main.js"></script>
+
 </body>
 </html>

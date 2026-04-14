@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CAAR &mdash; Contact Us</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="css/contact.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+
+  <!-- ════════════════════════════════════════════
+       INLINE VALIDATION STYLES (added on top of contact.css)
+       ════════════════════════════════════════════ -->
+  <style>
+    /* ── Field error state ── */
+    .cf-input.field-error,
+    .cf-select.field-error,
+    .cf-textarea.field-error {
+      border-color: #e53e3e !important;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12) !important;
+    }
+
+    /* ── Inline error message under each field ── */
+    .cf-field-error {
+      display: none;
+      font-size: 0.72rem;
+      color: #e53e3e;
+      margin-top: 5px;
+      font-weight: 500;
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+    .cf-field-error.visible {
+      display: flex;
+    }
+    .cf-field-error::before {
+      content: "✕";
+      font-size: 0.68rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Field success state ── */
+    .cf-input.field-ok,
+    .cf-select.field-ok,
+    .cf-textarea.field-ok {
+      border-color: #38a169 !important;
+    }
+    /* ── Character counter ── */
+    .cf-char-count {
+      font-size: 0.68rem;
+      color: #aaa;
+      text-align: right;
+      margin-top: 3px;
+    }
+    .cf-char-count.warn { color: var(--hdr-orange); }
+    .cf-char-count.over { color: #e53e3e; }
+
+    /* ── Robot checkbox error ── */
+    .cf-robot.robot-error {
+      border-color: #e53e3e !important;
+      background: #fff5f5;
+    }
+
+    /* ── Send button loading state ── */
+    .btn-send.loading {
+      opacity: 0.7;
+      cursor: wait;
+      position: relative;
+    }
+    .btn-send.loading::after {
+      content: '';
+      position: absolute;
+      right: 18px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     HEADER  (unchanged from your original)
+════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <a href="index.html"><img src="img/grand_logo.png" alt="CAAR" class="logo-img"/></a>
+    </div>
+    <div class="right-side">
+      <div class="top-row">
+        <a href="network.html" class="btn-top">Find Agency</a>
+        <a href="contact.html" class="btn-top">Contact Us</a>
+        <a href="login.html" class="btn-top" id="loginBtn">Login</a>
+
+  <div class="user-menu" id="userMenu" style="display:none;">
+    <button class="user-trigger" id="userTrigger">
+      <div class="user-avatar" id="userAvatar"></div>
+      <span class="user-name" id="userName"></span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-dropdown-header">
+        <span id="dropUserName"></span>
+        <span class="user-role-badge" id="dropUserRole"></span>
+      </div>
+      <hr class="user-dropdown-divider"/>
+      <a class="user-dropdown-item" id="dashboardLink">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <button class="user-dropdown-item user-logout" id="logoutBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </div>
+      </div>
+      <hr class="divider"/>
+      <div class="bottom-row">
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li class="dropdown">
+            <a href="products.html" class="nav-link">Products <span class="arrow">▾</span></a>
+            <ul class="dropdown-menu">
+              <li><a href="individual-risks.html">Individual Risks</a></li>
+              <li><a href="auto-insurance.html">Auto Insurance</a></li>
+              <li><a href="transport-insurance.html">Transport Insurance</a></li>
+              <li><a href="technical-risks.html">Technical Risks</a></li>
+              <li><a href="industrial-risks.html">Industrial Risks</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="company.html" class="nav-link">Company <span class="arrow">▾</span></a>
+            <ul class="dropdown-menu">
+              <li><a href="company.html">About Us</a></li>
+              <li><a href="company-careers.html">Careers</a></li>
+            </ul>
+          </li>
+          <li><a href="network.html" class="nav-link">Network</a></li>
+          <li><a href="news.html" class="nav-link">News</a></li>
+          <li><a href="contact.html" class="nav-link ">Contact</a></li>
+        </ul>
+        <div class="nav-icons">
+          <button class="icon-btn mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <button class="icon-btn" id="searchBtn">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+          <div class="lang-dropdown">
+  <button class="icon-btn lang-btn">
+    <span id="currentLang">EN</span>
+  </button>
+
+  <ul class="lang-menu">
+    <li data-lang="FR">Français</li>
+    <li data-lang="EN">English</li>
+    <li data-lang="AR">عربي</li>
+  </ul>
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="search-bar" id="searchBar">
+  <input type="text" placeholder="Search CAAR..." class="search-input" autofocus/>
+</div>
+</header>
+
+<!-- MOBILE NAV DRAWER (unchanged) -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu()"></div>
+<nav class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-header">
+    <span class="mobile-nav-title">Menu</span>
+    <button onclick="toggleMobileMenu()" class="mobile-nav-close">✕</button>
+  </div>
+  <a href="index.html"    onclick="toggleMobileMenu()">Home</a>
+  <a href="products.html" onclick="toggleMobileMenu()">Products</a>
+  <a href="company.html"  onclick="toggleMobileMenu()">Company</a>
+  <a href="network.html"  onclick="toggleMobileMenu()">Network</a>
+  <a href="news.html"     onclick="toggleMobileMenu()">News</a>
+  <a href="contact.html" class="active" onclick="toggleMobileMenu()">Contact</a>
+  <div class="mobile-nav-btns">
+    <a href="network.html" class="btn-top">Find Agency</a>
+    <a href="contact.html" class="btn-top">Contact Us</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════ -->
+<script src="js/auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+
+// Au chargement, lire le localStorage
+const savedUser = localStorage.getItem('user');
+if (savedUser) currentUser = JSON.parse(savedUser);
+/* ══════════════════════════════════════
+   ÉTAT UTILISATEUR SIMULÉ
+   Change role en : "admin" | "expert" | "client" | null
+══════════════════════════════════════ */
+let currentUser = { name: "John Doe", role: "admin" };
+// let currentUser = null; // ← décommenter pour tester déconnecté
+
+const DASHBOARD_ROUTES = {
+  admin:  '/admin-dashboard',
+  expert: '/expert-dashboard',
+  client: '/client-dashboard',
+};
+
+/* ── Rendu de l'état ── */
+function renderUserState() {
+  if (typeof renderAuthHeader === 'function') renderAuthHeader();
+}
+
+/* ── Toggle dropdown ── */
+function initUserMenu() {
+  if (typeof initUserMenuToggle === 'function') initUserMenuToggle();
+}
+/* ══════════════════════════════════════
+   MOBILE NAV
+══════════════════════════════════════ */
+function toggleMobileMenu() {
+  document.getElementById('mobileNav').classList.toggle('open');
+  document.getElementById('mobileNavOverlay').classList.toggle('open');
+}
+
+/* ══════════════════════════════════════
+   SEARCH BAR
+══════════════════════════════════════ */
+function initSearch() {
+  const searchBtn = document.getElementById('searchBtn');
+  const searchBar = document.getElementById('searchBar');
+  if (!searchBtn || !searchBar) return;
+
+  searchBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    searchBar.classList.toggle('open');
+    if (searchBar.classList.contains('open')) {
+      setTimeout(() => searchBar.querySelector('.search-input')?.focus(), 100);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!searchBar.contains(e.target) && !searchBtn.contains(e.target)) {
+      searchBar.classList.remove('open');
+    }
+  });
+}
+
+/* ══════════════════════════════════════
+   MAP
+══════════════════════════════════════ */
+function initMap() {
+  const mapEl = document.getElementById('hqMap');
+  if (!mapEl || typeof L === 'undefined') return;
+  const HQ = { lat: 36.767043, lng: 3.052792 };
+  const map = L.map('hqMap', { center: [HQ.lat, HQ.lng], zoom: 16, scrollWheelZoom: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  L.marker([HQ.lat, HQ.lng]).addTo(map).bindPopup("CAAR Headquarters").openPopup();
+}
+
+/* ══════════════════════════════════════
+   LANG SWITCHER
+══════════════════════════════════════ */
+function initLang() {
+  document.querySelectorAll('.lang-menu li').forEach(item => {
+    item.addEventListener('click', function () {
+      document.getElementById('currentLang').textContent = this.getAttribute('data-lang');
+    });
+  });
+}
+
+/* ══════════════════════════════════════
+   VALIDATION FORM (contact.html)
+══════════════════════════════════════ */
+function showError(inputId, errorId) {
+  const input = document.getElementById(inputId);
+  const errEl = document.getElementById(errorId);
+  if (input) { input.classList.add('field-error'); input.classList.remove('field-ok'); }
+  if (errEl) errEl.classList.add('visible');
+}
+function clearError(inputId, errorId) {
+  const input = document.getElementById(inputId);
+  const errEl = document.getElementById(errorId);
+  if (input) { input.classList.remove('field-error'); input.classList.add('field-ok'); }
+  if (errEl) errEl.classList.remove('visible');
+}
+const RULES = {
+  subject: v => v.length > 0,
+  name:    v => /^[\p{L}0-9\s'\-]{3,100}$/u.test(v),
+  email:   v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+  phone:   v => v === '' || /^[0-9\s+\-()]{8,20}$/.test(v),
+  message: v => v.length >= 10 && v.length <= 2000,
+};
+function updateCharCount(textarea) {
+  const count = textarea.value.length;
+  const max   = parseInt(textarea.getAttribute('maxlength')) || 2000;
+  const display = document.getElementById('cfCharCount');
+  if (!display) return;
+  display.textContent = `${count} / ${max}`;
+  display.className = 'cf-char-count';
+  if (count > max * 0.9) display.classList.add('warn');
+  if (count >= max) { display.classList.remove('warn'); display.classList.add('over'); }
+}
+async function submitForm() {
+  const subject = document.getElementById('cfSubject')?.value;
+  const name    = document.getElementById('cfName')?.value.trim();
+  const email   = document.getElementById('cfEmail')?.value.trim();
+  const phone   = document.getElementById('cfPhone')?.value.trim();
+  const message = document.getElementById('cfMessage')?.value.trim();
+  const consent = document.getElementById('cfConsent')?.checked;
+  const robot   = document.getElementById('cfRobot')?.checked;
+  if (!subject) return;
+
+  let hasError = false;
+  if (!RULES.subject(subject))        { showError('cfSubject','err-subject'); hasError = true; }
+  if (!RULES.name(name))              { showError('cfName','err-name');       hasError = true; }
+  if (!RULES.email(email))            { showError('cfEmail','err-email');     hasError = true; }
+  if (phone && !RULES.phone(phone))   { showError('cfPhone','err-phone');     hasError = true; }
+  if (!RULES.message(message))        { showError('cfMessage','err-message'); hasError = true; }
+  if (!consent) { document.getElementById('err-consent')?.classList.add('visible'); hasError = true; }
+  if (!robot)   { document.getElementById('cfRobotWrap')?.classList.add('robot-error'); hasError = true; }
+  if (hasError) return;
+
+  const btn = document.getElementById('sendBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, name, email, phone, message })
+    });
+    if (!res.ok) throw new Error('Server error');
+    alert('Message sent successfully!');
+  } catch (err) {
+    alert('Server error. Try again later.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send my request'; }
+  }
+}
+
+/* ══════════════════════════════════════
+   INIT GLOBAL
+══════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderUserState();
+  initUserMenu();
+  initSearch();
+  initMap();
+  initLang();
+});
+
+</script>
+
+
+<style>
+
+  /* Container */
+.lang-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Menu caché */
+.lang-menu {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 0;
+  list-style: none;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+
+  transition: all 0.25s ease;
+  z-index: 9999; /* 🔥 IMPORTANT */
+}
+
+/* 🔥 KEY FIX */
+.lang-dropdown:hover .lang-menu,
+.lang-menu:hover {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Items */
+.lang-menu li {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.lang-menu li:hover {
+  background: #f5f5f5;
+}
+.lang-menu {
+  transition: all 0.2s ease, opacity 0.2s ease;
+}
+.search-bar {
+  width: 100%;
+  background: white;
+  border-top: 1px solid #e8e0d8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+
+  transition: all 0.3s ease;
+}
+
+.search-bar.open {
+  max-height: 80px;
+  opacity: 1;
+  padding: 15px 0;
+}
+
+.search-input {
+  width: 60%;
+  padding: 12px 25px;
+  border-radius: 40px;
+  border: 2px solid #E8761E;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+/* ── User Menu Wrapper ── */
+.user-menu {
+  position: relative;
+}
+
+/* ── Trigger button ── */
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--hdr-orange);
+  border: 2px solid var(--hdr-orange);
+  border-radius: var(--btn-radius);
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  transition: background .2s, transform .15s;
+  white-space: nowrap;
+}
+.user-trigger:hover {
+  background: #e06d00;
+  border-color: #e06d00;
+  transform: translateY(-1px);
+}
+.user-trigger svg {
+  transition: transform .25s ease;
+  flex-shrink: 0;
+}
+.user-menu.open .user-trigger svg {
+  transform: rotate(180deg);
+}
+
+/* ── Avatar circle ── */
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+/* ── Dropdown ── */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  min-width: 200px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+  border: 1px solid #f0ece6;
+  padding: 6px 0;
+  z-index: 9999;
+
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.user-menu.open .user-dropdown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Dropdown header (nom + rôle) ── */
+.user-dropdown-header {
+  padding: 12px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.user-dropdown-header span:first-child {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.user-role-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #fff5e6;
+  color: var(--hdr-orange);
+  width: fit-content;
+}
+
+/* ── Divider ── */
+.user-dropdown-divider {
+  border: none;
+  border-top: 1px solid #f0ece6;
+  margin: 4px 0;
+}
+
+/* ── Items ── */
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+.user-dropdown-item:hover {
+  background: #fff8f2;
+  color: var(--hdr-orange);
+}
+.user-dropdown-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ── Logout ── */
+.user-logout {
+  color: #c0392b;
+}
+.user-logout:hover {
+  background: #fff5f5;
+  color: #c0392b;
+}
+.user-logout svg {
+  stroke: #c0392b;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .user-trigger .user-name { display: none; }
+  .user-dropdown { right: -8px; min-width: 180px; }
+}
+
+.user-menu { position: relative; }
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--hdr-orange);
+  border: 2px solid var(--hdr-orange);
+  border-radius: var(--btn-radius);
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  transition: background .2s, transform .15s;
+  white-space: nowrap;
+}
+.user-trigger:hover { background: #e06d00; border-color: #e06d00; transform: translateY(-1px); }
+.user-trigger svg   { transition: transform .25s ease; flex-shrink: 0; }
+.user-menu.open .user-trigger svg { transform: rotate(180deg); }
+
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px); right: 0;
+  background: #fff;
+  border-radius: 12px;
+  min-width: 200px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+  border: 1px solid #f0ece6;
+  padding: 6px 0;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.user-menu.open .user-dropdown { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+.user-dropdown-header { padding: 12px 16px 10px; display: flex; flex-direction: column; gap: 4px; }
+.user-dropdown-header span:first-child { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; }
+
+.user-role-badge {
+  font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: 20px;
+  background: #fff5e6; color: var(--hdr-orange);
+  width: fit-content;
+}
+
+.user-dropdown-divider { border: none; border-top: 1px solid #f0ece6; margin: 4px 0; }
+
+.user-dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  font-size: 0.84rem; font-weight: 600; color: #333;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  text-decoration: none;
+  background: none; border: none;
+  width: 100%; text-align: left;
+}
+.user-dropdown-item:hover { background: #fff8f2; color: var(--hdr-orange); }
+.user-dropdown-item svg  { flex-shrink: 0; opacity: 0.7; }
+
+.user-logout { color: #c0392b; }
+.user-logout:hover { background: #fff5f5; color: #c0392b; }
+.user-logout svg { stroke: #c0392b; }
+
+@media (max-width: 768px) {
+  .user-trigger .user-name { display: none; }
+  .user-dropdown { right: -8px; min-width: 180px; }
+}
+/* ==========================================================================
+   HEADER.CSS — Navigation desktop + mobile drawer
+   Projet : CAAR Assurances
+   Contenu :
+     1. Variables utilisées par le header (subset de :root)
+     2. Layout header (.right-side, .top-row, .bottom-row)
+     3. Bouton CTA top (.btn-top)
+     4. Séparateurs (.top-divider, .divider)
+     5. Navigation desktop (.nav-links, .nav-link, .arrow)
+     6. Dropdown menu (.dropdown, .dropdown-menu)
+     7. Icônes nav (.nav-icons, .icon-btn, .icon-img, .lang-label)
+     8. Mobile menu button (.mobile-menu-btn)
+     9. Mobile nav overlay (.mobile-nav-overlay)
+    10. Mobile nav drawer (.mobile-nav, .mobile-nav-header, etc.)
+    11. Media queries header (≤768px, ≤480px)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. LAYOUT HEADER
+   ========================================================================== */
+
+.right-side {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.top-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0 14px 20px;
+}
+
+.bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+
+
+/* ==========================================================================
+   2. BOUTON CTA TOP (.btn-top)
+   ========================================================================== */
+
+.btn-top {
+  padding: 9px 24px;
+  background: var(--hdr-orange);
+  border: 2px solid var(--hdr-orange);
+  border-radius: var(--btn-radius);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-block;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.btn-top:hover {
+  background: #e06d00;
+  border-color: #e06d00;
+  transform: translateY(-1px);
+}
+
+
+/* ==========================================================================
+   3. SÉPARATEURS
+   ========================================================================== */
+
+.top-divider,
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+
+/* ==========================================================================
+   4. NAVIGATION DESKTOP
+   ========================================================================== */
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+  position: relative;
+  transition: color .2s;
+  white-space: nowrap;
+}
+.nav-link:hover,
+.nav-link.active {
+  color: var(--hdr-orange);
+}
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  background: var(--hdr-orange);
+  border-radius: 3px 3px 0 0;
+}
+
+.arrow {
+  font-size: 14px;
+  color: var(--hdr-orange);
+  font-weight: 700;
+  transition: transform .2s;
+}
+
+
+/* ==========================================================================
+   5. DROPDOWN MENU
+   ========================================================================== */
+
+.dropdown {
+  position: relative;
+  list-style: none;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 200px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+  list-style: none;
+  padding: 6px 0;
+  z-index: 999;
+}
+.dropdown:hover .dropdown-menu { display: block; }
+.dropdown:hover .arrow         { transform: rotate(180deg); }
+
+.dropdown-menu li a {
+  display: block;
+  padding: 11px 20px;
+  font-size: 13px;
+  color: var(--dark);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background .15s, color .15s;
+}
+.dropdown-menu li:last-child a { border-bottom: none; }
+.dropdown-menu li a:hover      { background: #fff5e6; color: var(--hdr-orange); }
+
+
+/* ==========================================================================
+   6. ICÔNES NAVIGATION DROITE
+   ========================================================================== */
+
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background .2s;
+}
+.icon-btn:hover { background: #f5f5f5; }
+
+.icon-img   { width: 26px; height: 26px; object-fit: contain; }
+.lang-label { font-size: 13px; font-weight: 700; color: var(--dark); }
+
+
+/* ==========================================================================
+   7. MOBILE — BOUTON HAMBURGER
+   ========================================================================== */
+
+.mobile-menu-btn {
+  display: none; /* affiché via media query ci-dessous */
+}
+
+
+/* ==========================================================================
+   8. MOBILE — OVERLAY (fond semi-transparent)
+   ========================================================================== */
+
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+  cursor: pointer;
+}
+.mobile-nav-overlay.open { display: block; }
+
+
+/* ==========================================================================
+   9. MOBILE — DRAWER (panneau latéral)
+   ========================================================================== */
+
+.mobile-nav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--white);
+  z-index: 1200;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+}
+.mobile-nav.open {
+  transform: translateX(0);
+}
+
+.mobile-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.mobile-nav-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--dark);
+}
+
+.mobile-nav-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--gray);
+  padding: 4px;
+  line-height: 1;
+}
+
+.mobile-nav a {
+  display: block;
+  padding: 14px 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dark);
+  border-bottom: 1px solid #f5f5f5;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+}
+.mobile-nav a:hover,
+.mobile-nav a.active {
+  color: var(--hdr-orange);
+  background: #fff8f2;
+}
+
+.mobile-nav-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+}
+.mobile-nav-btns .btn-top {
+  text-align: center;
+  border-radius: var(--btn-radius);
+  font-size: 0.84rem;
+  padding: 10px;
+  display: block;
+}
+
+
+/* ==========================================================================
+   10. MEDIA QUERIES — HEADER
+   ========================================================================== */
+
+/* ---- Tablet ≤1024px ---- */
+@media (max-width: 1024px) {
+  .header-inner { padding: 0 20px; }
+  .logo-img     { width: 100px; height: 100px; }
+  .top-row      { padding: 8px 0 8px 16px; }
+}
+
+/* ---- Mobile ≤768px ---- */
+@media (max-width: 768px) {
+  /* Cacher la nav desktop et la top bar */
+  .nav-links,
+  .top-row,
+  .top-divider,
+  .divider   { display: none; }
+
+  /* Afficher le bouton hamburger */
+  .mobile-menu-btn { display: flex !important; }
+
+  /* Adapter le layout */
+  .bottom-row   { justify-content: flex-end; padding: 8px 0; height: auto; }
+  .header-inner { padding: 0 16px; flex-wrap: wrap; }
+  .logo-block   { border-right: 1px solid var(--border); padding: 8px 12px 8px 0; }
+  .logo-img     { width: 72px; height: 72px; }
+}
+
+/* ---- Small mobile ≤480px ---- */
+@media (max-width: 480px) {
+  .logo-img { width: 48px; height: 48px; }
+}
+
+
+</style>
+</body>
+</html>

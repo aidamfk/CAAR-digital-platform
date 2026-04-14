@@ -1,116 +1,99 @@
 /* ============================================================
-   CAAR — auth.js
-   Single source of truth for all authentication logic.
-   Import this on every page that needs auth awareness.
-============================================================ */
+   CAAR — auth.js  (v2 — backward-compatible wrapper)
+   ─────────────────────────────────────────────────────────
+   This file is LOADED AFTER app-state.js on every page.
+   It keeps the old function names that HTML onclick="" and
+   other scripts reference, but delegates to the new module.
 
-const AUTH_API = 'http://localhost:3000';
+   LOAD ORDER (in every HTML file):
+     <script src="app-state.js"></script>   ← state engine
+     <script src="auth.js"></script>         ← this file
+     <script src="main.js"></script>         ← header injection
+   ============================================================ */
 
-/* ── Getters ─────────────────────────────────────────────── */
-function getToken() {
-  return localStorage.getItem('token') || null;
-}
-function getRole() {
-  return localStorage.getItem('role') || null;
-}
-function isLoggedIn() {
-  return !!getToken();
+'use strict';
+
+/* ── Keep these for backward compatibility with existing HTML ── */
+var AUTH_API = window.CAAR && window.CAAR.API
+  ? window.CAAR.API
+  : 'http://localhost:3000';
+
+/* ── Re-export as globals for pages that call auth.* directly ── */
+
+// These are already set by app-state.js, but we keep them here
+// in case auth.js is loaded without app-state.js on old pages.
+if (typeof window.getToken === 'undefined') {
+  window.getToken = function() {
+    return localStorage.getItem('token') || localStorage.getItem('caar_auth_token') || null;
+  };
 }
 
-/* ── Role → dashboard URL ────────────────────────────────── */
-function getDashboardUrl(role) {
-  const map = {
+if (typeof window.getRole === 'undefined') {
+  window.getRole = function() {
+    var user = window.getUser ? window.getUser() : null;
+    if (user && user.role) return user.role;
+    return localStorage.getItem('role') || null;
+  };
+}
+
+if (typeof window.isLoggedIn === 'undefined') {
+  window.isLoggedIn = function() {
+    return typeof window.isAuthenticated === 'function'
+      ? window.isAuthenticated()
+      : !!window.getToken();
+  };
+}
+
+/* ── getDashboardUrl — kept for main.js and header component ── */
+window.getDashboardUrl = function(role) {
+  var map = {
     client: 'client-dashboard.html',
     admin:  'admin-dashboard.html',
-    expert: 'expert-dashboard.html'
+    expert: 'expert-dashboard.html',
   };
   return map[role] || 'client-dashboard.html';
-}
+};
 
-/* ── Redirect to correct dashboard ──────────────────────── */
-function redirectToDashboard() {
-  window.location.href = getDashboardUrl(getRole());
-}
+/* ── redirectToDashboard ── */
+window.redirectToDashboard = function() {
+  var user = window.getUser ? window.getUser() : null;
+  var role = user ? user.role : (localStorage.getItem('role') || 'client');
+  window.location.href = window.getDashboardUrl(role);
+};
 
-/* ── Auth guard — call at top of any protected page ─────── */
-function requireAuth() {
-  if (!getToken()) {
-    window.location.href = 'login.html';
+/* ── requireAuth guard — kept for pages not yet using initApp() ── */
+window.requireAuth = function() {
+  if (typeof window.isAuthenticated === 'function') {
+    if (!window.isAuthenticated()) {
+      window.location.href = 'login.html';
+    }
+  } else {
+    if (!window.getToken()) {
+      window.location.href = 'login.html';
+    }
   }
+};
+
+/* ── logout — kept so existing onclick="logout()" works ── */
+if (typeof window.logout === 'undefined') {
+  window.logout = function() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user');
+    localStorage.removeItem('caar_auth_token');
+    window.location.href = 'index.html';
+  };
 }
 
-/* ── Logout ──────────────────────────────────────────────── */
-function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('role');
-  localStorage.removeItem('user');
-  localStorage.removeItem('caar_auth_token'); // clean up old key too
-  window.location.href = 'index.html';
-}
-
-/* ── Dynamic header rendering ────────────────────────────── */
-function renderAuthHeader() {
-  const loginBtn     = document.getElementById('loginBtn');
-  const userMenu     = document.getElementById('userMenu');
-  const userAvatar   = document.getElementById('userAvatar');
-  const userName     = document.getElementById('userName');
-  const dropUserName = document.getElementById('dropUserName');
-  const dropUserRole = document.getElementById('dropUserRole');
-  const dashLink     = document.getElementById('dashboardLink');
-  const logoutBtn    = document.getElementById('logoutBtn');
-
-  if (!isLoggedIn()) {
-    if (loginBtn)  loginBtn.style.display  = 'inline-block';
-    if (userMenu)  userMenu.style.display  = 'none';
-    return;
+/* ── renderAuthHeader — old name used by some pages ── */
+window.renderAuthHeader = function() {
+  if (typeof window.renderHeader === 'function') {
+    window.renderHeader();
   }
+};
 
-  // Logged in — build from stored data
-  const role = getRole();
-  let   name = 'User';
-
-  try {
-    const stored = JSON.parse(localStorage.getItem('user') || '{}');
-    name = stored.first_name
-      ? stored.first_name + ' ' + (stored.last_name || '')
-      : stored.name || stored.email || 'User';
-  } catch { /* ignore */ }
-
-  if (loginBtn)  loginBtn.style.display = 'none';
-  if (userMenu)  userMenu.style.display = 'block';
-
-  const initials = name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  if (userAvatar)   userAvatar.textContent   = initials;
-  if (userName)     userName.textContent     = name.split(' ')[0];
-  if (dropUserName) dropUserName.textContent = name.trim();
-  if (dropUserRole) dropUserRole.textContent = role || 'client';
-
-  if (dashLink) {
-    dashLink.href = getDashboardUrl(role);
-    dashLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      redirectToDashboard();
-    });
-  }
-  if (logoutBtn) {
-    // Remove old listeners by cloning
-    const fresh = logoutBtn.cloneNode(true);
-    logoutBtn.parentNode.replaceChild(fresh, logoutBtn);
-    fresh.addEventListener('click', logout);
-  }
-}
-
-/* ── Toggle dropdown (used by userTrigger button) ────────── */
-function initUserMenuToggle() {
-  const trigger  = document.getElementById('userTrigger');
-  const userMenu = document.getElementById('userMenu');
-  if (!trigger || !userMenu) return;
-
-  trigger.addEventListener('click', function(e) {
-    e.stopPropagation();
-    userMenu.classList.toggle('open');
-  });
-  document.addEventListener('click', function() {
-    userMenu.classList.remove('open');
-  });
-}
+/* ── initUserMenuToggle — kept for header component ── */
+window.initUserMenuToggle = function() {
+  // Now handled inside renderHeader() via app-state.js
+  // Kept as no-op for compatibility
+};
