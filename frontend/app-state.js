@@ -62,7 +62,7 @@ function renderAuthHeader() {
   var dashLink     = document.getElementById('dashboardLink');
   var logoutBtn    = document.getElementById('logoutBtn');
 
-  if (!loginBtn && !userMenu) {
+  if (!loginBtn || !userMenu) {
     _log('renderAuthHeader — header not in DOM yet');
     return;
   }
@@ -72,20 +72,26 @@ function renderAuthHeader() {
   /* NOT AUTHENTICATED */
   if (!payload) {
     _log('renderAuthHeader — guest');
-    if (loginBtn) loginBtn.style.display = 'inline-flex';
-    if (userMenu) userMenu.style.display = 'none';
+    loginBtn.style.display = 'inline-flex';
+    userMenu.style.display = 'none';
     return;
   }
 
   /* AUTHENTICATED */
   _log('renderAuthHeader — authenticated:', payload.email, '/', payload.role);
 
-  if (loginBtn) loginBtn.style.display = 'none';
-  if (userMenu) userMenu.style.display = 'block';
+  loginBtn.style.display = 'none';
+  userMenu.style.display = 'block';
 
-  var name = payload.first_name
-    ? (payload.first_name + ' ' + (payload.last_name || '')).trim()
-    : (payload.email || 'User');
+  /* Build display name from JWT payload only */
+  var name;
+  if (payload.first_name) {
+    name = (payload.first_name + ' ' + (payload.last_name || '')).trim();
+  } else if (payload.email) {
+    name = payload.email;
+  } else {
+    name = 'User';
+  }
 
   var initials = name.trim().split(/\s+/)
     .map(function(w) { return w[0]; })
@@ -189,6 +195,7 @@ async function _refreshProfile() {
   try {
     var r = await apiRequest('/api/auth/me');
     if (r.ok && r.data && r.data.user) {
+      /* Store only for reference — auth state still comes from JWT */
       localStorage.setItem('user', JSON.stringify(r.data.user));
     }
   } catch (_) {}
