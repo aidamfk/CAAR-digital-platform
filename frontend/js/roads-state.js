@@ -1,576 +1,571 @@
+/**
+ * roads-state.js  — v3  (logic-only, zero HTML changes)
+ *
+ * PLUGS INTO roads.html AS-IS.
+ * Load AFTER the existing inline <script> so overrides take effect.
+ *
+ * Responsibilities:
+ *  1. Fetch real plans → inject into existing plan cards
+ *  2. Single localStorage state object (plan, vehicle, driver, quote)
+ *  3. Override submitAndProceed()  (step 2 → 3)
+ *  4. Override validateAndPay()    (step 3 → 4)
+ *  5. In-page error display — no alert()
+ *  6. Button loading guards — no double-submit
+ *  7. Field auto-save + restore on refresh
+ */
+
 'use strict';
 
-/* ============================================================
-   roads-state.js — Single source of truth for roads.html
-   Depends on: app-state.js (apiRequest)
-============================================================ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-const STATE_KEY = 'caar_roads_state';
+var RS = {
+  API:      'http://localhost:3000',
+  STATE_KEY: 'caar_roads_v3',
 
-const INITIAL_STATE = {
-  currentStep: 1,
-  planId:      null,
-  planData:    null,
-  vehicle:     { license_plate: '', brand: '', model: '', year: '', wilaya: '' },
-  driver:      { title: 'Mr', first_name: '', last_name: '', email: '', phone: '' },
-  quoteId:     null,
-  authToken:   null,
+  /** map card slot → plan name fragment (case-insensitive startsWith match) */
+  CARD_SLOTS: [
+    { cardId: 'plan-basic',   match: 'basic'   },
+    { cardId: 'plan-plus',    match: 'plus'     },
+    { cardId: 'plan-premium', match: 'premium'  },
+  ],
 };
 
-// ── State API ──────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE  — single localStorage object
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function getAppState() {
+var _state = (function () {
+  function load() {
+    try { return JSON.parse(localStorage.getItem(RS.STATE_KEY) || '{}'); }
+    catch (_) { return {}; }
+  }
+  function save(patch) {
+    var next = Object.assign(load(), patch);
+    localStorage.setItem(RS.STATE_KEY, JSON.stringify(next));
+    return next;
+  }
+  function clear() { localStorage.removeItem(RS.STATE_KEY); }
+  function get(key) { return load()[key]; }
+
+  return { load: load, save: save, clear: clear, get: get };
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PLAN INJECTION  — fetch real plans, inject into existing 3 cards
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+async function _loadAndInjectPlans() {
+  var plans;
   try {
-    const raw = localStorage.getItem(STATE_KEY);
-    return raw ? { ...INITIAL_STATE, ...JSON.parse(raw) } : { ...INITIAL_STATE };
-  } catch {
-    return { ...INITIAL_STATE };
-  }
-}
-
-function setAppState(state) {
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-}
-
-function updateAppState(partial) {
-  setAppState({ ...getAppState(), ...partial });
-}
-
-function clearAppState() {
-  localStorage.removeItem(STATE_KEY);
-}
-
-// ── UI Helpers ─────────────────────────────────────────────
-
-function showEl(id)  { const e = document.getElementById(id); if (e) e.style.display = ''; }
-function hideEl(id)  { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
-function setText(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
-function getVal(id)  { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
-
-function showError(fieldId, msg) {
-  const field = document.getElementById(fieldId);
-  const err   = document.getElementById(fieldId + '-error');
-  if (field) field.classList.add('field-error');
-  if (err)   { err.textContent = msg; err.style.display = 'flex'; }
-}
-
-function clearError(fieldId) {
-  const field = document.getElementById(fieldId);
-  const err   = document.getElementById(fieldId + '-error');
-  if (field) field.classList.remove('field-error');
-  if (err)   err.style.display = 'none';
-}
-
-function clearAllErrors() {
-  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
-  document.querySelectorAll('.inline-error').forEach(el => el.style.display = 'none');
-}
-
-function setButtonLoading(btnId, loading, label) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.disabled = loading;
-  if (loading) {
-    btn.dataset.orig = btn.innerHTML;
-    btn.innerHTML = `<span class="btn-spinner"></span>${label || 'Processing…'}`;
-  } else {
-    btn.innerHTML = btn.dataset.orig || btn.innerHTML;
-  }
-}
-
-function showPageError(containerId, msg) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = `<div class="api-error-banner">⚠ ${msg}</div>`;
-  el.style.display = 'block';
-}
-
-function hidePageError(containerId) {
-  const el = document.getElementById(containerId);
-  if (el) el.style.display = 'none';
-}
-
-// ── Step Navigation ────────────────────────────────────────
-
-function goToStep(n) {
-  const state = getAppState();
-  if (n < 1 || n > 5) return;
-
-  // Validate current step before advancing
-  if (n > state.currentStep) {
-    if (!validateStep(state.currentStep)) return;
-    saveCurrentStepData(state.currentStep);
-  }
-
-  document.querySelectorAll('.road-step').forEach(el => el.classList.add('hidden'));
-  const target = document.getElementById(`form-step-${n}`);
-  if (target) target.classList.remove('hidden');
-
-  updateAppState({ currentStep: n });
-  updateStepIndicators(n);
-
-  if (n === 4) renderRecap();
-  if (n === 3) restoreDriverFields();
-  if (n === 2) restoreVehicleFields();
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function updateStepIndicators(active) {
-  for (let i = 1; i <= 5; i++) {
-    const el = document.getElementById(`step-indicator-${i}`);
-    if (!el) continue;
-    el.classList.remove('active', 'done');
-    if (i < active)       el.classList.add('done');
-    else if (i === active) el.classList.add('active');
-  }
-}
-
-// ── Plan Loading ───────────────────────────────────────────
-
-async function loadPlans() {
-  const container = document.getElementById('plan-cards-container');
-  const errBox    = document.getElementById('plans-error');
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="plan-skeleton"></div>
-    <div class="plan-skeleton"></div>
-    <div class="plan-skeleton"></div>`;
-  hidePageError('plans-error');
-
-  let result;
-  try {
-    result = await apiRequest('/api/plans?product_name=Roadside+Assistance', 'GET');
-  } catch {
-    showPageError('plans-error', 'Network error — could not load plans. Please refresh.');
-    container.innerHTML = '';
+    var res  = await fetch(RS.API + '/api/plans?product_name=Roadside+Assistance');
+    var body = await res.json();
+    plans    = (body.plans || []).filter(function (p) { return p.price > 0; });
+  } catch (e) {
+    _log('Plans fetch failed — keeping static cards:', e.message);
     return;
   }
 
-  if (!result.ok || !result.data.plans || !result.data.plans.length) {
-    showPageError('plans-error', result.data?.error || 'No plans available. Please contact support.');
-    container.innerHTML = '';
-    return;
-  }
+  if (!plans.length) { _log('No plans returned — keeping static cards'); return; }
 
-  const plans = result.data.plans;
-  container.innerHTML = plans.map(plan => renderPlanCard(plan)).join('');
-
-  container.querySelectorAll('.plan-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const id    = parseInt(card.dataset.planId, 10);
-      const price = parseFloat(card.dataset.price);
-      const data  = plans.find(p => p.id === id);
-      selectPlan(id, price, data);
+  /* Match each slot to an API plan by name */
+  RS.CARD_SLOTS.forEach(function (slot) {
+    var plan = plans.find(function (p) {
+      return p.name.toLowerCase().indexOf(slot.match) === 0;
     });
+    if (!plan) {
+      /* Fallback: assign by index order if name doesn't match */
+      var idx = RS.CARD_SLOTS.indexOf(slot);
+      plan    = plans[idx] || null;
+    }
+    if (!plan) return;
+
+    var card = document.getElementById(slot.cardId);
+    if (!card) return;
+
+    /* Store real DB id on card DOM */
+    card.setAttribute('data-plan-id',    plan.id);
+    card.setAttribute('data-plan-price', plan.price);
+    card.setAttribute('data-plan-name',  plan.name);
+
+    /* Update visible price */
+    var priceEl = card.querySelector('.plan-price');
+    if (priceEl) priceEl.textContent = _fmtDZD(plan.price, false);
+
+    /* Update plan name label */
+    var nameEl = card.querySelector('.plan-name');
+    if (nameEl) nameEl.textContent = plan.name;
+
+    /* Update features list if API returned them */
+    var features = Array.isArray(plan.features) ? plan.features : [];
+    if (features.length) {
+      var listEl = card.querySelector('.plan-features');
+      if (listEl) {
+        listEl.innerHTML = features.map(function (f) {
+          return '<li>' + _esc(String(f)) + '</li>';
+        }).join('');
+      }
+    }
+
+    /* Rebind click to use real plan_id  — DO NOT change class or layout */
+    card.onclick = function () { _selectPlanByCard(card); };
   });
 
-  // Restore previously selected plan
-  const state = getAppState();
-  if (state.planId) {
-    const card = container.querySelector(`[data-plan-id="${state.planId}"]`);
-    if (card) card.classList.add('selected');
-    document.getElementById('btn-step1-continue')?.removeAttribute('disabled');
+  _log('Plans injected from API:', plans.map(function (p) {
+    return p.name + ' (id=' + p.id + ', ' + p.price + ' DZD)';
+  }));
+
+  /* Restore previously selected plan, or default to Plus */
+  var savedPlanId = _state.get('planId');
+  if (savedPlanId) {
+    var savedCard = document.querySelector('[data-plan-id="' + savedPlanId + '"]');
+    if (savedCard) { _selectPlanByCard(savedCard); return; }
+  }
+  /* Default: select the "Plus" slot */
+  var plusCard = document.getElementById('plan-plus');
+  if (plusCard && plusCard.getAttribute('data-plan-id')) {
+    _selectPlanByCard(plusCard);
   }
 }
 
-function renderPlanCard(plan) {
-  const features = Array.isArray(plan.features) ? plan.features : [];
-  const popular  = plan.is_popular
-    ? `<span class="plan-popular-badge">⭐ Most Popular</span>` : '';
-  const featuresHtml = features
-    .map(f => `<li>${f}</li>`)
-    .join('');
+/** Selects a plan card using its injected data-plan-* attributes */
+function _selectPlanByCard(card) {
+  var planId    = parseInt(card.getAttribute('data-plan-id'),    10);
+  var planPrice = parseFloat(card.getAttribute('data-plan-price'));
+  var planName  = card.getAttribute('data-plan-name')
+                  || (card.querySelector('.plan-name') || {}).textContent
+                  || 'Plan';
 
-  return `
-    <div class="plan-card" data-plan-id="${plan.id}" data-price="${plan.price}">
-      ${popular}
-      <span class="plan-badge-selected">✓ Selected</span>
-      <div class="plan-name">${plan.name}</div>
-      <div class="plan-price">${Number(plan.price).toLocaleString('fr-DZ')} DZD</div>
-      <div class="plan-price-sub">per year, taxes included</div>
-      <ul class="plan-features">${featuresHtml}</ul>
-    </div>`;
-}
+  /* Persist to state BEFORE calling the existing selectPlan so globals sync */
+  _state.save({ planId: planId, planData: { id: planId, name: planName, price: planPrice } });
 
-function selectPlan(planId, price, planData) {
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-  const card = document.querySelector(`[data-plan-id="${planId}"]`);
-  if (card) card.classList.add('selected');
-
-  updateAppState({ planId, planData });
-
-  const continueBtn = document.getElementById('btn-step1-continue');
-  if (continueBtn) continueBtn.removeAttribute('disabled');
-
-  updateStep1Summary(price, planData?.name);
-}
-
-function updateStep1Summary(price, name) {
-  setText('sum-plan-name',    name  || '—');
-  setText('sum-annual',       price ? `${Number(price).toLocaleString('fr-DZ')} DZD` : '—');
-  setText('sum-total-step1',  price ? `${Number(price).toLocaleString('fr-DZ')} DZD` : '—');
-}
-
-// ── Validation ─────────────────────────────────────────────
-
-const VALIDATORS = {
-  license_plate: v => /^[\d]{4,6}-\d{2}-\d{3}$/.test(v) || v.length >= 5,
-  brand:         v => v.length > 0,
-  model:         v => v.length > 0,
-  year:          v => /^\d{4}$/.test(v) && parseInt(v) >= 1990 && parseInt(v) <= new Date().getFullYear(),
-  wilaya:        v => v.length > 0,
-  first_name:    v => v.length >= 2,
-  last_name:     v => v.length >= 2,
-  email:         v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-  phone:         v => /^0[567]\d{8}$/.test(v.replace(/\s/g, '')),
-};
-
-const ERROR_MSGS = {
-  license_plate: 'Enter a valid license plate (e.g. 12345-16-001)',
-  brand:         'Please select a vehicle brand',
-  model:         'Please enter the vehicle model',
-  year:          'Enter a valid year (1990–present)',
-  wilaya:        'Please select a wilaya',
-  first_name:    'First name must be at least 2 characters',
-  last_name:     'Last name must be at least 2 characters',
-  email:         'Enter a valid email address',
-  phone:         'Enter a valid Algerian phone number (05/06/07 + 8 digits)',
-};
-
-function validateStep(step) {
-  clearAllErrors();
-  let valid = true;
-
-  if (step === 1) {
-    const state = getAppState();
-    if (!state.planId) {
-      showPageError('plans-error', 'Please select a plan to continue.');
-      return false;
-    }
-    if (!document.getElementById('terms-consent')?.checked) {
-      showPageError('plans-error', 'Please accept the general terms and conditions.');
-      return false;
-    }
-    return true;
-  }
-
-  if (step === 2) {
-    const fields = ['license_plate', 'brand', 'model', 'year', 'wilaya'];
-    fields.forEach(field => {
-      const val = getVal(field);
-      if (!VALIDATORS[field]?.(val)) {
-        showError(field, ERROR_MSGS[field]);
-        valid = false;
-      }
-    });
-    return valid;
-  }
-
-  if (step === 3) {
-    const fields = ['first_name', 'last_name', 'email', 'phone'];
-    fields.forEach(field => {
-      const val = getVal(field);
-      if (!VALIDATORS[field]?.(val)) {
-        showError(field, ERROR_MSGS[field]);
-        valid = false;
-      }
-    });
-    const email  = getVal('email');
-    const confEl = document.getElementById('confirm_email');
-    if (confEl && email !== confEl.value.trim()) {
-      showError('confirm_email', 'Email addresses do not match');
-      valid = false;
-    }
-    return valid;
-  }
-
-  return true;
-}
-
-// ── State Save / Restore ───────────────────────────────────
-
-function saveCurrentStepData(step) {
-  if (step === 2) {
-    updateAppState({
-      vehicle: {
-        license_plate: getVal('license_plate'),
-        brand:         getVal('brand'),
-        model:         getVal('model'),
-        year:          getVal('year'),
-        wilaya:        getVal('wilaya'),
-      }
-    });
-  }
-
-  if (step === 3) {
-    const titleEl = document.getElementById('title');
-    updateAppState({
-      driver: {
-        title:      titleEl ? titleEl.value : 'Mr',
-        first_name: getVal('first_name'),
-        last_name:  getVal('last_name'),
-        email:      getVal('email').toLowerCase(),
-        phone:      getVal('phone').replace(/\s/g, ''),
-      }
-    });
+  /* Delegate visual selection + global variable update to the existing function */
+  if (typeof window.selectPlan === 'function') {
+    window.selectPlan(planName, planPrice, planId);
   }
 }
 
-function restoreVehicleFields() {
-  const { vehicle } = getAppState();
-  if (!vehicle) return;
-  Object.keys(vehicle).forEach(key => {
-    const el = document.getElementById(key);
-    if (el && vehicle[key]) el.value = vehicle[key];
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIELD PERSISTENCE  — auto-save inputs to state, restore on reload
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+var _VEHICLE_FIELDS = [
+  { id: 'license_plate', key: 'license_plate' },
+  { id: 'vehicle_brand', key: 'brand'          },
+  { id: 'vehicle_model', key: 'model'          },
+  { id: 'vehicle_year',  key: 'year'           },
+  { id: 'wilaya',        key: 'wilaya'         },
+];
+
+var _DRIVER_FIELDS = [
+  { id: 'title',         key: 'title'      },
+  { id: 'first_name',    key: 'first_name' },
+  { id: 'last_name',     key: 'last_name'  },
+  { id: 'email',         key: 'email'      },
+  { id: 'confirm_email', key: 'email_confirm' },
+  { id: 'mobile_1',      key: 'phone'      },
+];
+
+function _saveVehicle() {
+  var v = {};
+  _VEHICLE_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (el) v[f.key] = el.value;
+  });
+  _state.save({ vehicle: v });
+}
+
+function _saveDriver() {
+  var d = {};
+  _DRIVER_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (el) d[f.key] = el.value;
+  });
+  _state.save({ driver: d });
+}
+
+function _restoreVehicle() {
+  var v = _state.get('vehicle') || {};
+  _VEHICLE_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (el && v[f.key]) el.value = v[f.key];
   });
 }
 
-function restoreDriverFields() {
-  const { driver } = getAppState();
-  if (!driver) return;
-  Object.keys(driver).forEach(key => {
-    const el = document.getElementById(key);
-    if (el && driver[key]) el.value = driver[key];
+function _restoreDriver() {
+  var d = _state.get('driver') || {};
+  _DRIVER_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (el && d[f.key]) el.value = d[f.key];
   });
 }
 
-// ── Recap ──────────────────────────────────────────────────
-
-function renderRecap() {
-  const state = getAppState();
-  const { vehicle, driver, planData } = state;
-
-  // Plan
-  setText('rv-plan',  planData?.name  || '—');
-  setText('rv-price', planData?.price ? `${Number(planData.price).toLocaleString('fr-DZ')} DZD` : '—');
-
-  // Vehicle
-  setText('rv-plate',  vehicle?.license_plate || '—');
-  setText('rv-brand',  vehicle?.brand         || '—');
-  setText('rv-model',  vehicle?.model         || '—');
-  setText('rv-year',   vehicle?.year          || '—');
-  setText('rv-wilaya', vehicle?.wilaya        || '—');
-
-  // Driver
-  const fullName = [driver?.title, driver?.first_name, driver?.last_name].filter(Boolean).join(' ');
-  setText('rv-name',  fullName         || '—');
-  setText('rv-phone', driver?.phone    || '—');
-  setText('rv-email', driver?.email    || '—');
-
-  // Dates
-  const startD = new Date();
-  const endD   = new Date();
-  endD.setFullYear(endD.getFullYear() + 1);
-  endD.setDate(endD.getDate() - 1);
-  const fmt = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  setText('rv-start', fmt(startD));
-  setText('rv-end',   fmt(endD));
-  setText('rv-total', planData?.price ? `${Number(planData.price).toLocaleString('fr-DZ')} DZD` : '—');
-}
-
-// ── Contract Submission ────────────────────────────────────
-
-async function submitContract() {
-  if (!validateStep(3)) return;
-  saveCurrentStepData(3);
-
-  const state = getAppState();
-  const { vehicle, driver, planId, planData } = state;
-
-  if (!planId) {
-    showPageError('recap-error', 'No plan selected. Please go back and select a plan.');
-    return;
-  }
-
-  hidePageError('recap-error');
-  setButtonLoading('btn-recap-continue', true, 'Creating quote…');
-
-  // Step A: Create quote
-  const quotePayload = {
-    first_name:    driver.first_name,
-    last_name:     driver.last_name,
-    email:         driver.email,
-    phone:         driver.phone || null,
-    license_plate: vehicle.license_plate.toUpperCase(),
-    brand:         vehicle.brand,
-    model:         vehicle.model,
-    year:          parseInt(vehicle.year, 10),
-    wilaya:        vehicle.wilaya || null,
-    plan_id:       planId,
-  };
-
-  let quoteResult;
-  try {
-    quoteResult = await apiRequest('/api/roadside/quote', 'POST', quotePayload);
-  } catch {
-    showPageError('recap-error', 'Network error — please check your connection.');
-    setButtonLoading('btn-recap-continue', false);
-    return;
-  }
-
-  if (!quoteResult.ok) {
-    showPageError('recap-error', quoteResult.data?.error || `Failed to create quote (HTTP ${quoteResult.status})`);
-    setButtonLoading('btn-recap-continue', false);
-    return;
-  }
-
-  const { quote_id, token } = quoteResult.data;
-  updateAppState({ quoteId: quote_id, authToken: token });
-  // Merge token into localStorage so apiRequest() picks it up
-  localStorage.setItem('token', token);
-
-  setButtonLoading('btn-recap-continue', true, 'Confirming quote…');
-
-  // Step B: Confirm quote
-  let confirmResult;
-  try {
-    confirmResult = await apiRequest(`/api/roadside/confirm/${quote_id}`, 'POST');
-  } catch {
-    showPageError('recap-error', 'Network error during confirmation.');
-    setButtonLoading('btn-recap-continue', false);
-    return;
-  }
-
-  if (!confirmResult.ok) {
-    showPageError('recap-error', confirmResult.data?.error || 'Failed to confirm quote.');
-    setButtonLoading('btn-recap-continue', false);
-    return;
-  }
-
-  setButtonLoading('btn-recap-continue', false);
-  populatePaymentStep();
-  goToStep(5);
-}
-
-async function processPayment() {
-  const state = getAppState();
-
-  if (!validatePaymentForm()) return;
-
-  hidePageError('payment-error');
-  setButtonLoading('btn-validate-pay', true, 'Processing payment…');
-
-  let payResult;
-  try {
-    payResult = await apiRequest(`/api/roadside/pay/${state.quoteId}`, 'POST', {});
-  } catch {
-    showPageError('payment-error', 'Network error during payment.');
-    setButtonLoading('btn-validate-pay', false);
-    return;
-  }
-
-  if (!payResult.ok) {
-    showPageError('payment-error', payResult.data?.error || 'Payment failed. Please try again.');
-    setButtonLoading('btn-validate-pay', false);
-    return;
-  }
-
-  const result = payResult.data;
-  clearAppState();
-
-  // Populate confirmation
-  setText('confirm-policy-ref', result.policy_reference || '—');
-  const startFmt = result.start_date?.split('-').reverse().join('/') || '—';
-  const endFmt   = result.end_date?.split('-').reverse().join('/')   || '—';
-  setText('confirm-dates',  `Issued: ${startFmt} · Valid until: ${endFmt}`);
-  setText('confirm-amount', result.amount_paid ? `${Number(result.amount_paid).toLocaleString('fr-DZ')} DZD` : '—');
-  setText('confirm-plan',   state.planData?.name || '—');
-
-  goToStep(5);
-  // Replace step 5 content with confirmation
-  const payBox = document.getElementById('form-step-5');
-  if (payBox) payBox.classList.add('hidden');
-  document.getElementById('form-step-confirm')?.classList.remove('hidden');
-}
-
-function validatePaymentForm() {
-  clearAllErrors();
-  let valid = true;
-  const card = document.getElementById('card_number')?.value.replace(/\s/g,'') || '';
-  const cvv  = document.getElementById('cvv2')?.value || '';
-  const month = document.getElementById('expiry_month')?.value || '';
-  const year  = document.getElementById('expiry_year')?.value  || '';
-  const name  = document.getElementById('cardholder_name')?.value.trim() || '';
-
-  if (card.length < 16) { showError('card_number', 'Invalid card number'); valid = false; }
-  if (cvv.length < 3)   { showError('cvv2', 'Invalid CVV'); valid = false; }
-  if (!month)           { showPageError('payment-error', 'Select expiry month'); valid = false; }
-  if (!year)            { showPageError('payment-error', 'Select expiry year'); valid = false; }
-  if (!name)            { showError('cardholder_name', 'Enter cardholder name'); valid = false; }
-  return valid;
-}
-
-function populatePaymentStep() {
-  const { planData } = getAppState();
-  const price = planData?.price || 0;
-  setText('pay-amount', `${Number(price).toLocaleString('fr-DZ')} DZD`);
-  setText('pay-ref', `New Contract — Roadside Assistance (${planData?.name || ''})`);
-  startCountdown(300);
-}
-
-// ── Countdown ──────────────────────────────────────────────
-
-let _countdownTimer = null;
-
-function startCountdown(seconds) {
-  clearInterval(_countdownTimer);
-  let remaining = seconds;
-  const tick = () => {
-    const el = document.getElementById('countdown');
-    if (el) el.textContent = `${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
-    if (remaining <= 0) clearInterval(_countdownTimer);
-    remaining--;
-  };
-  tick();
-  _countdownTimer = setInterval(tick, 1000);
-}
-
-// ── Live validation ────────────────────────────────────────
-
-function attachLiveValidation() {
-  Object.keys(VALIDATORS).forEach(field => {
-    const el = document.getElementById(field);
+function _attachFieldSavers() {
+  _VEHICLE_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
     if (!el) return;
-    el.addEventListener('input', () => {
-      const val = el.value.trim();
-      if (VALIDATORS[field](val)) clearError(field);
-      else showError(field, ERROR_MSGS[field]);
-    });
+    el.addEventListener('input',  _saveVehicle);
+    el.addEventListener('change', _saveVehicle);
+  });
+  _DRIVER_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (!el) return;
+    el.addEventListener('input',  _saveDriver);
+    el.addEventListener('change', _saveDriver);
   });
 }
 
-// ── Init ───────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON LOADING GUARD
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function initRoadsPage() {
-  // Restore step
-  const state = getAppState();
-  updateStepIndicators(state.currentStep);
-  document.querySelectorAll('.road-step').forEach(el => el.classList.add('hidden'));
-  const activeStep = document.getElementById(`form-step-${state.currentStep}`);
-  if (activeStep) activeStep.classList.remove('hidden');
-
-  // Load plans
-  loadPlans();
-
-  // Restore field values if returning to mid-flow
-  if (state.currentStep === 2) restoreVehicleFields();
-  if (state.currentStep === 3) restoreDriverFields();
-  if (state.currentStep === 4) renderRecap();
-
-  // Wire navigation buttons
-  document.getElementById('btn-step1-continue')?.addEventListener('click', () => goToStep(2));
-  document.getElementById('btn-step2-back')?.addEventListener('click',     () => goToStep(1));
-  document.getElementById('btn-step2-continue')?.addEventListener('click', () => goToStep(3));
-  document.getElementById('btn-step3-back')?.addEventListener('click',     () => goToStep(2));
-  document.getElementById('btn-step3-continue')?.addEventListener('click', () => goToStep(4));
-  document.getElementById('btn-recap-back')?.addEventListener('click',     () => goToStep(3));
-  document.getElementById('btn-recap-continue')?.addEventListener('click', submitContract);
-  document.getElementById('btn-pay-back')?.addEventListener('click',       () => goToStep(4));
-  document.getElementById('btn-validate-pay')?.addEventListener('click',   processPayment);
-
-  attachLiveValidation();
+function _btnLoad(id, label) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled  = true;
+  btn._rs_orig  = btn.innerHTML;
+  btn.innerHTML = '⏳ ' + (label || 'Processing…');
 }
 
-document.addEventListener('DOMContentLoaded', initRoadsPage);
+function _btnReset(id) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled  = false;
+  if (btn._rs_orig) btn.innerHTML = btn._rs_orig;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IN-PAGE ERROR DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function _showErr(boxId, textId, msg) {
+  var box  = document.getElementById(boxId);
+  var text = document.getElementById(textId);
+  if (text) text.textContent = msg;
+  if (box)  box.style.display = 'block';
+  _log('UI error [' + boxId + ']:', msg);
+}
+
+function _hideErr(boxId) {
+  var box = document.getElementById(boxId);
+  if (box) box.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   API HELPERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** POST /api/roadside/quote */
+async function _apiCreateQuote() {
+  /* Snapshot form values into state first */
+  _saveVehicle();
+  _saveDriver();
+
+  var s = _state.load();
+  var v = s.vehicle || {};
+  var d = s.driver  || {};
+
+  /* Resolve wilaya display text */
+  var wilayaEl = document.getElementById('wilaya');
+  var wilayaTxt = wilayaEl
+    ? wilayaEl.options[wilayaEl.selectedIndex].text
+    : (v.wilaya || null);
+
+  var payload = {
+    first_name:    (d.first_name || '').trim(),
+    last_name:     (d.last_name  || '').trim(),
+    email:         (d.email      || '').trim().toLowerCase(),
+    phone:          d.phone ? d.phone.replace(/\s/g, '') : null,
+    license_plate: (v.license_plate || '').toUpperCase().trim(),
+    brand:         (v.brand  || '').trim(),
+    model:         (v.model  || '').trim(),
+    year:           parseInt(v.year, 10) || 0,
+    wilaya:         wilayaTxt || null,
+    plan_id:        s.planId  || null,  /* ← ALWAYS from state, never hardcoded */
+  };
+
+  _log('POST /api/roadside/quote', JSON.stringify(payload));
+
+  var res  = await fetch(RS.API + '/api/roadside/quote', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
+  var data = await res.json();
+  _log('Quote response', res.status, data);
+
+  if (!res.ok) throw new Error(data.error || 'Failed to create quote (HTTP ' + res.status + ')');
+
+  /* Persist token + quoteId — overwrite so inline script also sees the token */
+  _state.save({ quoteId: data.quote_id, token: data.token });
+  localStorage.setItem('token', data.token); /* kept for compatibility */
+
+  /* Sync globals used by existing functions */
+  window.quoteId   = data.quote_id;
+  window.authToken = data.token;
+
+  return data;
+}
+
+/** POST /api/roadside/confirm/:id */
+async function _apiConfirm() {
+  var s     = _state.load();
+  var qId   = s.quoteId;
+  var token = s.token;
+
+  _log('POST /api/roadside/confirm/' + qId);
+
+  var res  = await fetch(RS.API + '/api/roadside/confirm/' + qId, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token,
+    },
+  });
+  var data = await res.json();
+  _log('Confirm response', res.status, data);
+
+  if (!res.ok) throw new Error(data.error || 'Failed to confirm quote (HTTP ' + res.status + ')');
+  return data;
+}
+
+/** POST /api/roadside/pay/:id */
+async function _apiPay() {
+  var s     = _state.load();
+  var qId   = s.quoteId;
+  var token = s.token;
+
+  _log('POST /api/roadside/pay/' + qId);
+
+  var res  = await fetch(RS.API + '/api/roadside/pay/' + qId, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token,
+    },
+    body: JSON.stringify({}),
+  });
+  var data = await res.json();
+  _log('Pay response', res.status, data);
+
+  if (!res.ok) throw new Error(data.error || 'Payment failed (HTTP ' + res.status + ')');
+  return data;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP INDICATOR SYNC  — shared helper so both overrides use the same logic
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function _syncStepIndicators(activeStep) {
+  for (var i = 1; i <= 4; i++) {
+    var ind = document.getElementById('step-indicator-' + i);
+    if (!ind) continue;
+    ind.classList.remove('active', 'done');
+    if (i < activeStep)        ind.classList.add('done');
+    else if (i === activeStep) ind.classList.add('active');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERRIDE: submitAndProceed()  ← called by btn-pay-cib
+   Flow: validate consents → POST quote → POST confirm → show step 3
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+window.submitAndProceed = async function submitAndProceed() {
+  /* Consent validation — uses existing checkbox IDs */
+  if (!_chk('confirm-info')) {
+    _showErr('api-error-msg', 'api-error-text',
+      'Please confirm that all information is correct.');
+    return;
+  }
+  if (!_chk('confirm-terms')) {
+    _showErr('api-error-msg', 'api-error-text',
+      'Please accept the general terms and conditions.');
+    return;
+  }
+
+  _hideErr('api-error-msg');
+  _btnLoad('btn-pay-cib', 'Creating quote…');
+
+  try {
+    /* Step A: create quote */
+    await _apiCreateQuote();
+
+    _btnLoad('btn-pay-cib', 'Confirming…');
+
+    /* Step B: confirm (pending → confirmed) */
+    await _apiConfirm();
+
+    _btnReset('btn-pay-cib');
+
+    /* Step C: advance UI to payment (step 3) — uses existing populatePayment */
+    if (typeof window.populatePayment === 'function') window.populatePayment();
+
+    document.getElementById('form-step-2').classList.add('hidden');
+    document.getElementById('form-step-3').classList.remove('hidden');
+    window.currentStep = 3;
+    _syncStepIndicators(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    _btnReset('btn-pay-cib');
+    _showErr('api-error-msg', 'api-error-text', err.message);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERRIDE: validateAndPay()  ← called by btn-validate-pay
+   Flow: validate card UI → POST pay → populate confirmation → show step 4
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+window.validateAndPay = async function validateAndPay() {
+  /* Client-side card field validation (IDs unchanged from original HTML) */
+  var cardNum  = (_val('card_number') ).replace(/\s/g, '');
+  var cvv      =  _val('cvv2');
+  var month    =  _val('expiry_month');
+  var year     =  _val('expiry_year');
+  var holder   =  _val('cardholder_name');
+
+  if (cardNum.length < 16) {
+    _showErr('pay-error-msg', 'pay-error-text', 'Please enter a valid 16-digit card number.');
+    return;
+  }
+  if (cvv.length < 3) {
+    _showErr('pay-error-msg', 'pay-error-text', 'Please enter a valid 3-digit CVV2.');
+    return;
+  }
+  if (!month || !year) {
+    _showErr('pay-error-msg', 'pay-error-text', 'Please select the card expiry date.');
+    return;
+  }
+  if (!holder.trim()) {
+    _showErr('pay-error-msg', 'pay-error-text', 'Please enter the cardholder name.');
+    return;
+  }
+
+  _hideErr('pay-error-msg');
+  _btnLoad('btn-validate-pay', 'Processing payment…');
+  clearInterval(window.countdownTimer); /* stop the session countdown */
+
+  try {
+    var result = await _apiPay();
+
+    _btnReset('btn-validate-pay');
+
+    /* Populate confirmation with REAL API data */
+    _populateConfirmation(result);
+
+    /* Clear sensitive state now that flow is complete */
+    _state.clear();
+
+    /* Advance to step 4 */
+    document.getElementById('form-step-3').classList.add('hidden');
+    document.getElementById('form-step-4').classList.remove('hidden');
+    window.currentStep = 4;
+    _syncStepIndicators(4);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    _btnReset('btn-validate-pay');
+    _showErr('pay-error-msg', 'pay-error-text', err.message);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIRMATION POPULATE  — uses real API payload
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function _populateConfirmation(data) {
+  var s        = _state.load(); /* may be empty if just cleared — read before clear */
+  var planData = s.planData || {};
+
+  var ref    = data.policy_reference || '—';
+  var startF = _isoToDisplay(data.start_date);
+  var endF   = _isoToDisplay(data.end_date);
+  var amount = data.amount_paid != null
+    ? _fmtDZD(data.amount_paid, true)
+    : _fmtDZD(window.selectedPrice || 0, true);
+  var planName = planData.name || window.selectedPlan || '—';
+
+  _setText('confirm-policy-ref', ref);
+  _setText('confirm-dates',  'Issued: ' + startF + ' · Valid until: ' + endF);
+  _setText('confirm-amount', amount);
+  _setText('confirm-plan',   planName);
+
+  _log('Confirmation populated:', {
+    policy_reference: ref,
+    start_date: data.start_date,
+    end_date:   data.end_date,
+    amount_paid: data.amount_paid,
+    contract_id: data.contract_id,
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MICRO-UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function _val(id) {
+  var el = document.getElementById(id);
+  return el ? (el.value || '') : '';
+}
+
+function _chk(id) {
+  var el = document.getElementById(id);
+  return !!(el && el.checked);
+}
+
+function _setText(id, text) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function _isoToDisplay(iso) {
+  if (!iso) return '—';
+  var parts = iso.split('-');        /* YYYY-MM-DD */
+  return parts.length === 3
+    ? parts[2] + '/' + parts[1] + '/' + parts[0]
+    : iso;
+}
+
+function _fmtDZD(n, withSuffix) {
+  var formatted = Number(n).toLocaleString('fr-DZ', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return withSuffix ? formatted + ' DZD' : formatted + ' DZD';
+}
+
+function _esc(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function _log() {
+  var args = Array.prototype.slice.call(arguments);
+  args.unshift('[roads-state]');
+  console.log.apply(console, args);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+document.addEventListener('DOMContentLoaded', function () {
+  _log('init — loading real plans from API');
+
+  /* 1. Fetch & inject real plan data into existing cards */
+  _loadAndInjectPlans();
+
+  /* 2. Restore saved vehicle + driver inputs (survives page refresh) */
+  _restoreVehicle();
+  _restoreDriver();
+
+  /* 3. Wire auto-save on every field change */
+  _attachFieldSavers();
+
+  _log('init complete');
+});

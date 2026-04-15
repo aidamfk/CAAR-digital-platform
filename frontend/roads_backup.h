@@ -836,13 +836,13 @@ function validateStep1() {
   var model = document.getElementById('vehicle_model').value.trim();
   var year  = document.getElementById('vehicle_year').value;
 
-  if (!plate)        { showApiError('Please enter your license plate number.'); return false; }
-  if (!brand)        { showApiError('Please select your vehicle brand.'); return false; }
-  if (!model)        { showApiError('Please enter your vehicle model.'); return false; }
-  if (!year)         { showApiError('Please select the year of manufacture.'); return false; }
-  if (!selectedPlan) { showApiError('Please select an assistance plan to continue.'); return false; }
+  if (!plate)        { alert('Please enter your license plate number.'); return false; }
+  if (!brand)        { alert('Please select your vehicle brand.'); return false; }
+  if (!model)        { alert('Please enter your vehicle model.'); return false; }
+  if (!year)         { alert('Please select the year of manufacture.'); return false; }
+  if (!selectedPlan) { alert('Please select an assistance plan to continue.'); return false; }
   if (!document.getElementById('terms-consent').checked) {
-    showApiError('Please accept the general terms and conditions to continue.');
+    alert('Please accept the general terms and conditions to continue.');
     return false;
   }
   return true;
@@ -855,10 +855,10 @@ function validateStep2() {
   var conf  = document.getElementById('confirm_email').value.trim();
   var mob1  = document.getElementById('mobile_1').value.trim();
 
-  if (!last || !first) { showApiError('Please enter your full name.'); return false; }
-  if (!email)          { showApiError('Please enter your email address.'); return false; }
-  if (email !== conf)  { showApiError('Email addresses do not match.'); return false; }
-  if (!mob1)           { showApiError('Please enter your phone number.'); return false; }
+  if (!last || !first) { alert('Please enter your full name.'); return false; }
+  if (!email)          { alert('Please enter your email address.'); return false; }
+  if (email !== conf)  { alert('Email addresses do not match.'); return false; }
+  if (!mob1)           { alert('Please enter your phone number.'); return false; }
   return true;
 }
 
@@ -948,13 +948,7 @@ async function submitQuoteToAPI() {
   var wilaya        = wilaya_select.options[wilaya_select.selectedIndex].text || null;
 
   // FIX: backend expects 'plan_id' as integer (Basic=1, Plus=2, Premium=3)
-  
-if (!selectedPlanId) {
-  showApiError('Please select a plan.');
-  return false;
-}
-var plan_id = selectedPlanId;
-
+  var plan_id = selectedPlanId;
 
   var payload = {
     first_name:    first_name,
@@ -1139,11 +1133,11 @@ async function processPaymentAPI() {
 async function submitAndProceed() {
   // Validate consent checkboxes
   if (!document.getElementById('confirm-info').checked) {
-    showApiError('Please confirm that all information is correct.');
+    alert('Please confirm that all information is correct.');
     return;
   }
   if (!document.getElementById('confirm-terms').checked) {
-    showApiError('Please accept the general terms and conditions.');
+    alert('Please accept the general terms and conditions.');
     return;
   }
 
@@ -1205,11 +1199,11 @@ async function validateAndPay() {
   var year  = document.getElementById('expiry_year').value;
   var name  = document.getElementById('cardholder_name').value.trim();
 
-  if (card.length < 16) {showPayError('Please enter a valid 16-digit card number.'); return; }
-  if (cvv.length < 3)   { showPayError('Please enter a valid 3-digit CVV2.'); return; }
-  if (!month)           { showPayError('Please select an expiry month.'); return; }
-  if (!year)            { showPayError('Please select an expiry year.'); return; }
-  if (!name)            { showPayError('Please enter the cardholder name.'); return; }
+  if (card.length < 16) { alert('Please enter a valid 16-digit card number.'); return; }
+  if (cvv.length < 3)   { alert('Please enter a valid 3-digit CVV2.'); return; }
+  if (!month)           { alert('Please select an expiry month.'); return; }
+  if (!year)            { alert('Please select an expiry year.'); return; }
+  if (!name)            { alert('Please enter the cardholder name.'); return; }
 
   console.log('[CAAR] ── validateAndPay ──');
   console.log('[CAAR] Card validated (client-side) — calling payment API…');
@@ -1317,7 +1311,7 @@ function populateConfirmation(apiData) {
 }
 
 function downloadCertificate() {
- alert('Your certificate is being prepared. It will be sent to your email shortly.');
+  alert('Your certificate is being prepared. It will be sent to your email shortly.');
 }
 
 /* ============================================================
