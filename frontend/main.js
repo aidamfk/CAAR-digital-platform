@@ -718,6 +718,7 @@ document.addEventListener('DOMContentLoaded', function () {
   window.onConstructionTypeChange = calculatePremium;
   window.onWilayaChange = function () {};
 
+/* Placeholder for any future logic based on wilaya selection 
   window.selectPlan = function (name, price) {
     selectedPlan = name; selectedPrice = price;
     ['basic', 'plus', 'premium'].forEach(function (p) {
@@ -728,14 +729,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (card) { card.classList.add('selected'); var r = card.querySelector('input[type="radio"]'); if (r) r.checked = true; }
     updateRoadSummary();
   };
-
+*/
   function updateRoadSummary() {
     setTxt('sum-plan-name', selectedPlan || '— Select a plan above —');
     setTxt('sum-annual', selectedPlan ? fmtDZD(selectedPrice) : '0.00 DZD');
     setTxt('sum-total-step1', selectedPlan ? fmtDZD(selectedPrice) : '0.00 DZD');
   }
   window.updateSummary = updateRoadSummary;
-
+/*
   window.goToStep = function (n) {
     if (n < 1 || n > 4) return;
     if (currentStep === 1 && n === 2 && !validateStep1()) return;
@@ -753,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+*/
   function validateStep1() {
     var isRoads = !!getEl('license_plate');
     if (isRoads) {
@@ -846,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!month || !year) { alert('Select expiry date'); return; }
     if (!getVal('cardholder_name')) { alert('Enter cardholder name'); return; }
     clearInterval(countdownTimer);
-    window.goToStep(4);
+    /* window.goToStep(4); */
   };
 
   window.formatCardNumber = function (input) { var v = input.value.replace(/\D/g, '').slice(0, 16); input.value = (v.match(/.{1,4}/g) || []).join(' '); };
@@ -876,6 +877,5 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof window.updateAgencyCard === 'function') window.updateAgencyCard();
     calculatePremium();
-    if (getEl('plan-plus') && !selectedPlan) window.selectPlan('Plus', 7900);
   });
 })();

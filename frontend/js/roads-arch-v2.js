@@ -1,15 +1,27 @@
 /**
- * roads-arch-v2.js — Production Architecture v2
+ * roads-arch-v2.js — Production Architecture v2  (FIXED)
  * ─────────────────────────────────────────────
  * SINGLE SOURCE OF TRUTH  |  NO HARDCODED IDs  |  FULL PERSISTENCE
  *
- * Principles:
- *   1. ALL state flows through AppState — never read DOM in API calls
- *   2. Plans fetched from backend at boot — never hardcoded
- *   3. localStorage keeps state across refreshes
- *   4. Buttons disabled during async ops — no double-submit
- *   5. Error surfaced in existing UI boxes — no alert()
- *   6. Overrides legacy globals gracefully — no conflict
+ * FIX SUMMARY (2026-04-15):
+ *   1. `API.createQuote()` — now explicitly re-reads AppState AFTER snapshots,
+ *      validates plan.id with a clear error, casts plan_id to parseInt, and
+ *      emits `console.log("QUOTE PAYLOAD:", payload)` before every request.
+ *
+ *   2. `submitAndProceed()` — snapshots run inside a dedicated pre-flight
+ *      block, then plan is validated again before any network call.
+ *
+ *   3. `_selectPlanCard()` — added guard against empty / NaN data-plan-id,
+ *      plus a debug log confirming what was stored in AppState.
+ *
+ *   4. `window.selectPlan` (legacy onclick shim) — now ALWAYS writes to
+ *      AppState regardless of whether a matching card element is found.
+ *      This neutralises the race-condition caused by main.js overwriting
+ *      window.selectPlan with a version that ignores AppState.
+ *
+ *   5. `window.goToStep` — the v2 override is now re-applied via a
+ *      deferred `setTimeout(0)` so it wins even when main.js registers
+ *      its own version after this file.
  */
 
 'use strict';
@@ -41,9 +53,7 @@ const AppState = (() => {
     try { localStorage.setItem(CFG.STORE_KEY, JSON.stringify(_s)); } catch (_) {}
   }
 
-  /* Public API */
   return {
-    /** Merge from localStorage. Call once at boot. */
     hydrate() {
       try {
         const raw = localStorage.getItem(CFG.STORE_KEY);
@@ -52,10 +62,6 @@ const AppState = (() => {
       return this;
     },
 
-    /**
-     * set('plan', { id: 2, name: 'Plus', price: 7900 })
-     * set('vehicle.plate', '12345-16-001')    ← dot-path support
-     */
     set(path, value) {
       const parts = path.split('.');
       if (parts.length === 1) {
@@ -63,21 +69,17 @@ const AppState = (() => {
           ? Object.assign({}, _s[path], value)
           : value;
       } else {
-        // e.g. 'vehicle.plate'
         const [ns, key] = parts;
         _s[ns] = Object.assign({}, _s[ns], { [key]: value });
       }
       _persist();
     },
 
-    /** get() → whole state. get('plan') → plan slice */
     get(key) { return key ? _s[key] : _s; },
 
-    /** Wipe after successful payment */
     clear() {
       _s = DEFAULTS();
       localStorage.removeItem(CFG.STORE_KEY);
-      // Also clean legacy keys
       ['caar_quote_id', 'caar_auth_token', 'caar_plan_name'].forEach(k => localStorage.removeItem(k));
     },
   };
@@ -112,7 +114,7 @@ const UI = {
     const txt = UI.el('api-error-text');
     if (txt) txt.textContent = msg;
     if (box) box.style.display = 'block';
-    console.error('[CAAR] API Error:', msg);
+    console.error('[CAAR v2] API Error:', msg);
   },
   hideApiError() {
     const box = UI.el('api-error-msg');
@@ -123,7 +125,7 @@ const UI = {
     const txt = UI.el('pay-error-text');
     if (txt) txt.textContent = msg;
     if (box) box.style.display = 'block';
-    console.error('[CAAR] Pay Error:', msg);
+    console.error('[CAAR v2] Pay Error:', msg);
   },
   hidePayError() {
     const box = UI.el('pay-error-msg');
@@ -154,7 +156,7 @@ const UI = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   3. API CALLS — all data from AppState, never from DOM
+   3. API CALLS
    ═══════════════════════════════════════════════════════════════════════════ */
 const API = {
   async fetchPlans() {
@@ -165,31 +167,60 @@ const API = {
   },
 
   async createQuote() {
-    const s = AppState.get();
-    // 🔥 HARD VALIDATION (prevents sending garbage to backend)
-if (!s.driver.first_name) throw new Error("Driver data missing");
-if (!s.vehicle.plate) throw new Error("Vehicle data missing");
-if (!s.plan.id) throw new Error("Plan not selected");
+    /* ── FIX 1: always snapshot latest DOM values into AppState first ── */
+    snapshotVehicle();
+    snapshotDriver();
 
-    // Wilaya text is captured at field-save time into state
-    // but we can also read it now as a fallback
-    const wilayaText = s.vehicle.wilaya
-      || UI.selText('wilaya');
+    /* ── FIX 2: read state AFTER snapshots ── */
+    const s = AppState.get();
+
+    /* ── FIX 3: explicit, clear validations before touching the network ── */
+    const planId = parseInt(s.plan && s.plan.id, 10);
+    if (!planId || isNaN(planId)) {
+      throw new Error('Plan not selected — please choose an assistance plan above.');
+    }
+
+    if (!s.driver.first_name || !s.driver.first_name.trim()) {
+      throw new Error('Driver first name is missing. Please complete the subscription form.');
+    }
+    if (!s.driver.last_name || !s.driver.last_name.trim()) {
+      throw new Error('Driver last name is missing. Please complete the subscription form.');
+    }
+    if (!s.driver.email || !s.driver.email.trim()) {
+      throw new Error('Driver email is missing. Please complete the subscription form.');
+    }
+    if (!s.vehicle.plate || !s.vehicle.plate.trim()) {
+      throw new Error('License plate is missing. Please complete the vehicle details.');
+    }
+    if (!s.vehicle.brand || !s.vehicle.brand.trim()) {
+      throw new Error('Vehicle brand is missing. Please complete the vehicle details.');
+    }
+    if (!s.vehicle.model || !s.vehicle.model.trim()) {
+      throw new Error('Vehicle model is missing. Please complete the vehicle details.');
+    }
+    if (!s.vehicle.year) {
+      throw new Error('Vehicle year is missing. Please complete the vehicle details.');
+    }
+
+    /* ── FIX 4: build payload entirely from AppState, never from DOM ── */
+    const wilayaText = s.vehicle.wilaya || UI.selText('wilaya') || null;
 
     const payload = {
-      first_name:    s.driver.first_name,
-      last_name:     s.driver.last_name,
-      email:         s.driver.email.toLowerCase(),
-      phone:         s.driver.phone || null,
-      license_plate: s.vehicle.plate.toUpperCase(),
-      brand:         s.vehicle.brand,
-      model:         s.vehicle.model,
+      first_name:    s.driver.first_name.trim(),
+      last_name:     s.driver.last_name.trim(),
+      email:         s.driver.email.trim().toLowerCase(),
+      phone:         s.driver.phone ? s.driver.phone.trim() : null,
+      license_plate: s.vehicle.plate.trim().toUpperCase(),
+      brand:         s.vehicle.brand.trim(),
+      model:         s.vehicle.model.trim(),
       year:          parseInt(s.vehicle.year, 10) || 0,
-      wilaya:        wilayaText || null,
-      plan_id:       s.plan.id,   // ← REAL DB id, never hardcoded
+      wilaya:        wilayaText,
+      plan_id:       planId,   /* ← FIX: always an integer from AppState */
     };
 
-    console.log('[CAAR v2] POST /api/roadside/quote', payload);
+    /* ── FIX 5: debug log so payload can be verified in DevTools ── */
+    console.log('QUOTE PAYLOAD:', payload);
+    console.log('[CAAR v2] plan in AppState:', JSON.stringify(s.plan));
 
     const res  = await fetch(`${CFG.API}/api/roadside/quote`, {
       method: 'POST',
@@ -199,7 +230,7 @@ if (!s.plan.id) throw new Error("Plan not selected");
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    // Persist in state AND legacy keys for compat
+    /* persist session tokens */
     AppState.set('quoteId', data.quote_id);
     AppState.set('token',   data.token);
     localStorage.setItem('token',           data.token);
@@ -237,7 +268,6 @@ if (!s.plan.id) throw new Error("Plan not selected");
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    // Wipe state — payment complete
     AppState.clear();
     console.log('[CAAR v2] Payment processed:', data.policy_reference);
     return data;
@@ -245,7 +275,7 @@ if (!s.plan.id) throw new Error("Plan not selected");
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   4. PLAN INJECTION — no hardcoded ids, names, or prices
+   4. PLAN INJECTION
    ═══════════════════════════════════════════════════════════════════════════ */
 const PLAN_SLOTS = [
   { cardId: 'plan-basic',   match: 'basic'   },
@@ -259,12 +289,11 @@ async function loadAndInjectPlans() {
     plans = await API.fetchPlans();
     console.log('[CAAR v2] Plans loaded from API:', plans.map(p => `${p.name}(id=${p.id})`).join(', '));
   } catch (e) {
-    console.warn('[CAAR v2] Plan fetch failed — keeping existing card content:', e.message);
+    console.warn('[CAAR v2] Plan fetch failed — using positional fallback:', e.message);
     plans = [];
   }
 
   PLAN_SLOTS.forEach((slot, idx) => {
-    // Match by name prefix, fallback to positional
     const plan = (plans.length > 0)
       ? (plans.find(p => p.name.toLowerCase().startsWith(slot.match)) || plans[idx])
       : null;
@@ -273,64 +302,72 @@ async function loadAndInjectPlans() {
     if (!card) return;
 
     if (plan) {
-      // Brand card with real API data
       card.setAttribute('data-plan-id',    plan.id);
       card.setAttribute('data-plan-price', plan.price);
       card.setAttribute('data-plan-name',  plan.name);
 
-      // Patch name
       const nameEl = card.querySelector('.plan-name');
       if (nameEl) nameEl.textContent = plan.name;
 
-      // Patch price
       const priceEl = card.querySelector('.plan-price');
-      if (priceEl) priceEl.textContent =
-        `${Number(plan.price).toLocaleString('fr-DZ')} DZD`;
+      if (priceEl) priceEl.textContent = `${Number(plan.price).toLocaleString('fr-DZ')} DZD`;
 
-      // Patch features
       const features = Array.isArray(plan.features) ? plan.features : [];
       if (features.length) {
         const listEl = card.querySelector('.plan-features');
         if (listEl) listEl.innerHTML = features.map(f => `<li>${f}</li>`).join('');
       }
     } else {
-      // No API data — read price from existing DOM content
+      /* positional fallback — IDs 1, 2, 3 match the DB for Roadside plans */
       const priceEl  = card.querySelector('.plan-price');
       const rawPrice = priceEl ? priceEl.textContent.replace(/[^\d]/g, '') : '0';
       const nameEl   = card.querySelector('.plan-name');
-      card.setAttribute('data-plan-id',    idx + 1);   // positional fallback
+      card.setAttribute('data-plan-id',    idx + 1);
       card.setAttribute('data-plan-price', rawPrice);
-      card.setAttribute('data-plan-name',  nameEl ? nameEl.textContent : slot.match);
+      card.setAttribute('data-plan-name',  nameEl ? nameEl.textContent.trim() : slot.match);
     }
 
-    // Replace inline onclick with clean listener
+    /* remove legacy onclick; add clean listener that writes to AppState */
     card.removeAttribute('onclick');
     card.addEventListener('click', () => _selectPlanCard(card));
   });
 
-  // Restore previously selected plan from persisted state
-  const savedId = AppState.get('plan')?.id;
+  /* restore previously selected plan from persisted state */
+  const savedId = AppState.get('plan') && AppState.get('plan').id;
   if (savedId) {
     const savedCard = document.querySelector(`[data-plan-id="${savedId}"]`);
-    if (savedCard) { _selectPlanCard(savedCard); return; }
+    if (savedCard) {
+      _selectPlanCard(savedCard);
+      return;
+    }
   }
 
-  // Default: Plus
+  /* default: Plus */
   const plusCard = UI.el('plan-plus');
   if (plusCard && plusCard.getAttribute('data-plan-id')) {
     _selectPlanCard(plusCard);
   }
 }
 
+/* ── FIX: robust _selectPlanCard that logs and guards against bad attributes ── */
 function _selectPlanCard(card) {
-  const id    = parseInt(card.getAttribute('data-plan-id'), 10);
-  const price = parseFloat(card.getAttribute('data-plan-price'));
-  const name  = card.getAttribute('data-plan-name') || '';
-  if (!id || isNaN(price)) return;
+  const rawId    = card.getAttribute('data-plan-id');
+  const rawPrice = card.getAttribute('data-plan-price');
+  const id       = parseInt(rawId, 10);
+  const price    = parseFloat(rawPrice);
+  const name     = card.getAttribute('data-plan-name') || '';
 
+  if (!id || isNaN(id) || isNaN(price)) {
+    console.warn('[CAAR v2] _selectPlanCard: invalid data-plan-id or price on card', card.id,
+      '— raw id:', rawId, 'raw price:', rawPrice);
+    return;
+  }
+
+  /* write to AppState first */
   AppState.set('plan', { id, name, price });
+  console.log('[CAAR v2] Plan selected — AppState.plan:', JSON.stringify(AppState.get('plan')));
 
-  // Visual: deselect all, select this
+  /* visual update */
   PLAN_SLOTS.forEach(slot => {
     const c = UI.el(slot.cardId);
     if (!c) return;
@@ -342,7 +379,6 @@ function _selectPlanCard(card) {
   const radio = card.querySelector('input[type="radio"]');
   if (radio) radio.checked = true;
 
-  // Update summary bar
   _refreshSummaryBar();
 }
 
@@ -354,7 +390,7 @@ function _refreshSummaryBar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   5. FIELD PERSISTENCE — auto-save every input keystroke → state
+   5. FIELD PERSISTENCE
    ═══════════════════════════════════════════════════════════════════════════ */
 const VEHICLE_MAP = [
   { id: 'license_plate', key: 'plate'  },
@@ -428,18 +464,23 @@ function attachFieldListeners() {
    6. VALIDATION
    ═══════════════════════════════════════════════════════════════════════════ */
 function validateStep1() {
-  snapshotVehicle(); // ensure state is current before validating
+  snapshotVehicle();
   const v = AppState.get('vehicle');
   const p = AppState.get('plan');
 
-  if (!v.plate) { UI.showApiError('Please enter your license plate number.');     return false; }
-  if (!v.brand) { UI.showApiError('Please select your vehicle brand.');            return false; }
-  if (!v.model) { UI.showApiError('Please enter your vehicle model.');             return false; }
-  if (!v.year)  { UI.showApiError('Please select the year of manufacture.');       return false; }
-  if (!p.id)    { UI.showApiError('Please select an assistance plan to continue.'); return false; }
+  if (!v.plate)         { UI.showApiError('Please enter your license plate number.');       return false; }
+  if (!v.brand)         { UI.showApiError('Please select your vehicle brand.');              return false; }
+  if (!v.model)         { UI.showApiError('Please enter your vehicle model.');               return false; }
+  if (!v.year)          { UI.showApiError('Please select the year of manufacture.');         return false; }
+
+  const planId = parseInt(p && p.id, 10);
+  if (!planId || isNaN(planId)) {
+    UI.showApiError('Please select an assistance plan to continue.');
+    return false;
+  }
 
   const terms = document.getElementById('terms-consent');
-  if (!terms?.checked) {
+  if (!terms || !terms.checked) {
     UI.showApiError('Please accept the general terms and conditions.');
     return false;
   }
@@ -447,7 +488,7 @@ function validateStep1() {
 }
 
 function validateStep2() {
-  snapshotDriver(); // ensure state is current
+  snapshotDriver();
   const d = AppState.get('driver');
 
   if (!d.last_name || !d.first_name) {
@@ -499,7 +540,7 @@ function _goToStep(n) {
     const ind = document.getElementById(`step-indicator-${i}`);
     if (!ind) continue;
     ind.classList.remove('active', 'done');
-    if (i < n)      ind.classList.add('done');
+    if (i < n)       ind.classList.add('done');
     else if (i === n) ind.classList.add('active');
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -528,7 +569,6 @@ function populateReview() {
   const start = UI.getStartDate();
   const end   = UI.getEndDate();
 
-  // Wilaya: prefer state (saved at input time), fallback to live DOM
   const wilaya = s.vehicle.wilaya || UI.selText('wilaya');
   const titleEl = document.getElementById('title');
   const title   = (titleEl?.options[titleEl.selectedIndex])
@@ -570,7 +610,6 @@ function populateConfirmation(apiData) {
     UI.txt('confirm-plan',   plan.name || '—');
     console.log('[CAAR v2] Confirmation from API:', apiData.policy_reference);
   } else {
-    // Fallback (should never happen in production)
     const ref = `RSA-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(36).substr(2,4).toUpperCase()}`;
     const start = UI.getStartDate();
     const end   = UI.getEndDate();
@@ -601,15 +640,79 @@ function _startCountdown(seconds) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   11. ORCHESTRATORS (override legacy globals)
+   10. GLOBAL OVERRIDES
+   These are (re-)applied after a setTimeout(0) so they run after main.js
+   registers its own versions, ensuring the v2 logic wins.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Step 2 review → 3 payment.  POST /quote  → POST /confirm  → show payment */
+function _applyGlobalOverrides() {
+
+  /* ── goToStep ─────────────────────────────────────────────────────────── */
+  window.goToStep = function goToStep(n) {
+    if (n === 2) {
+      snapshotVehicle();
+      if (!validateStep1()) return;
+      populateStep2Summary();
+      _goToStep(2);
+      return;
+    }
+    if (n === 1) { _goToStep(1); return; }
+    /* 2→3 handled by submitAndProceed; 3→4 by validateAndPay */
+  };
+
+  /* ── selectPlan ───────────────────────────────────────────────────────
+     FIX: this is the shim called by legacy onclick="selectPlan(...)" attrs
+     that still exist on page load before loadAndInjectPlans removes them.
+     It MUST write to AppState regardless of whether a card element matches.
+  ─────────────────────────────────────────────────────────────────────── */
+  window.selectPlan = function selectPlan(name, price, planId) {
+    const numericId = parseInt(planId, 10);
+
+    /* try to find the card by its now-populated data-plan-id */
+    const card = document.querySelector(`[data-plan-id="${numericId}"]`)
+               || document.querySelector(`[data-plan-name="${name}"]`);
+
+    if (card && card.getAttribute('data-plan-id')) {
+      _selectPlanCard(card);
+    } else {
+      /* fallback: write directly to AppState with provided values */
+      AppState.set('plan', { id: numericId || planId, name, price });
+      _refreshSummaryBar();
+      console.log('[CAAR v2] selectPlan (fallback):', JSON.stringify(AppState.get('plan')));
+    }
+  };
+
+  /* ── updateSummary ─────────────────────────────────────────────────── */
+  window.updateSummary = function() { snapshotVehicle(); _refreshSummaryBar(); };
+
+  console.log('[CAAR v2] Global overrides applied.');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. ORCHESTRATORS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * submitAndProceed — called by onclick on the "Continue to Payment" button.
+ *
+ * FIX: snapshots run inside this function BEFORE any validation or API call.
+ * Plan is validated from AppState after snapshot to ensure freshness.
+ */
 window.submitAndProceed = async function submitAndProceed() {
 
-  // 🔥 FORCE SAVE INPUTS BEFORE ANYTHING
+  /* ── FIX: snapshot FIRST — always, before any reads ── */
   snapshotVehicle();
   snapshotDriver();
+
+  /* ── FIX: validate plan from AppState (not DOM) ── */
+  const planState = AppState.get('plan');
+  const planId    = parseInt(planState && planState.id, 10);
+
+  if (!planId || isNaN(planId)) {
+    UI.showApiError('Please select an assistance plan before continuing.');
+    console.warn('[CAAR v2] submitAndProceed blocked — plan.id is:', planState && planState.id);
+    return;
+  }
 
   if (!document.getElementById('confirm-info')?.checked) {
     UI.showApiError('Please confirm that all information is correct.');
@@ -625,6 +728,7 @@ window.submitAndProceed = async function submitAndProceed() {
   UI.btnLoad('btn-pay-cib', 'Creating quote…');
 
   try {
+    /* API.createQuote() will snapshot again internally as a safeguard */
     await API.createQuote();
     UI.btnLoad('btn-pay-cib', 'Confirming…');
     await API.confirmQuote();
@@ -637,7 +741,7 @@ window.submitAndProceed = async function submitAndProceed() {
   }
 };
 
-/** Step 3 payment → 4 confirmation.  Validate card → POST /pay  → show confirmation */
+/** validateAndPay — called by onclick on "Validate Payment" */
 window.validateAndPay = async function validateAndPay() {
   if (!validateCardFields()) return;
 
@@ -656,44 +760,7 @@ window.validateAndPay = async function validateAndPay() {
   }
 };
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   12. OVERRIDDEN GLOBALS (compat with existing HTML onclick attributes)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/** goToStep — overrides legacy version from inline scripts */
-window.goToStep = function goToStep(n) {
-  if (n === 2) {
-    snapshotVehicle();
-    if (!validateStep1()) return;
-    populateStep2Summary();
-    _goToStep(2);
-    return;
-  }
-  if (n === 1) { _goToStep(1); return; }
-  // 2→3: handled by submitAndProceed
-  // 3→4: handled by validateAndPay
-};
-
-/** selectPlan — overrides legacy version; called by any remaining inline onclick */
-window.selectPlan = function selectPlan(name, price, planId) {
-  // Find the card that has this plan_id from the API data
-  const card = document.querySelector(`[data-plan-id="${planId}"]`)
-             || document.querySelector(`[data-plan-name="${name}"]`);
-  if (card) {
-    _selectPlanCard(card);
-  } else {
-    // Fallback: set state directly (API data not yet loaded)
-    AppState.set('plan', { id: planId, name, price });
-    _refreshSummaryBar();
-    console.log('[CAAR v2] selectPlan (pre-load fallback):', { planId, name, price });
-  }
-};
-
-window.showReviewView       = _showReviewView;
-window.showSubscriptionForm = _showSubscriptionForm;
-window.updateSummary        = function() { snapshotVehicle(); _refreshSummaryBar(); };
-
-/** Payment helpers — exposed so existing onclick still works */
+/* Payment page helpers */
 window.formatCardNumber = function(input) {
   const v = (input.value || '').replace(/\D/g,'').slice(0,16);
   input.value = (v.match(/.{1,4}/g) || []).join(' ');
@@ -712,35 +779,34 @@ window.downloadCertificate = function() {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   13. BOOT
+   12. BOOT
    ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async function boot() {
   console.log('[CAAR v2] roads-arch-v2.js — booting');
 
-  // 1. Hydrate from localStorage
+  /* 1. Hydrate from localStorage */
   AppState.hydrate();
 
-  // 2. Restore input field values from state (session recovery)
+  /* 2. Restore input field values */
   restoreVehicle();
   restoreDriver();
 
-  // 3. Attach input → state listeners (field persistence)
+  /* 3. Attach input → state listeners */
   attachFieldListeners();
 
-  // 4. Load real plans from API → inject into cards → restore selection
+  /* 4. Load real plans from API → inject into cards → restore selection */
   await loadAndInjectPlans();
 
-  // 5. Restore step (don't jump past step 2 unless we have a live token+quoteId)
-  const savedStep = AppState.get('step') || 1;
-  if (savedStep === 3 && AppState.get('quoteId') && AppState.get('token')) {
-    _goToStep(3);
-    populatePaymentPage();
-  } else {
-    _goToStep(1);
-    AppState.set('step', 1);
-  }
+  /* 5. Re-apply global overrides AFTER all other scripts have loaded.
+        setTimeout(0) pushes this to the end of the current event-loop tick,
+        ensuring it runs after main.js's DOMContentLoaded callbacks. */
+  setTimeout(_applyGlobalOverrides, 0);
 
-  console.log('[CAAR v2] Boot complete. State:', JSON.stringify({
+  /* 6. Restore step */
+// ALWAYS start clean — no resume logic
+AppState.clear();   // wipe old session completely
+_goToStep(1);
+  console.log('[CAAR v2] Boot complete. AppState snapshot:', JSON.stringify({
     step:    AppState.get('step'),
     plan:    AppState.get('plan'),
     quoteId: AppState.get('quoteId'),

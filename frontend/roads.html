@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<div id="site-header"></div>
+
 
 
 <!-- ===== ROADSIDE ASSISTANCE PAGE ===== -->
@@ -182,7 +182,7 @@
           </div>
 
           <!-- Premium -->
-          <div class="plan-card" id="plan-premium"data-plan-id="" onclick="selectPlan('Premium', 11500, 3)">
+          <div class="plan-card" id="plan-premium" data-plan-id="" onclick="selectPlan('Premium', 11500, 3)">
             <input type="radio" name="plan" value="Premium" class="plan-radio"/>
             <span class="plan-badge-selected">&#10003; Selected</span>
             <div class="plan-name">Premium</div>
@@ -337,12 +337,16 @@
         style="width:100%;justify-content:center;">
   Continue to Payment →
 </button>
+</div> <!-- form-nav-btns -->
 
-</div>
-        </div>
-      
-      </div><!-- /subscription-form-view -->
-</div> 
+</div> <!-- subscription-right -->
+
+</div> <!-- subscription-layout -->
+
+</div> <!-- subscription-form-view -->
+
+</div> <!-- form-step-2 -->
+     
     <!-- ======================================================
          STEP 3 — PAYMENT (CIB Gateway)
     ====================================================== -->
@@ -477,7 +481,7 @@
           </div>
 
           <div class="success-actions">
-            <a href="index.html" class="success-btn primary">Go to My Space &#8594;</a>
+            <a href="client-dashboard.html" class="success-btn primary">Go to My Space &#8594;</a>
             <button type="button" class="success-btn" onclick="downloadCertificate()">&#128196; Download Certificate</button>
             <button type="button" class="success-btn" onclick="window.print()">&#128424; Print</button>
           </div>
@@ -514,14 +518,14 @@
   </div><!-- /road-form-container -->
 </div><!-- /road-page -->
 
-<div id="site-footer"></div>
 
 
 <script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
-<script src="js/roads-arch-v2.js"></script>
 <script src="main.js"></script>
+<script src="js/roads-arch-v2.js"></script>
+
 
 </body>
 </html>
