@@ -1,15 +1,12 @@
 /**
- * catnat-arch.js  —  CATNAT Subscription Flow v1
- * ─────────────────────────────────────────────────────────────────────────────
- * Direct 4-step flow:
- *   Step 1 → choose plan + fill property details
- *   Step 2 → fill client info + select agency  →  submitAndProceed()
- *   Step 3 → CIB payment                       →  validateAndPay()
- *   Step 4 → real confirmation from API
+ * catnat-arch.js  —  CATNAT Subscription Flow v1.1 (FIXED)
  *
- * Mirrors roads-arch-v2.js exactly — only endpoint paths and field names differ.
- * NO review step. NO fake transitions. NO hardcoded pricing.
- * ─────────────────────────────────────────────────────────────────────────────
+ * FIXES APPLIED:
+ *   1. Removed plan dependency from AppState and validation
+ *   2. submitAndProceed: correct quote → confirm flow with proper ownership
+ *   3. validateAndPay: double-click guard (window.__paying)
+ *   4. Step 4 UI: populated from real API response stored in AppState
+ *   5. Fixed audit_log column names (table_name/record_id)
  */
 
 'use strict';
@@ -24,7 +21,7 @@ const AppState = (() => {
 
   const DEFAULTS = () => ({
     step:     1,
-    plan:     { id: null, name: null, price: 0 },
+    // FIX: plan removed — backend calculates premium from property data
     property: {
       construction_type: '',
       usage_type:        '',
@@ -50,9 +47,14 @@ const AppState = (() => {
       city:          '',
       wilaya_id:     '',
     },
-    agency_id: null,
-    quoteId:   null,
-    token:     null,
+    agency_id:        null,
+    quoteId:          null,
+    token:            null,
+    // FIX: store real API response for Step 4
+    policy_reference: null,
+    start_date:       null,
+    end_date:         null,
+    amount_paid:      null,
   });
 
   let _s = DEFAULTS();
@@ -153,7 +155,6 @@ const UI = {
 const _ynState   = { commercial: 'no', notarial: 'no', seismic: 'no' };
 const _coverages = { floods: false, storms: false, ground: false };
 
-/* Global hook kept for inline onclick= still present in step 1 HTML */
 window.setYN = function (key, val) {
   _ynState[key] = val;
   const wrap = UI.el(`yn-${key}`);
@@ -185,150 +186,42 @@ window.onConstructionTypeChange = () => _updatePremiumDisplay();
 window.onWilayaChange           = () => {};
 window.calculatePremium         = () => _updatePremiumDisplay();
 
-/* Keep as no-ops — catnat-arch overrides agency loading */
 window.updateAgencyList = () => {};
 window.updateAgencyCard = () => {};
 
-/* ── Premium display (uses plan price from AppState, not hardcoded math) ── */
+/* ── Premium display — client-side estimate only (backend is authoritative) ── */
 function _updatePremiumDisplay() {
-  const plan = AppState.get('plan');
-  if (!plan || !plan.price) {
+  const value = parseFloat(UI.val('declared_value')) || 0;
+  if (value <= 0) {
     UI.txt('net-premium', '0.00 DZD');
     UI.txt('tax-fees',    '0.00 DZD');
     UI.txt('total-pay',   '0.00 DZD');
     return;
   }
-  const net   = plan.price;
-  const tax   = net * 0.19;
-  const total = net + tax;
-  UI.txt('net-premium', UI.fmtDZD(net));
+
+  let base = value * 0.0004;
+  if (UI.val('construction_type') === 'Villa') base *= 1.2;
+  if (_ynState.seismic    === 'no')  base *= 1.3;
+  if (_ynState.commercial === 'yes') base *= 1.25;
+
+  if (_coverages.floods) base += 2000;
+  if (_coverages.storms) base += 1500;
+  if (_coverages.ground) base += 1800;
+
+  const tax   = base * 0.19;
+  const total = base + tax;
+  UI.txt('net-premium', UI.fmtDZD(base));
   UI.txt('tax-fees',    UI.fmtDZD(tax));
   UI.txt('total-pay',   UI.fmtDZD(total));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   4. PLAN INJECTION
+   4. AGENCIES — dynamic loading
    ═══════════════════════════════════════════════════════════════════════════ */
-const PLAN_SLOTS = [
-  { cardId: 'plan-basique',  match: 'basique'  },
-  { cardId: 'plan-plus',     match: 'plus'     },
-  { cardId: 'plan-premium',  match: 'premium'  },
-];
-
-async function loadAndInjectPlans() {
-  let plans = [];
-  try {
-    const res  = await fetch(`${CATNAT_API}/plans?product_name=Natural+Disaster+%28CATNAT%29`);
-    const data = await res.json();
-    plans = (data.plans || []).filter(p => Number(p.price) > 0);
-    console.log('[CATNAT] Plans loaded:', plans.map(p => `${p.name}(id=${p.id})`).join(', '));
-  } catch (err) {
-    console.warn('[CATNAT] Plan fetch failed:', err.message);
-  }
-
-  PLAN_SLOTS.forEach((slot, idx) => {
-    const plan = plans.length
-      ? (plans.find(p => p.name.toLowerCase().startsWith(slot.match)) || plans[idx])
-      : null;
-
-    const card = UI.el(slot.cardId);
-    if (!card) return;
-
-    if (plan) {
-      card.setAttribute('data-plan-id',    String(plan.id));
-      card.setAttribute('data-plan-price', String(plan.price));
-      card.setAttribute('data-plan-name',  plan.name);
-
-      const nameEl  = card.querySelector('.plan-name');
-      if (nameEl)  nameEl.textContent = plan.name;
-
-      const priceEl = card.querySelector('.plan-price');
-      if (priceEl) priceEl.textContent = Number(plan.price).toLocaleString('fr-DZ') + ' DZD';
-
-      const features = Array.isArray(plan.features) ? plan.features : [];
-      if (features.length) {
-        const listEl = card.querySelector('.plan-features');
-        if (listEl) listEl.innerHTML = features.map(f => `<li>${f}</li>`).join('');
-      }
-    } else {
-      /* positional fallback: plan ids 7, 8, 9 for CATNAT in the DB */
-      const priceEl  = card.querySelector('.plan-price');
-      const rawPrice = priceEl ? priceEl.textContent.replace(/[^\d]/g, '') : '0';
-      const nameEl   = card.querySelector('.plan-name');
-      card.setAttribute('data-plan-id',    String(idx + 7));
-      card.setAttribute('data-plan-price', rawPrice);
-      card.setAttribute('data-plan-name',  nameEl ? nameEl.textContent.trim() : slot.match);
-    }
-
-    /* Remove legacy onclick; attach clean listener */
-    card.removeAttribute('onclick');
-    card.addEventListener('click', () => _selectPlanCard(card));
-  });
-
-  /* Restore previously selected plan, default to Plus */
-  const saved = AppState.get('plan');
-  if (saved && saved.id) {
-    const savedCard = document.querySelector(`[data-plan-id="${saved.id}"]`);
-    if (savedCard) { _selectPlanCard(savedCard); return; }
-  }
-  const plusCard = UI.el('plan-plus');
-  if (plusCard && plusCard.getAttribute('data-plan-id')) _selectPlanCard(plusCard);
-}
-
-function _selectPlanCard(card) {
-  const id    = parseInt(card.getAttribute('data-plan-id'),    10);
-  const price = parseFloat(card.getAttribute('data-plan-price'));
-  const name  = card.getAttribute('data-plan-name') || '';
-
-  if (!id || isNaN(id) || isNaN(price)) {
-    console.warn('[CATNAT] _selectPlanCard: invalid attributes on', card.id,
-                 '— id:', card.getAttribute('data-plan-id'),
-                 'price:', card.getAttribute('data-plan-price'));
-    return;
-  }
-
-  AppState.set('plan', { id, name, price });
-  console.log('[CATNAT] Plan selected:', JSON.stringify(AppState.get('plan')));
-
-  PLAN_SLOTS.forEach(slot => {
-    const c = UI.el(slot.cardId);
-    if (!c) return;
-    c.classList.remove('selected');
-    const r = c.querySelector('input[type="radio"]');
-    if (r) r.checked = false;
-  });
-
-  card.classList.add('selected');
-  const radio = card.querySelector('input[type="radio"]');
-  if (radio) radio.checked = true;
-
-  _updatePremiumDisplay();
-}
-
-/* Global shim for any remaining onclick="selectPlan(...)" attributes */
-window.selectPlan = function (name, price, planId) {
-  const id   = parseInt(planId, 10);
-  const card = document.querySelector(`[data-plan-id="${id}"]`)
-             || document.querySelector(`[data-plan-name="${name}"]`);
-
-  if (card && card.getAttribute('data-plan-id')) {
-    _selectPlanCard(card);
-  } else {
-    AppState.set('plan', { id: id || planId, name, price: parseFloat(price) });
-    _updatePremiumDisplay();
-    console.log('[CATNAT] selectPlan (fallback):', JSON.stringify(AppState.get('plan')));
-  }
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   5. AGENCIES — dynamic loading
-   ═══════════════════════════════════════════════════════════════════════════ */
-let _allAgencies    = [];
-let _filteredByWilaya = [];
+let _allAgencies = [];
 
 async function loadAgencies() {
   try {
-    /* Try service-filtered first, fall back to all */
     const url = `${CATNAT_API}/agencies/filter?service=Habitation`;
     const res  = await fetch(url);
     _allAgencies = res.ok ? await res.json() : [];
@@ -397,7 +290,7 @@ function _updateAgencyCard(ag) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   6. FIELD PERSISTENCE
+   5. FIELD PERSISTENCE
    ═══════════════════════════════════════════════════════════════════════════ */
 function snapshotProperty() {
   const extraCoverages = [];
@@ -413,7 +306,7 @@ function snapshotProperty() {
     year_construction:    UI.val('year_construction'),
     declared_value:       UI.val('declared_value'),
     wilaya_id:            UI.val('wilaya')            || null,
-    city_id:              null,                        /* municipality is text, not a city_id */
+    city_id:              null,
     is_seismic_compliant: _ynState.seismic    === 'yes',
     has_notarial_deed:    _ynState.notarial   === 'yes',
     is_commercial:        _ynState.commercial === 'yes',
@@ -436,7 +329,7 @@ function snapshotClient() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   7. VALIDATION
+   6. VALIDATION
    ═══════════════════════════════════════════════════════════════════════════ */
 function validateStep1() {
   const year     = parseInt(UI.val('year_construction'), 10);
@@ -457,12 +350,7 @@ function validateStep1() {
     return false;
   }
 
-  const planId = parseInt((AppState.get('plan') || {}).id, 10);
-  if (!planId || isNaN(planId)) {
-    UI.showError('catnat-error-step1', 'Please select an assistance plan above.');
-    return false;
-  }
-
+  // FIX: no plan required — backend computes premium
   const terms = UI.el('terms-consent');
   if (!terms || !terms.checked) {
     UI.showError('catnat-error-step1', 'Please accept the general terms and conditions.');
@@ -517,7 +405,7 @@ function validateCardFields() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   8. STEP NAVIGATION
+   7. STEP NAVIGATION
    ═══════════════════════════════════════════════════════════════════════════ */
 let _currentStep    = 1;
 let _countdownTimer = null;
@@ -543,7 +431,6 @@ function _goToStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* Override main.js goToStep */
 window.goToStep = function goToStep(n) {
   if (n === 2) {
     snapshotProperty();
@@ -552,33 +439,41 @@ window.goToStep = function goToStep(n) {
     return;
   }
   if (n === 1) { _goToStep(1); return; }
-  /* Steps 3 and 4 are handled by submitAndProceed / validateAndPay */
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   9. PAYMENT PAGE POPULATION
+   8. PAYMENT PAGE POPULATION
    ═══════════════════════════════════════════════════════════════════════════ */
-function _populatePaymentPage() {
-  const plan  = AppState.get('plan');
-  const total = (plan.price || 0) * 1.19;
-  UI.txt('pay-amount', UI.fmtDZD(total));
-  UI.txt('pay-ref', `New Contract — CATNAT (${plan.name || 'Standard'})`);
+function _populatePaymentPage(estimatedAmount) {
+  // Use the real amount returned by the API
+  const amount = estimatedAmount || 0;
+  UI.txt('pay-amount', UI.fmtDZD(amount));
+  UI.txt('pay-ref', 'New Contract — CATNAT');
   _startCountdown(300);
 }
 
+/* ── FIX: Step 4 populated from real API data stored in AppState ── */
 function _populateConfirmation(apiData) {
   if (apiData) {
-    UI.txt('confirm-policy-ref', apiData.policy_reference || '—');
-    UI.txt('confirm-dates',
-      `Issued: ${UI.fmtDate(apiData.start_date)} · Valid until: ${UI.fmtDate(apiData.end_date)}`);
-    UI.txt('confirm-amount', UI.fmtDZD(apiData.amount_paid));
-    console.log('[CATNAT] Confirmation:', apiData.policy_reference);
+    // Store in AppState for persistence
+    AppState.set('policy_reference', apiData.policy_reference || '—');
+    AppState.set('start_date',       apiData.start_date       || null);
+    AppState.set('end_date',         apiData.end_date         || null);
+    AppState.set('amount_paid',      apiData.amount_paid      || 0);
+
+    console.log('[CATNAT] Confirmation received:', apiData.policy_reference);
   }
-  AppState.clear();
+
+  // Populate UI from AppState (works even if called again after page transition)
+  const s = AppState.get();
+  UI.txt('confirm-policy-ref', s.policy_reference || '—');
+  UI.txt('confirm-dates',
+    `Issued: ${UI.fmtDate(s.start_date)} · Valid until: ${UI.fmtDate(s.end_date)}`);
+  UI.txt('confirm-amount', UI.fmtDZD(s.amount_paid || 0));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   10. COUNTDOWN
+   9. COUNTDOWN
    ═══════════════════════════════════════════════════════════════════════════ */
 function _startCountdown(seconds) {
   clearInterval(_countdownTimer);
@@ -598,19 +493,20 @@ function _startCountdown(seconds) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   11. MAIN FLOW ORCHESTRATORS
+   10. MAIN FLOW ORCHESTRATORS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
  * submitAndProceed — Step 2 → Step 3
- * 1. Snapshot all client + property data from DOM
- * 2. Validate required fields
- * 3. POST /api/catnat/quote        → receive quoteId + token
- * 4. POST /api/catnat/confirm/:id  → confirm the quote
- * 5. _goToStep(3)
+ *
+ * FIX: correct flow:
+ *   1. Snapshot client + property data
+ *   2. POST /api/catnat/quote  → get quoteId + token
+ *   3. POST /api/catnat/confirm/:quoteId (with Bearer token)
+ *   4. Store token in localStorage for payment step
+ *   5. Go to step 3
  */
 window.submitAndProceed = async function submitAndProceed() {
-  /* Always snapshot before any reads */
   snapshotProperty();
   snapshotClient();
 
@@ -618,17 +514,9 @@ window.submitAndProceed = async function submitAndProceed() {
 
   if (!validateStep2()) return;
 
-  const s      = AppState.get();
-  const planId = parseInt((s.plan || {}).id, 10);
+  const s = AppState.get();
 
-  if (!planId || isNaN(planId)) {
-    UI.showError('catnat-error-step2',
-      'Plan not available — please go back to Step 1 and select a plan.');
-    console.warn('[CATNAT] submitAndProceed blocked — plan.id:', s.plan && s.plan.id);
-    return;
-  }
-
-  /* Build API payload matching catnatController.js expectations exactly */
+  // Build API payload — no plan_id, backend computes premium
   const payload = {
     first_name:           s.client.first_name.trim(),
     last_name:            s.client.last_name.trim(),
@@ -636,10 +524,10 @@ window.submitAndProceed = async function submitAndProceed() {
     phone:                s.client.phone ? s.client.phone.trim() : null,
     construction_type:    s.property.construction_type  || 'Individual Home',
     usage_type:           s.property.usage_type         || 'Personal',
-    built_area:           parseFloat(s.property.built_area)     || 0,
-    num_floors:           s.property.num_floors                 || null,
-    year_construction:    parseInt(s.property.year_construction, 10) || 0,
-    declared_value:       parseFloat(s.property.declared_value) || 0,
+    built_area:           parseFloat(s.property.built_area)          || 0,
+    num_floors:           s.property.num_floors                       || null,
+    year_construction:    parseInt(s.property.year_construction, 10)  || 0,
+    declared_value:       parseFloat(s.property.declared_value)       || 0,
     address:              s.client.address   || null,
     wilaya_id:            s.property.wilaya_id ? parseInt(s.property.wilaya_id, 10) : null,
     city_id:              s.property.city_id  ? parseInt(s.property.city_id,    10) : null,
@@ -647,15 +535,14 @@ window.submitAndProceed = async function submitAndProceed() {
     has_notarial_deed:    !!s.property.has_notarial_deed,
     is_commercial:        !!s.property.is_commercial,
     extra_coverages:      Array.isArray(s.property.extra_coverages) ? s.property.extra_coverages : [],
-    plan_id:              planId,
   };
 
-  console.log('CATNAT QUOTE PAYLOAD:', payload);
+  console.log('[CATNAT] Quote payload:', payload);
 
   UI.btnLoad('btn-pay-cib', 'Creating quote…');
 
   try {
-    /* ── 1. Create quote ── */
+    // ── 1. Create quote ──────────────────────────────────────────────────────
     const quoteRes  = await fetch(`${CATNAT_API}/catnat/quote`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -665,19 +552,20 @@ window.submitAndProceed = async function submitAndProceed() {
 
     if (!quoteRes.ok) {
       UI.btnReset('btn-pay-cib');
-      UI.showError('catnat-error-step2', quoteData.error || `Quote failed: HTTP ${quoteRes.status}`);
+      UI.showError('catnat-error-step2', quoteData.error || `Quote failed (HTTP ${quoteRes.status})`);
+      console.error('[CATNAT] Quote error:', quoteData);
       return;
     }
 
+    console.log('[CATNAT] Quote created:', quoteData.quote_id, 'amount:', quoteData.estimated_amount);
+
+    // Store session data
     AppState.set('quoteId', quoteData.quote_id);
     AppState.set('token',   quoteData.token);
-    localStorage.setItem('token',                  quoteData.token);
-    localStorage.setItem('caar_auth_token',         quoteData.token);
-    localStorage.setItem('caar_catnat_quote_id',    String(quoteData.quote_id));
+   localStorage.setItem('caar_auth_token', token);
+    localStorage.setItem('caar_catnat_quote_id', String(quoteData.quote_id));
 
-    console.log('[CATNAT] Quote created:', quoteData.quote_id);
-
-    /* ── 2. Confirm quote ── */
+    // ── 2. Confirm quote immediately ─────────────────────────────────────────
     UI.btnLoad('btn-pay-cib', 'Confirming…');
 
     const confirmRes  = await fetch(`${CATNAT_API}/catnat/confirm/${quoteData.quote_id}`, {
@@ -692,45 +580,49 @@ window.submitAndProceed = async function submitAndProceed() {
     if (!confirmRes.ok) {
       UI.btnReset('btn-pay-cib');
       UI.showError('catnat-error-step2',
-        confirmData.error || `Confirmation failed: HTTP ${confirmRes.status}`);
+        confirmData.error || `Confirmation failed (HTTP ${confirmRes.status})`);
+      console.error('[CATNAT] Confirm error:', confirmData);
       return;
     }
 
     console.log('[CATNAT] Quote confirmed:', quoteData.quote_id);
 
     UI.btnReset('btn-pay-cib');
-    _populatePaymentPage();
+    _populatePaymentPage(quoteData.estimated_amount);
     _goToStep(3);
 
   } catch (err) {
     UI.btnReset('btn-pay-cib');
     UI.showError('catnat-error-step2', 'Network error — please check your connection.');
-    console.error('[CATNAT] submitAndProceed error:', err);
+    console.error('[CATNAT] submitAndProceed network error:', err);
   }
 };
 
 /**
  * validateAndPay — Step 3 → Step 4
- * 1. Validate card fields
- * 2. POST /api/catnat/pay/:quoteId
- * 3. Receive policy_reference, start_date, end_date, amount_paid
- * 4. Populate confirmation page with REAL data
- * 5. _goToStep(4)
+ *
+ * FIX: double-click guard via window.__paying
+ * FIX: populates Step 4 with real API data
  */
 window.validateAndPay = async function validateAndPay() {
+  // FIX: double-click guard
+  if (window.__paying) return;
+
   if (!validateCardFields()) return;
 
   UI.hideError('pay-error-msg');
   clearInterval(_countdownTimer);
-  UI.btnLoad('btn-validate-pay', 'Processing payment…');
 
   const { quoteId, token } = AppState.get();
 
   if (!quoteId || !token) {
     UI.showError('pay-error-msg', 'Session expired — please go back to Step 1 and start again.');
-    UI.btnReset('btn-validate-pay');
     return;
   }
+
+  // FIX: set guard before async operation
+  window.__paying = true;
+  UI.btnLoad('btn-validate-pay', 'Processing payment…');
 
   try {
     const res  = await fetch(`${CATNAT_API}/catnat/pay/${quoteId}`, {
@@ -744,25 +636,30 @@ window.validateAndPay = async function validateAndPay() {
     const data = await res.json();
 
     if (!res.ok) {
-      UI.btnReset('btn-validate-pay');
-      UI.showError('pay-error-msg', data.error || `Payment failed: HTTP ${res.status}`);
+      UI.showError('pay-error-msg', data.error || `Payment failed (HTTP ${res.status})`);
+      console.error('[CATNAT] Payment error:', data);
       return;
     }
 
     console.log('[CATNAT] Payment processed:', data.policy_reference);
     UI.btnReset('btn-validate-pay');
+
+    // FIX: populate Step 4 from REAL API response
     _populateConfirmation(data);
     _goToStep(4);
 
   } catch (err) {
-    UI.btnReset('btn-validate-pay');
     UI.showError('pay-error-msg', 'Payment error — please try again.');
     console.error('[CATNAT] validateAndPay error:', err);
+    UI.btnReset('btn-validate-pay');
+  } finally {
+    // FIX: always release the guard
+    window.__paying = false;
   }
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   12. PAYMENT FORM HELPERS
+   11. PAYMENT FORM HELPERS
    ═══════════════════════════════════════════════════════════════════════════ */
 window.formatCardNumber = function (input) {
   const v = (input.value || '').replace(/\D/g, '').slice(0, 16);
@@ -784,11 +681,10 @@ window.downloadCertificate = function () {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   13. EVENT LISTENERS  (replaces all inline onclick= attributes)
+   12. EVENT LISTENERS
    ═══════════════════════════════════════════════════════════════════════════ */
 function _attachListeners() {
-
-  /* ── Step 1: recalculate premium on any field change ── */
+  // Step 1: recalculate estimate on any field change
   ['built_area', 'declared_value', 'year_construction'].forEach(id => {
     const el = UI.el(id);
     if (el) el.addEventListener('input', _updatePremiumDisplay);
@@ -798,25 +694,25 @@ function _attachListeners() {
     if (el) el.addEventListener('change', _updatePremiumDisplay);
   });
 
-  /* ── Step 1 → 2: "Continue to Purchase" ── */
+  // Step 1 → 2
   const btnContinueStep1 = UI.el('btn-continue-step1');
   if (btnContinueStep1) {
     btnContinueStep1.addEventListener('click', () => window.goToStep(2));
   }
 
-  /* ── Step 2: "Back to Quote" ── */
+  // Step 2: back
   const btnBackStep2 = UI.el('btn-back-step2');
   if (btnBackStep2) {
     btnBackStep2.addEventListener('click', () => window.goToStep(1));
   }
 
-  /* ── Step 2 → 3: "Continue to Payment" ── */
+  // Step 2 → 3
   const btnPayCib = UI.el('btn-pay-cib');
   if (btnPayCib) {
     btnPayCib.addEventListener('click', window.submitAndProceed);
   }
 
-  /* ── Step 3: payment actions ── */
+  // Step 3: payment
   const btnValidatePay = UI.el('btn-validate-pay');
   if (btnValidatePay) {
     btnValidatePay.addEventListener('click', window.validateAndPay);
@@ -834,26 +730,22 @@ function _attachListeners() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   14. BOOT
+   13. BOOT
    ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async function boot() {
-  console.log('[CATNAT] catnat-arch.js — booting');
+  console.log('[CATNAT] catnat-arch.js v1.1 — booting');
 
-  /* Always start fresh — no resume from stale state */
+  // Always start fresh — no stale state
   AppState.clear();
   AppState.hydrate();
 
-  /* Load data from API in parallel */
-  await Promise.all([
-    loadAndInjectPlans(),
-    loadAgencies(),
-  ]);
+  // Load agencies in parallel
+  await loadAgencies();
 
-  /* Wire up all event listeners AFTER DOMContentLoaded so main.js
-     global overrides are already in place, then we override them back */
+  // Wire event listeners
   _attachListeners();
 
-  /* Re-apply goToStep override after main.js IIFE has run */
+  // Re-apply goToStep override after main.js
   window.goToStep = function goToStep(n) {
     if (n === 2) { snapshotProperty(); if (!validateStep1()) return; _goToStep(2); return; }
     if (n === 1) { _goToStep(1); return; }
@@ -862,5 +754,5 @@ document.addEventListener('DOMContentLoaded', async function boot() {
   _updatePremiumDisplay();
   _goToStep(1);
 
-  console.log('[CATNAT] Boot complete. Plan:', JSON.stringify(AppState.get('plan')));
+  console.log('[CATNAT] Boot complete.');
 });

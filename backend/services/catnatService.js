@@ -78,6 +78,7 @@ async function createQuote(data) {
     extra_coverages,
   } = data;
 
+  // Backend calculates premium — no plan dependency
   const estimated_amount = calculatePremium({
     declared_value,
     construction_type,
@@ -96,8 +97,11 @@ async function createQuote(data) {
     await conn.beginTransaction();
 
     let userId;
+    let userRole = 'client';
+
     if (existingUser) {
-      userId = existingUser.id;
+      userId   = existingUser.id;
+      userRole = existingUser.role || 'client';
     } else {
       const tempPassword  = crypto.randomBytes(12).toString('hex');
       const password_hash = await bcrypt.hash(tempPassword, 12);
@@ -130,30 +134,30 @@ async function createQuote(data) {
     });
 
     const quoteId = await m.createQuote(conn, {
-      client_id: clientId,
-      property_id: propertyId,
-      product_id: product.id,
-      plan_id: null,
+      client_id:        clientId,
+      property_id:      propertyId,
+      product_id:       product.id,
+      plan_id:          null,   // no plan for CATNAT — premium calculated server-side
       estimated_amount,
     });
 
-    // ✅ NOTIFICATION
-    await conn.query(
+    // Notification
+    await conn.execute(
       `INSERT INTO notifications (user_id, title, message, type)
        VALUES (?, ?, ?, ?)`,
       [userId, 'Quote created', `Your CATNAT quote #${quoteId} has been created.`, 'info']
     );
 
-    // ✅ AUDIT LOG
-    await conn.query(
-      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
-       VALUES (?, ?, ?, ?)`,
-      [userId, 'CREATE', 'QUOTE', quoteId]
+    // Audit log — use correct column names (table_name, record_id, description)
+    await conn.execute(
+      `INSERT INTO audit_logs (user_id, action, table_name, record_id, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, 'CREATE', 'quotes', quoteId, `CATNAT quote created for property_id=${propertyId}`]
     );
 
     await conn.commit();
 
-    const token = _signToken({ id: userId, email });
+    const token = _signToken({ id: userId, email, role: userRole });
 
     return { quote_id: quoteId, estimated_amount, token };
 
@@ -172,24 +176,47 @@ async function confirmQuote(quoteId, userId) {
   try {
     await conn.beginTransaction();
 
-    const quote = await m.getQuoteByIdForUpdate(conn, quoteId);
-    if (!quote) throw new Error('Quote not found');
-    if (quote.user_id !== userId) throw new Error('Forbidden');
+    // FIX: query must return user_id for ownership check
+    const [rows] = await conn.execute(
+      `SELECT q.*, c.user_id
+       FROM quotes q
+       JOIN clients c ON c.id = q.client_id
+       WHERE q.id = ?
+       FOR UPDATE`,
+      [quoteId]
+    );
+    const quote = rows[0] || null;
 
-    await m.updateQuoteStatus(conn, quoteId, 'confirmed');
+    if (!quote) throw Object.assign(new Error('Quote not found'), { status: 404 });
 
-    // ✅ NOTIFICATION
-    await conn.query(
+    // FIX: ownership check
+    if (quote.user_id !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 });
+
+    // Only pending quotes can be confirmed
+    if (quote.status !== 'pending') {
+      throw Object.assign(
+        new Error(`Quote cannot be confirmed (current status: ${quote.status})`),
+        { status: 409 }
+      );
+    }
+
+    await conn.execute(
+      'UPDATE quotes SET status = ? WHERE id = ?',
+      ['confirmed', quoteId]
+    );
+
+    // Notification
+    await conn.execute(
       `INSERT INTO notifications (user_id, title, message, type)
        VALUES (?, ?, ?, ?)`,
       [userId, 'Quote confirmed', `Your quote #${quoteId} has been confirmed.`, 'success']
     );
 
-    // ✅ AUDIT LOG
-    await conn.query(
-      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
-       VALUES (?, ?, ?, ?)`,
-      [userId, 'CONFIRM', 'QUOTE', quoteId]
+    // Audit log
+    await conn.execute(
+      `INSERT INTO audit_logs (user_id, action, table_name, record_id, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, 'CONFIRM', 'quotes', quoteId, `CATNAT quote #${quoteId} confirmed`]
     );
 
     await conn.commit();
@@ -211,18 +238,53 @@ async function processPayment(quoteId, userId, documentData = null) {
   try {
     await conn.beginTransaction();
 
-    const quote = await m.getQuoteByIdForUpdate(conn, quoteId);
-    if (!quote) throw new Error('Quote not found');
-    if (quote.user_id !== userId) throw new Error('Forbidden');
+    // FIX: query must return user_id for ownership check
+    const [rows] = await conn.execute(
+      `SELECT q.*, c.user_id
+       FROM quotes q
+       JOIN clients c ON c.id = q.client_id
+       WHERE q.id = ?
+       FOR UPDATE`,
+      [quoteId]
+    );
+    const quote = rows[0] || null;
+
+    if (!quote) throw Object.assign(new Error('Quote not found'), { status: 404 });
+
+    // FIX: ownership check
+    if (quote.user_id !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 });
+
+    // FIX: enforce status flow — must be confirmed before payment
+    if (quote.status !== 'confirmed') {
+      throw Object.assign(
+        new Error(`Quote must be confirmed before payment (current status: ${quote.status})`),
+        { status: 409 }
+      );
+    }
+
+    // FIX: prevent duplicate contracts — check via property_id + client_id + product_id
+    // Since contracts has no quote_id, we guard on property_id which is unique per quote
+    if (quote.property_id) {
+      const [existing] = await conn.execute(
+        'SELECT id FROM contracts WHERE property_id = ? AND client_id = ? AND product_id = ?',
+        [quote.property_id, quote.client_id, quote.product_id]
+      );
+      if (existing.length > 0) {
+        throw Object.assign(
+          new Error('A contract already exists for this property and product'),
+          { status: 409 }
+        );
+      }
+    }
 
     const { start_date, end_date } = _getContractDates();
     const policy_reference = _generatePolicyReference(quoteId);
 
     const contractId = await m.createContract(conn, {
-      client_id: quote.client_id,
-      property_id: quote.property_id,
-      product_id: quote.product_id,
-      plan_id: null,
+      client_id:      quote.client_id,
+      property_id:    quote.property_id,
+      product_id:     quote.product_id,
+      plan_id:        null,
       start_date,
       end_date,
       premium_amount: quote.estimated_amount,
@@ -230,34 +292,52 @@ async function processPayment(quoteId, userId, documentData = null) {
     });
 
     await m.createPayment(conn, {
-      contract_id: contractId,
-      amount: quote.estimated_amount,
+      contract_id:  contractId,
+      amount:       quote.estimated_amount,
       payment_date: new Date().toISOString().slice(0, 10),
     });
 
-    // ✅ NOTIFICATION
-    await conn.query(
+    // Optional document
+    if (documentData && documentData.file_name && documentData.file_path) {
+      await m.createDocument(conn, {
+        client_id:   quote.client_id,
+        contract_id: contractId,
+        file_name:   documentData.file_name,
+        file_path:   documentData.file_path,
+        file_type:   documentData.file_type || null,
+      });
+    }
+
+    // Notification
+    await conn.execute(
       `INSERT INTO notifications (user_id, title, message, type)
        VALUES (?, ?, ?, ?)`,
       [userId, 'Payment successful', `Your policy ${policy_reference} is now active.`, 'success']
     );
 
-    // ✅ AUDIT LOG
-    await conn.query(
-      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
-       VALUES (?, ?, ?, ?)`,
-      [userId, 'PAY', 'CONTRACT', contractId]
+    // Audit log
+    await conn.execute(
+      `INSERT INTO audit_logs (user_id, action, table_name, record_id, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, 'CREATE_CONTRACT', 'contracts', contractId,
+       `CATNAT contract created via online payment. Quote #${quoteId}, Policy: ${policy_reference}`]
+    );
+
+    // FIX: mark quote as accepted (not 'paid' — not a valid enum value)
+    await conn.execute(
+      'UPDATE quotes SET status = ? WHERE id = ?',
+      ['accepted', quoteId]
     );
 
     await conn.commit();
 
     return {
-      message: 'Payment successful',
-      contract_id: contractId,
+      message:        'Payment successful',
+      contract_id:    contractId,
       policy_reference,
       start_date,
       end_date,
-      amount_paid: quote.estimated_amount,
+      amount_paid:    parseFloat(quote.estimated_amount),
     };
 
   } catch (err) {
