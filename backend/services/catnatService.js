@@ -1,13 +1,3 @@
-/**
- * services/catnatService.js
- *
- * Business logic for the CATNAT (Natural Disaster) subscription flow.
- * Three operations:
- *   1. createQuote    — find/create user + client + property, build quote
- *   2. confirmQuote   — ownership check, pending → confirmed
- *   3. processPayment — atomic transaction: contract, payment, notification, audit
- */
-
 'use strict';
 
 const bcrypt  = require('bcryptjs');
@@ -19,7 +9,7 @@ const m       = require('../models/catnatModel');
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) throw new Error('FATAL: JWT_SECRET is not set.');
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────
 
 function _generateInsuranceNumber() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -50,43 +40,54 @@ function _signToken(user) {
   );
 }
 
-// ─── 1. CREATE QUOTE ──────────────────────────────────────────────────────────
+// ─── PREMIUM ─────────────────────────────────────────────────
 
-/**
- * Body fields expected:
- *   first_name, last_name, email, phone?
- *   construction_type, usage_type, built_area, num_floors,
- *   year_construction, declared_value, address?,
- *   wilaya_id?, city_id?,
- *   is_seismic_compliant, has_notarial_deed, is_commercial,
- *   extra_coverages (array, e.g. ["floods","storms"]),
- *   plan_id
- *
- * Returns: { quote_id, estimated_amount, plan_name, token }
- */
-async function createQuote({
-  first_name, last_name, email, phone,
-  construction_type, usage_type, built_area, num_floors,
-  year_construction, declared_value, address,
-  wilaya_id, city_id,
-  is_seismic_compliant, has_notarial_deed, is_commercial,
+function calculatePremium({
+  declared_value,
+  construction_type,
+  is_seismic_compliant,
+  is_commercial,
   extra_coverages,
-  plan_id,
 }) {
-  // Pre-transaction reads
-  const plan = await m.getPlanById(plan_id);
-  if (!plan) {
-    const err = new Error(`Plan with id ${plan_id} not found`);
-    err.status = 404;
-    throw err;
+  let premium = declared_value * 0.0004;
+
+  if (construction_type === 'Villa') premium *= 1.2;
+  if (!is_seismic_compliant) premium *= 1.3;
+  if (is_commercial) premium *= 1.25;
+
+  if (Array.isArray(extra_coverages)) {
+    if (extra_coverages.includes('floods')) premium += 2000;
+    if (extra_coverages.includes('storms')) premium += 1500;
+    if (extra_coverages.includes('ground')) premium += 1800;
   }
+
+  const taxes = premium * 0.19;
+  return premium + taxes;
+}
+
+// ─── CREATE QUOTE ────────────────────────────────────────────
+
+async function createQuote(data) {
+  const {
+    first_name, last_name, email, phone,
+    construction_type, usage_type,
+    built_area, num_floors,
+    year_construction, declared_value,
+    address, wilaya_id, city_id,
+    is_seismic_compliant, has_notarial_deed, is_commercial,
+    extra_coverages,
+  } = data;
+
+  const estimated_amount = calculatePremium({
+    declared_value,
+    construction_type,
+    is_seismic_compliant,
+    is_commercial,
+    extra_coverages,
+  });
 
   const product = await m.getCatnatProduct();
-  if (!product) {
-    const err = new Error('CATNAT product not found in database');
-    err.status = 500;
-    throw err;
-  }
+  if (!product) throw new Error('CATNAT product not found');
 
   const existingUser = await m.findUserByEmail(email);
 
@@ -94,68 +95,68 @@ async function createQuote({
   try {
     await conn.beginTransaction();
 
-    // 1. Find or create user
-    let userId, userEmail = email, userRole = 'client';
+    let userId;
     if (existingUser) {
-      userId   = existingUser.id;
-      userRole = existingUser.role;
+      userId = existingUser.id;
     } else {
       const tempPassword  = crypto.randomBytes(12).toString('hex');
       const password_hash = await bcrypt.hash(tempPassword, 12);
-      userId = await m.createUser(conn, {
-        first_name, last_name, email, password_hash, phone,
-      });
+      userId = await m.createUser(conn, { first_name, last_name, email, password_hash, phone });
     }
 
-    // 2. Find or create client profile
-    const existingClient = existingUser ? await m.findClientByUserId(userId) : null;
-    let clientId;
-    if (existingClient) {
-      clientId = existingClient.id;
-    } else {
-      clientId = await m.createClient(conn, {
-        user_id:          userId,
-        insurance_number: _generateInsuranceNumber(),
-      });
-    }
+    const existingClient = await m.findClientByUserId(userId);
+    const clientId = existingClient
+      ? existingClient.id
+      : await m.createClient(conn, {
+          user_id: userId,
+          insurance_number: _generateInsuranceNumber(),
+        });
 
-    // 3. Create property record
     const propertyId = await m.createProperty(conn, {
-      client_id:           clientId,
+      client_id: clientId,
       construction_type,
       usage_type,
-      built_area:          built_area     ? parseFloat(built_area)     : null,
+      built_area,
       num_floors,
-      year_construction:   year_construction ? parseInt(year_construction, 10) : null,
-      declared_value:      declared_value ? parseFloat(declared_value) : null,
+      year_construction,
+      declared_value,
       address,
-      wilaya_id:           wilaya_id ? parseInt(wilaya_id, 10) : null,
-      city_id:             city_id   ? parseInt(city_id,   10) : null,
-      is_seismic_compliant: is_seismic_compliant ? 1 : 0,
-      has_notarial_deed:    has_notarial_deed    ? 1 : 0,
-      is_commercial:        is_commercial        ? 1 : 0,
-      extra_coverages:      Array.isArray(extra_coverages) ? extra_coverages : [],
+      wilaya_id,
+      city_id,
+      is_seismic_compliant,
+      has_notarial_deed,
+      is_commercial,
+      extra_coverages,
     });
 
-    // 4. Create quote
     const quoteId = await m.createQuote(conn, {
-      client_id:        clientId,
-      property_id:      propertyId,
-      product_id:       product.id,
-      plan_id:          parseInt(plan_id, 10),
-      estimated_amount: parseFloat(plan.price),
+      client_id: clientId,
+      property_id: propertyId,
+      product_id: product.id,
+      plan_id: null,
+      estimated_amount,
     });
+
+    // ✅ NOTIFICATION
+    await conn.query(
+      `INSERT INTO notifications (user_id, title, message, type)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'Quote created', `Your CATNAT quote #${quoteId} has been created.`, 'info']
+    );
+
+    // ✅ AUDIT LOG
+    await conn.query(
+      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'CREATE', 'QUOTE', quoteId]
+    );
 
     await conn.commit();
 
-    const token = _signToken({ id: userId, email: userEmail, role: userRole });
+    const token = _signToken({ id: userId, email });
 
-    return {
-      quote_id:         quoteId,
-      estimated_amount: parseFloat(plan.price),
-      plan_name:        plan.name,
-      token,
-    };
+    return { quote_id: quoteId, estimated_amount, token };
+
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -164,131 +165,37 @@ async function createQuote({
   }
 }
 
-// ─── 2. CONFIRM QUOTE ─────────────────────────────────────────────────────────
+// ─── CONFIRM ─────────────────────────────────────────────────
 
-async function confirmQuote(quoteId, authenticatedUserId) {
-  const quote = await m.getQuoteById(quoteId);
-
-  if (!quote) {
-    const err = new Error('Quote not found');
-    err.status = 404;
-    throw err;
-  }
-  if (quote.user_id !== authenticatedUserId) {
-    const err = new Error('Forbidden: this quote does not belong to you');
-    err.status = 403;
-    throw err;
-  }
-  if (quote.status !== 'pending') {
-    const err = new Error(`Quote cannot be confirmed (status: ${quote.status})`);
-    err.status = 409;
-    throw err;
-  }
-
-  await m.updateQuoteStatus(quoteId, 'confirmed');
-  return { message: 'Quote confirmed successfully', quote_id: quoteId };
-}
-
-// ─── 3. PROCESS PAYMENT ───────────────────────────────────────────────────────
-
-/**
- * Runs atomically:
- *   1. Lock + verify quote
- *   2. Create contract (property-based, no vehicle_id)
- *   3. Create payment
- *   4. Optional document
- *   5. Notification
- *   6. Audit log
- *   7. Mark quote accepted
- */
-async function processPayment(quoteId, authenticatedUserId, documentData = null) {
+async function confirmQuote(quoteId, userId) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
     const quote = await m.getQuoteByIdForUpdate(conn, quoteId);
-    if (!quote) {
-      const err = new Error('Quote not found');
-      err.status = 404;
-      throw err;
-    }
-    if (quote.user_id !== authenticatedUserId) {
-      const err = new Error('Forbidden: this quote does not belong to you');
-      err.status = 403;
-      throw err;
-    }
-    if (quote.status !== 'confirmed') {
-      const err = new Error(
-        `Quote cannot be paid (status: ${quote.status}). Please confirm first.`
-      );
-      err.status = 409;
-      throw err;
-    }
+    if (!quote) throw new Error('Quote not found');
+    if (quote.user_id !== userId) throw new Error('Forbidden');
 
-    const policy_reference         = _generatePolicyReference(quoteId);
-    const { start_date, end_date } = _getContractDates();
-    const today                    = new Date().toISOString().slice(0, 10);
+    await m.updateQuoteStatus(conn, quoteId, 'confirmed');
 
-    // Contract — property_id instead of vehicle_id
-    const contractId = await m.createContract(conn, {
-      client_id:       quote.client_id,
-      property_id:     quote.property_id,    // ← CATNAT-specific
-      product_id:      quote.product_id,
-      plan_id:         quote.plan_id,
-      start_date,
-      end_date,
-      premium_amount:  quote.estimated_amount,
-      policy_reference,
-    });
+    // ✅ NOTIFICATION
+    await conn.query(
+      `INSERT INTO notifications (user_id, title, message, type)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'Quote confirmed', `Your quote #${quoteId} has been confirmed.`, 'success']
+    );
 
-    // Payment
-    await m.createPayment(conn, {
-      contract_id:  contractId,
-      amount:       quote.estimated_amount,
-      payment_date: today,
-    });
-
-    // Optional document
-    if (documentData?.file_name && documentData?.file_path) {
-      await m.createDocument(conn, {
-        client_id:   quote.client_id,
-        contract_id: contractId,
-        file_name:   documentData.file_name,
-        file_path:   documentData.file_path,
-        file_type:   documentData.file_type || null,
-      });
-    }
-
-    // Notification
-    await m.createNotification(conn, {
-      user_id: authenticatedUserId,
-      title:   'Votre contrat CATNAT est actif',
-      message: `Votre police (${policy_reference}) est valide du ${start_date} au ${end_date}.`,
-      type:    'contract',
-    });
-
-    // Audit
-    await m.createAuditLog(conn, {
-      user_id:     authenticatedUserId,
-      action:      'CREATE_CONTRACT',
-      table_name:  'contracts',
-      record_id:   contractId,
-      description: `CATNAT contract created via online payment. Quote #${quoteId}, Policy: ${policy_reference}`,
-    });
-
-    // Mark quote accepted
-    await m.updateQuoteStatusTx(conn, quoteId, 'accepted');
+    // ✅ AUDIT LOG
+    await conn.query(
+      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'CONFIRM', 'QUOTE', quoteId]
+    );
 
     await conn.commit();
 
-    return {
-      message:          'Payment processed successfully',
-      policy_reference,
-      contract_id:      contractId,
-      start_date,
-      end_date,
-      amount_paid:      parseFloat(quote.estimated_amount),
-    };
+    return { message: 'Quote confirmed', quote_id: quoteId };
+
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -297,6 +204,68 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── PAYMENT ─────────────────────────────────────────────────
+
+async function processPayment(quoteId, userId, documentData = null) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const quote = await m.getQuoteByIdForUpdate(conn, quoteId);
+    if (!quote) throw new Error('Quote not found');
+    if (quote.user_id !== userId) throw new Error('Forbidden');
+
+    const { start_date, end_date } = _getContractDates();
+    const policy_reference = _generatePolicyReference(quoteId);
+
+    const contractId = await m.createContract(conn, {
+      client_id: quote.client_id,
+      property_id: quote.property_id,
+      product_id: quote.product_id,
+      plan_id: null,
+      start_date,
+      end_date,
+      premium_amount: quote.estimated_amount,
+      policy_reference,
+    });
+
+    await m.createPayment(conn, {
+      contract_id: contractId,
+      amount: quote.estimated_amount,
+      payment_date: new Date().toISOString().slice(0, 10),
+    });
+
+    // ✅ NOTIFICATION
+    await conn.query(
+      `INSERT INTO notifications (user_id, title, message, type)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'Payment successful', `Your policy ${policy_reference} is now active.`, 'success']
+    );
+
+    // ✅ AUDIT LOG
+    await conn.query(
+      `INSERT INTO audit_logs (user_id, action, entity, entity_id)
+       VALUES (?, ?, ?, ?)`,
+      [userId, 'PAY', 'CONTRACT', contractId]
+    );
+
+    await conn.commit();
+
+    return {
+      message: 'Payment successful',
+      contract_id: contractId,
+      policy_reference,
+      start_date,
+      end_date,
+      amount_paid: quote.estimated_amount,
+    };
+
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
 
 module.exports = { createQuote, confirmQuote, processPayment };
