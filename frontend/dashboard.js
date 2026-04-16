@@ -181,7 +181,6 @@ window.switchSection = function (key, _el) {
 
   const cfg = SECTION_CONFIG[key] || SECTION_CONFIG.dashboard;
   safeSetText('#topbarTitle', cfg.title);
-  safeSetText('#topbarBreadcrumb', cfg.title);
   const iconEl = document.getElementById('topbarIcon');
   if (iconEl) iconEl.innerHTML =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
@@ -189,7 +188,6 @@ window.switchSection = function (key, _el) {
 
   closeSidebar();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
   if (key === 'claims')    loadClaims();
   if (key === 'contracts') loadContractsSection();
 };

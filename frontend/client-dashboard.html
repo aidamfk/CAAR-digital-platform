@@ -7,12 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="dashboard.css"/>
   <link rel="stylesheet" href="main.css"/>
-</head>
-<body>
 
- 
   <style>
-    /* ── New Claim Modal ──────────────────────────────────── */
+    /* ── New Claim Modal ─────────────────────────────────────── */
     .nc-modal-overlay {
       display: none;
       position: fixed; inset: 0;
@@ -23,143 +20,170 @@
       justify-content: center;
     }
     .nc-modal-overlay.open { display: flex; }
-
     .nc-modal {
-      background: #fff;
-      border-radius: 18px;
-      padding: 32px 32px 28px;
-      width: 100%;
-      max-width: 520px;
-      margin: 16px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.18);
+      background: #fff; border-radius: 18px;
+      padding: 32px 32px 28px; width: 100%; max-width: 520px;
+      margin: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.18);
       animation: ncSlideIn .28s ease;
     }
     @keyframes ncSlideIn {
       from { opacity:0; transform:translateY(-20px); }
       to   { opacity:1; transform:translateY(0); }
     }
-
     .nc-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 22px;
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 22px;
     }
     .nc-modal-title {
-      font-family: var(--font-serif);
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--dark);
+      font-family: var(--font-serif); font-size: 1.15rem;
+      font-weight: 700; color: var(--dark);
     }
     .nc-modal-close {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      cursor: pointer;
-      font-size: .9rem;
-      color: var(--gray);
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg); border: 1.5px solid var(--border);
+      cursor: pointer; font-size: .9rem; color: var(--gray);
       display: flex; align-items: center; justify-content: center;
       transition: background .15s;
     }
     .nc-modal-close:hover { background: #f0f0f0; color: var(--dark); }
-
     .nc-field { margin-bottom: 16px; }
     .nc-field label {
-      display: block;
-      font-size: .78rem;
-      font-weight: 700;
-      color: var(--dark);
-      margin-bottom: 6px;
+      display: block; font-size: .78rem; font-weight: 700;
+      color: var(--dark); margin-bottom: 6px;
     }
     .nc-field label .req { color: var(--orange); }
     .nc-select, .nc-input, .nc-textarea {
-      width: 100%;
-      padding: 10px 13px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: .86rem;
-      font-family: var(--font-sans);
-      color: var(--dark);
-      background: #fff;
-      outline: none;
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: .86rem; font-family: var(--font-sans);
+      color: var(--dark); background: #fff; outline: none;
       transition: border-color .2s, box-shadow .2s;
     }
     .nc-select {
       appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23999' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      cursor: pointer;
+      background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
     }
     .nc-select:focus, .nc-input:focus, .nc-textarea:focus {
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(232,118,30,.1);
+      border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,118,30,.1);
     }
     .nc-textarea { min-height: 90px; resize: vertical; }
-    .nc-hint {
-      font-size: .72rem;
-      color: var(--gray);
-      margin-top: 4px;
-    }
+    .nc-hint { font-size: .72rem; color: var(--gray); margin-top: 4px; }
     .nc-error {
-      display: none;
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: .78rem;
-      font-weight: 600;
-      color: #be123c;
-      margin-bottom: 14px;
+      display: none; background: #fff1f2; border: 1px solid #fecdd3;
+      border-radius: 8px; padding: 10px 14px; font-size: .78rem;
+      font-weight: 600; color: #be123c; margin-bottom: 14px;
     }
-    .nc-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-    }
+    .nc-actions { display: flex; gap: 10px; margin-top: 6px; }
     .nc-btn-submit {
-      flex: 1;
-      padding: 12px;
-      background: var(--orange);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-family: var(--font-sans);
-      font-size: .88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s;
+      flex: 1; padding: 12px; background: var(--orange); color: #fff;
+      border: none; border-radius: 8px; font-family: var(--font-sans);
+      font-size: .88rem; font-weight: 700; cursor: pointer; transition: background .2s;
     }
     .nc-btn-submit:hover:not(:disabled) { background: var(--orange-dark); }
     .nc-btn-submit:disabled { opacity: .7; cursor: wait; }
     .nc-btn-cancel {
-      padding: 12px 20px;
-      background: #fff;
-      color: var(--dark);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--font-sans);
-      font-size: .88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: border-color .2s, color .2s;
+      padding: 12px 20px; background: #fff; color: var(--dark);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: var(--font-sans); font-size: .88rem; font-weight: 600;
+      cursor: pointer; transition: border-color .2s, color .2s;
     }
     .nc-btn-cancel:hover { border-color: var(--orange); color: var(--orange); }
 
-    /* ── Contracts grid inside section ────────────────────── */
+    /* ── Contracts grid ──────────────────────────────────────── */
     #contracts-cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      align-items: start;
+      gap: 20px; align-items: start;
     }
+
+    /* ── Topbar dropdown system ──────────────────────────────── */
+    .dtb-dropdown-wrap { position: relative; display: inline-flex; align-items: center; }
+
+    .dtb-dropdown {
+      position: absolute; top: calc(100% + 10px); right: 0; z-index: 700;
+      background: #fff; border: 1.5px solid var(--border); border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.13); overflow: hidden; min-width: 220px;
+      animation: dtbDropIn .18s ease;
+    }
+    .dtb-dropdown[hidden] { display: none !important; }
+    @keyframes dtbDropIn {
+      from { opacity:0; transform:translateY(-6px) scale(.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    .dtb-dropdown__header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 12px 16px 10px; font-size: .78rem; font-weight: 700;
+      color: var(--dark); border-bottom: 1px solid var(--border);
+    }
+    .dtb-dropdown__footer { padding: 10px 16px; border-top: 1px solid var(--border); }
+    .dtb-divider { border: none; border-top: 1px solid var(--border); margin: 3px 0; }
+
+    .dtb-role-badge {
+      font-size: .62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; padding: 2px 8px; border-radius: 20px;
+      background: var(--orange-lt); color: var(--orange);
+    }
+
+    .dtb-notif-dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 8px; height: 8px; background: var(--orange);
+      border-radius: 50%; border: 2px solid #fff;
+    }
+
+    .dtb-notif-list { list-style: none; max-height: 280px; overflow-y: auto; padding: 6px 0; }
+    .dtb-notif-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 16px; border-bottom: 1px solid #f5f5f5;
+      cursor: pointer; transition: background .12s;
+    }
+    .dtb-notif-item:last-child { border-bottom: none; }
+    .dtb-notif-item:hover      { background: var(--orange-lt); }
+    .dtb-notif-item--unread    { background: #fff8f2; }
+    .dtb-notif-icon {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--orange-lt);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .dtb-notif-icon svg { width: 14px; height: 14px; stroke: var(--orange); fill: none; stroke-width: 2; }
+    .dtb-notif-body { flex: 1; }
+    .dtb-notif-title { font-size: .78rem; font-weight: 700; color: var(--dark); line-height: 1.3; }
+    .dtb-notif-time  { font-size: .68rem; color: var(--gray); margin-top: 2px; }
+    .dtb-notif-empty { font-size: .78rem; color: var(--gray); text-align: center; display: block; }
+
+    .dtb-mark-read {
+      background: none; border: none; cursor: pointer; font-size: .68rem;
+      font-weight: 600; color: var(--orange); font-family: var(--font-sans);
+      padding: 0; transition: opacity .15s;
+    }
+    .dtb-mark-read:hover { opacity: .7; }
+
+    .dtb-menu-list { list-style: none; padding: 5px 0; }
+    .dtb-menu-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 10px 16px; font-size: .82rem; font-weight: 600; color: var(--dark);
+      text-decoration: none; background: none; border: none; cursor: pointer;
+      font-family: var(--font-sans); transition: background .12s, color .12s;
+    }
+    .dtb-menu-item:hover { background: var(--orange-lt); color: var(--orange); }
+    .dtb-menu-item svg {
+      width: 15px; height: 15px; stroke: currentColor; fill: none;
+      stroke-width: 2; flex-shrink: 0; opacity: .7;
+    }
+    .dtb-menu-item--danger       { color: #c53030; }
+    .dtb-menu-item--danger:hover { background: #fff1f2; color: #c53030; }
+    .dtb-menu-item--danger svg   { stroke: #c53030; }
+    .dtb-dropdown--notif         { min-width: 300px; }
+
+    /* Breadcrumb gone */
+    .dash-topbar__breadcrumb  { display: none !important; }
+    .dash-topbar .dash-topbar__divider { display: none; }
   </style>
 </head>
 <body>
 
-<!-- ═══ NEW CLAIM MODAL ═══════════════════════════════════════════════════ -->
-<div class="nc-modal-overlay" id="newClaimModal" onclick="handleModalBgClick(event)">
+<!-- ═══ NEW CLAIM MODAL ═══════════════════════════════════════════ -->
+<div class="nc-modal-overlay" id="newClaimModal">
   <div class="nc-modal" role="dialog" aria-labelledby="ncModalTitle" aria-modal="true">
 
     <div class="nc-modal-header">
@@ -171,30 +195,21 @@
         </svg>
         File a New Claim
       </div>
-      <button class="nc-modal-close" onclick="closeNewClaimModal()" aria-label="Close">✕</button>
+      <button class="nc-modal-close" id="ncModalCloseBtn" aria-label="Close">✕</button>
     </div>
 
-    <!-- Error banner -->
     <div class="nc-error" id="claimFormError"></div>
 
-    <!-- Step 1: Contract selection (CONTRACT-FIRST) -->
     <div class="nc-field">
-      <label for="ncContractSelect">
-        Select Contract <span class="req">*</span>
-      </label>
+      <label for="ncContractSelect">Select Contract <span class="req">*</span></label>
       <select class="nc-select" id="ncContractSelect">
         <option value="">— Loading your contracts… —</option>
       </select>
-      <div class="nc-hint">
-        Only active contracts are shown. The backend will verify ownership.
-      </div>
+      <div class="nc-hint">Only active contracts are shown.</div>
     </div>
 
-    <!-- Step 2: Incident details -->
     <div class="nc-field">
-      <label for="ncDescription">
-        Description <span class="req">*</span>
-      </label>
+      <label for="ncDescription">Description <span class="req">*</span></label>
       <textarea class="nc-textarea" id="ncDescription"
         placeholder="Describe the incident in detail (minimum 10 characters)…"
         maxlength="2000"></textarea>
@@ -207,46 +222,40 @@
       </div>
       <div class="nc-field">
         <label for="ncLocation">Location (optional)</label>
-        <input type="text" class="nc-input" id="ncLocation"
-          placeholder="Street / area / landmark"/>
+        <input type="text" class="nc-input" id="ncLocation" placeholder="Street / area / landmark"/>
       </div>
     </div>
 
     <div class="nc-actions">
-      <button class="nc-btn-cancel" onclick="closeNewClaimModal()">Cancel</button>
-      <button class="nc-btn-submit" id="ncSubmitBtn" onclick="submitNewClaim()">
-        Submit Claim
-      </button>
+      <button class="nc-btn-cancel" id="ncCancelBtn">Cancel</button>
+      <button class="nc-btn-submit" id="ncSubmitBtn">Submit Claim</button>
     </div>
 
   </div>
 </div>
 
-<!-- ═══ CLAIM DETAIL PANEL ════════════════════════════════════════════════ -->
-<div class="claim-panel-overlay" id="claimPanelOverlay" onclick="closeClaimPanel()"></div>
+<!-- ═══ CLAIM DETAIL PANEL ════════════════════════════════════════ -->
+<div class="claim-panel-overlay" id="claimPanelOverlay"></div>
 <div class="claim-detail-panel" id="claimDetailPanel">
   <div class="cdp-header">
     <div class="cdp-header-left">
       <div class="cdp-title" id="cdpTitle">Claim Details</div>
       <div class="cdp-subtitle" id="cdpSubtitle">Reference — —</div>
     </div>
-    <button class="btn-close-panel" onclick="closeClaimPanel()" aria-label="Close">✕</button>
+    <button class="btn-close-panel" id="cdpCloseBtn" aria-label="Close">✕</button>
   </div>
   <div class="cdp-body" id="cdpBody"></div>
   <div class="cdp-footer">
-    <button class="btn-cdp-secondary" onclick="closeClaimPanel()">Close</button>
-    <button class="btn-cdp-primary"
-      onclick="alert('Document upload will be available in a future update.')">
-      📎 Attach Document
-    </button>
+    <button class="btn-cdp-secondary" id="cdpFooterClose">Close</button>
+    <button class="btn-cdp-primary" id="cdpAttachBtn">📎 Attach Document</button>
   </div>
 </div>
 
-<div class="dash-sidebar-overlay" id="dashSidebarOverlay" onclick="closeSidebar()"></div>
+<div class="dash-sidebar-overlay" id="dashSidebarOverlay"></div>
 
 <div class="dashboard-root">
 
-  <!-- ═══ SIDEBAR ══════════════════════════════════════════════════════════ -->
+  <!-- ═══ SIDEBAR ════════════════════════════════════════════════ -->
   <aside class="dash-sidebar" id="dashSidebar">
 
     <div class="dash-sidebar__logo">
@@ -266,9 +275,9 @@
 
     <div class="dash-sidebar__nav-label">Navigation</div>
 
+    <!-- No onclick attributes — all wired via addEventListener below -->
     <nav class="dash-sidebar__nav">
-      <a href="#" class="dash-nav-item active" data-section="dashboard"
-        onclick="switchSection('dashboard', this); return false;">
+      <a href="#" class="dash-nav-item active" data-section="dashboard">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/>
           <rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
@@ -276,8 +285,7 @@
         </span>
         Dashboard
       </a>
-      <a href="#" class="dash-nav-item" data-section="claims"
-        onclick="switchSection('claims', this); return false;">
+      <a href="#" class="dash-nav-item" data-section="claims">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/></svg>
@@ -285,31 +293,27 @@
         My Claims
         <span class="dash-nav-item__badge"></span>
       </a>
-      <a href="#" class="dash-nav-item" data-section="roadside"
-        onclick="switchSection('roadside', this); return false;">
+      <a href="#" class="dash-nav-item" data-section="roadside">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
           <polygon points="10 8 16 12 10 16 10 8"/></svg>
         </span>
         Request Roadside
       </a>
-      <a href="#" class="dash-nav-item" data-section="messages"
-        onclick="switchSection('messages', this); return false;">
+      <a href="#" class="dash-nav-item" data-section="messages">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </span>
         Messages
       </a>
-      <a href="#" class="dash-nav-item" data-section="contracts"
-        onclick="switchSection('contracts', this); return false;">
+      <a href="#" class="dash-nav-item" data-section="contracts">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </span>
         My Contracts
       </a>
-      <a href="#" class="dash-nav-item" data-section="profile"
-        onclick="switchSection('profile', this); return false;">
+      <a href="#" class="dash-nav-item" data-section="profile">
         <span class="dash-nav-item__icon">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/></svg>
@@ -329,14 +333,14 @@
 
   </aside>
 
-  <!-- ═══ MAIN ═════════════════════════════════════════════════════════════ -->
+  <!-- ═══ MAIN ═══════════════════════════════════════════════════ -->
   <div class="dash-main">
 
-    <!-- TOP BAR -->
+    <!-- ═══ TOP BAR ═══════════════════════════════════════════════ -->
     <header class="dash-topbar">
+
       <div class="dash-topbar__left">
-        <button class="dash-topbar__hamburger" id="dashHamburger"
-          onclick="openSidebar()" aria-label="Open menu">
+        <button class="dash-topbar__hamburger" id="dashHamburger" aria-label="Open sidebar menu">
           <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/>
           <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
@@ -347,50 +351,112 @@
         </div>
         <div class="dash-topbar__title-group">
           <div class="dash-topbar__title" id="topbarTitle">Dashboard</div>
-          <div class="dash-topbar__breadcrumb">
-            CAAR &rsaquo; Client Space &rsaquo;
-            <span id="topbarBreadcrumb">Dashboard</span>
-          </div>
+          <!-- breadcrumb removed -->
         </div>
       </div>
+
       <div class="dash-topbar__right">
-        <button class="dash-topbar__btn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </button>
-        
-        <div class="dash-topbar__user">
-          <div class="dash-topbar__user-avatar">?</div>
-          <span class="dash-topbar__user-name">Loading…</span>
-          <svg class="dash-topbar__user-chevron" viewBox="0 0 24 24">
-          <polyline points="6 9 12 15 18 9"/></svg>
+
+        <!-- Home button -->
+        <a href="index.html" class="dash-topbar__btn" aria-label="Return to homepage" title="Homepage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </a>
+
+        <!-- Notification bell -->
+        <div class="dtb-dropdown-wrap" id="notifWrap">
+          <button class="dash-topbar__btn" id="notifBtn"
+                  aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="dtb-notif-dot" id="notifDot" hidden></span>
+          </button>
+          <div class="dtb-dropdown dtb-dropdown--notif" id="notifDropdown" role="menu" hidden>
+            <div class="dtb-dropdown__header">
+              <span>Notifications</span>
+              <button class="dtb-mark-read" id="markAllRead">Mark all read</button>
+            </div>
+            <ul class="dtb-notif-list" id="notifList"></ul>
+            <div class="dtb-dropdown__footer">
+              <span class="dtb-notif-empty" id="notifEmpty">No new notifications</span>
+            </div>
+          </div>
         </div>
-        <div class="dash-topbar__divider"></div>
-      
+
+        <!-- User menu -->
+        <div class="dtb-dropdown-wrap" id="userWrap">
+          <button class="dash-topbar__user" id="userMenuBtn"
+                  aria-expanded="false" aria-haspopup="true">
+            <div class="dash-topbar__user-avatar" id="topbarAvatar">?</div>
+            <span class="dash-topbar__user-name" id="topbarName">Loading…</span>
+            <svg class="dash-topbar__user-chevron" viewBox="0 0 24 24">
+              <polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="dtb-dropdown dtb-dropdown--user" id="userDropdown" role="menu" hidden>
+            <div class="dtb-dropdown__header">
+              <span id="dropFullName">—</span>
+              <span class="dtb-role-badge" id="dropRole">client</span>
+            </div>
+            <hr class="dtb-divider"/>
+            <ul class="dtb-menu-list">
+              <li>
+                <a href="client-dashboard.html" class="dtb-menu-item" role="menuitem">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/></svg>
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <button class="dtb-menu-item" id="goToProfile" role="menuitem">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/></svg>
+                  My Profile
+                </button>
+              </li>
+              <li>
+                <a href="index.html" class="dtb-menu-item" role="menuitem">
+                  <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  Homepage
+                </a>
+              </li>
+            </ul>
+            <hr class="dtb-divider"/>
+            <ul class="dtb-menu-list">
+              <li>
+                <button class="dtb-menu-item dtb-menu-item--danger" id="logoutDropBtn" role="menuitem">
+                  <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Logout
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
       </div>
     </header>
 
-    <!-- ═══ CONTENT ══════════════════════════════════════════════════════ -->
+    <!-- ═══ CONTENT ═════════════════════════════════════════════ -->
     <main class="dash-content">
 
-      <!-- SECTION: DASHBOARD ──────────────────────────────────────────── -->
+      <!-- SECTION: DASHBOARD ───────────────────────────────────── -->
       <div class="dash-section active" id="dashboard-section">
-
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">Welcome back 👋</h1>
-          <p class="dash-content__header-sub">
-            Here's an overview of your CAAR account and recent activity.
-          </p>
+          <p class="dash-content__header-sub">Here's an overview of your CAAR account.</p>
         </div>
 
-        <!-- Summary Cards (values populated by loadDashboardStats()) -->
         <div class="summary-cards">
           <div class="summary-card summary-card--orange">
             <div class="sc-icon sc-icon--orange">
-              <svg viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/></svg>
             </div>
             <div class="sc-label">Total Claims</div>
             <div class="sc-value">—</div>
@@ -425,20 +491,18 @@
           </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="quick-actions">
-          <!-- ✅ FIX: now calls the contract-first flow -->
-          <a href="#" class="btn-qa-primary" onclick="openNewClaimModalGeneric(); return false;">
+          <!-- No onclick — wired via addEventListener -->
+          <button class="btn-qa-primary" id="qaNewClaim">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Claim
-          </a>
-          <a href="#" class="btn-qa-secondary"
-            onclick="switchSection('roadside', document.querySelector('[data-section=roadside]')); return false;">
+          </button>
+          <button class="btn-qa-secondary" id="qaRoadside">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
             <polygon points="10 8 16 12 10 16 10 8"/></svg>
             Request Roadside
-          </a>
+          </button>
           <a href="contact.html" class="btn-qa-secondary">
             <svg viewBox="0 0 24 24">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -446,23 +510,19 @@
           </a>
         </div>
 
-        <!-- Content Grid -->
         <div class="dash-content-grid">
           <div class="activity-card">
             <div class="activity-card-header">
               <div class="activity-card-title">Recent Activity</div>
-              <span class="activity-card-link"
-                onclick="switchSection('claims', null)" style="cursor:pointer;">
+              <button class="activity-card-link" id="viewAllClaims" style="background:none;border:none;cursor:pointer;font-size:.78rem;color:var(--orange);font-weight:600;">
                 View all →
-              </span>
+              </button>
             </div>
             <div class="activity-list">
               <div class="activity-item">
                 <div class="activity-dot activity-dot--amber">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/></svg>
                 </div>
                 <div class="activity-body">
                   <div class="activity-body-title">Open "My Claims" to view your history</div>
@@ -471,7 +531,6 @@
               </div>
             </div>
           </div>
-
           <div>
             <div class="dash-widget">
               <div class="dash-widget-header">Quick Support</div>
@@ -496,22 +555,17 @@
         </div>
       </div><!-- /dashboard-section -->
 
-
-      <!-- SECTION: MY CLAIMS ──────────────────────────────────────────── -->
+      <!-- SECTION: MY CLAIMS ───────────────────────────────────── -->
       <div class="dash-section" id="claims-section">
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">My Claims</h1>
-          <p class="dash-content__header-sub">
-            Track your insurance claims and check their current status.
-            Click any row to view full details.
-          </p>
+          <p class="dash-content__header-sub">Track your insurance claims. Click any row to view details.</p>
         </div>
-
         <div class="claims-controls-bar">
           <div class="claims-controls-left">
             <span class="claims-filter-label">Filter by:</span>
-            <select class="claims-filter-select" id="claimsFilterSelect"
-              onchange="filterClaims(this.value)">
+            <!-- No onchange — wired via addEventListener -->
+            <select class="claims-filter-select" id="claimsFilterSelect">
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
               <option value="under_review">Under Review</option>
@@ -524,26 +578,19 @@
               Showing <strong id="claimsCountNum">—</strong> claims
             </span>
           </div>
-          <!-- ✅ FIX: contract-first flow -->
-          <button class="btn-new-claim" onclick="openNewClaimModalGeneric()">
-            <svg viewBox="0 0 24 24">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
+          <button class="btn-new-claim" id="claimsNewClaimBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Claim
           </button>
         </div>
-
         <div class="claims-table-card">
           <div class="claims-table-scroll">
             <table class="claims-tbl" id="claimsTable">
               <thead>
                 <tr>
-                  <th>Claim ID</th>
-                  <th>Date Filed</th>
-                  <th>Contract</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th>Claim ID</th><th>Date Filed</th>
+                  <th>Contract</th><th>Status</th><th>Action</th>
                 </tr>
               </thead>
               <tbody id="claimsTableBody"></tbody>
@@ -551,27 +598,20 @@
           </div>
           <div class="claims-empty" id="claimsEmpty" style="display:none;">
             <div class="claims-empty-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/></svg>
             </div>
             <div class="claims-empty-title">No claims yet</div>
-            <div class="claims-empty-sub">
-              File your first claim using the "New Claim" button above.
-            </div>
+            <div class="claims-empty-sub">File your first claim using the "New Claim" button above.</div>
           </div>
         </div>
       </div><!-- /claims-section -->
 
-
-      <!-- SECTION: ROADSIDE ───────────────────────────────────────────── -->
+      <!-- SECTION: ROADSIDE ────────────────────────────────────── -->
       <div class="dash-section" id="roadside-section">
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">Request Roadside Assistance</h1>
-          <p class="dash-content__header-sub">
-            Fill in the form and our team will dispatch assistance as quickly as possible.
-          </p>
+          <p class="dash-content__header-sub">Fill in the form and our team will dispatch assistance.</p>
         </div>
         <div class="roadside-alert">
           <div class="roadside-alert-icon">🆘</div>
@@ -598,14 +638,15 @@
               </div>
               <div class="roadside-form-body" id="roadsideFormBody">
                 <div class="rf-group-title">Type of Problem</div>
+                <!-- chips wired via addEventListener (delegated) -->
                 <div class="rf-problem-chips" id="rfProblemChips">
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Breakdown')"><span class="chip-icon">⚙️</span> Breakdown</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Flat Tyre')"><span class="chip-icon">🔧</span> Flat Tyre</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Battery Dead')"><span class="chip-icon">🔋</span> Battery Dead</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Accident')"><span class="chip-icon">🚨</span> Accident</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Locked Out')"><span class="chip-icon">🔑</span> Locked Out</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Out of Fuel')"><span class="chip-icon">⛽</span> Out of Fuel</div>
-                  <div class="rf-problem-chip" onclick="selectProblemChip(this,'Other')"><span class="chip-icon">❓</span> Other</div>
+                  <div class="rf-problem-chip" data-problem="Breakdown"><span class="chip-icon">⚙️</span> Breakdown</div>
+                  <div class="rf-problem-chip" data-problem="Flat Tyre"><span class="chip-icon">🔧</span> Flat Tyre</div>
+                  <div class="rf-problem-chip" data-problem="Battery Dead"><span class="chip-icon">🔋</span> Battery Dead</div>
+                  <div class="rf-problem-chip" data-problem="Accident"><span class="chip-icon">🚨</span> Accident</div>
+                  <div class="rf-problem-chip" data-problem="Locked Out"><span class="chip-icon">🔑</span> Locked Out</div>
+                  <div class="rf-problem-chip" data-problem="Out of Fuel"><span class="chip-icon">⛽</span> Out of Fuel</div>
+                  <div class="rf-problem-chip" data-problem="Other"><span class="chip-icon">❓</span> Other</div>
                 </div>
                 <input type="hidden" id="rfProblemType" value=""/>
                 <div class="rf-group-title">Vehicle Information</div>
@@ -645,8 +686,7 @@
                 <div class="rf-group-title">Problem Description</div>
                 <div class="rf-field">
                   <label for="rfDescription">Describe the issue <span class="req">*</span></label>
-                  <textarea class="rf-textarea" id="rfDescription"
-                    placeholder="Briefly describe what happened…"></textarea>
+                  <textarea class="rf-textarea" id="rfDescription" placeholder="Briefly describe what happened…"></textarea>
                 </div>
                 <div class="rf-group-title">Contact</div>
                 <div class="rf-grid">
@@ -655,8 +695,7 @@
                     <input type="tel" class="rf-input" id="rfPhone" placeholder="05XX XX XX XX"/>
                   </div>
                 </div>
-                <button class="btn-roadside-submit" id="btnRoadsideSubmit"
-                  onclick="submitRoadsideRequest()">
+                <button class="btn-roadside-submit" id="btnRoadsideSubmit">
                   <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>
                   Send Assistance Request
                 </button>
@@ -667,7 +706,7 @@
                 <div class="roadside-success-sub">Our team will contact you within <strong>15 minutes</strong>.</div>
                 <div class="roadside-success-ref" id="rsRequestRef">REF — —</div>
                 <div class="roadside-success-actions">
-                  <button class="btn-rs-success-secondary" onclick="resetRoadsideForm()">Submit Another</button>
+                  <button class="btn-rs-success-secondary" id="roadsideResetBtn">Submit Another</button>
                 </div>
               </div>
             </div>
@@ -675,8 +714,7 @@
         </div>
       </div><!-- /roadside-section -->
 
-
-      <!-- SECTION: MESSAGES ───────────────────────────────────────────── -->
+      <!-- SECTION: MESSAGES ────────────────────────────────────── -->
       <div class="dash-section" id="messages-section">
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">Messages</h1>
@@ -693,17 +731,12 @@
         </div>
       </div><!-- /messages-section -->
 
-
-      <!-- SECTION: MY CONTRACTS ───────────────────────────────────────── -->
+      <!-- SECTION: MY CONTRACTS ────────────────────────────────── -->
       <div class="dash-section" id="contracts-section">
         <div class="dash-content__header">
           <h1 class="dash-content__header-title">My Contracts</h1>
-          <p class="dash-content__header-sub">
-            All your active and past insurance policies.
-            Click "File a Claim" on an active contract to create a claim for it.
-          </p>
+          <p class="dash-content__header-sub">All your active and past insurance policies.</p>
         </div>
-        <!-- ✅ FIX: populated dynamically by loadContracts() — no hardcoded data -->
         <div id="contracts-cards-grid">
           <div style="padding:40px;text-align:center;color:#999;font-size:.84rem;grid-column:1/-1;">
             Open this section to load your contracts.
@@ -711,8 +744,7 @@
         </div>
       </div><!-- /contracts-section -->
 
-
-      <!-- SECTION: PROFILE ────────────────────────────────────────────── -->
+      <!-- SECTION: PROFILE ─────────────────────────────────────── -->
       <div class="dash-section" id="profile-section">
         <div id="profileApiMsg" style="display:none;margin-bottom:12px;"></div>
         <div class="dash-content__header">
@@ -731,24 +763,24 @@
               <div class="pfb-grid">
                 <div class="pfb-field">
                   <label>First Name</label>
-                  <input class="pfb-input" type="text" id="pf-first" value=""/>
+                  <input class="pfb-input" type="text" id="pf-first"/>
                 </div>
                 <div class="pfb-field">
                   <label>Last Name</label>
-                  <input class="pfb-input" type="text" id="pf-last" value=""/>
+                  <input class="pfb-input" type="text" id="pf-last"/>
                 </div>
                 <div class="pfb-field pfb-field--full">
                   <label>Email Address</label>
-                  <input class="pfb-input" type="email" id="pf-email" value=""/>
+                  <input class="pfb-input" type="email" id="pf-email"/>
                 </div>
                 <div class="pfb-field pfb-field--full">
                   <label>Phone Number</label>
-                  <input class="pfb-input" type="tel" id="pf-phone" value=""/>
+                  <input class="pfb-input" type="tel" id="pf-phone"/>
                 </div>
               </div>
               <div class="pfb-actions">
-                <button class="pfb-btn-primary" onclick="saveProfile()">Save Changes</button>
-                <button class="pfb-btn-secondary" onclick="cancelProfile()">Cancel</button>
+                <button class="pfb-btn-primary" id="pfSaveBtn">Save Changes</button>
+                <button class="pfb-btn-secondary" id="pfCancelBtn">Cancel</button>
               </div>
               <div class="pfb-success" id="pfb-success" style="display:none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -773,7 +805,7 @@
                 </div>
               </div>
               <div class="pfb-actions">
-                <button class="pfb-btn-primary" onclick="changePassword()">Update Password</button>
+                <button class="pfb-btn-primary" id="pfPwBtn">Update Password</button>
               </div>
               <div class="pfb-success" id="pfb-pw-success" style="display:none;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -792,44 +824,373 @@
   </div><!-- /dash-main -->
 </div><!-- /dashboard-root -->
 
-<script>
-  /* Close modal if user clicks outside the inner box */
-  function handleModalBgClick(e) {
-    if (e.target === document.getElementById('newClaimModal')) {
-      closeNewClaimModal();
-    }
-  }
+<div id="claimsApiMsg" style="display:none;margin-bottom:12px;"></div>
 
-  /* Pre-fill profile fields from localStorage on page load */
-  document.addEventListener('DOMContentLoaded', function () {
-    try {
-      const u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u.first_name) document.getElementById('pf-first').value = u.first_name;
-      if (u.last_name)  document.getElementById('pf-last').value  = u.last_name;
-      if (u.email)      document.getElementById('pf-email').value = u.email;
-      if (u.phone)      document.getElementById('pf-phone').value = u.phone;
-
-      // Avatar in profile
-      const pac = document.querySelector('.pac-circle');
-      if (pac) {
-        const initials = ((u.first_name || '?')[0] + (u.last_name || '?')[0]).toUpperCase();
-        pac.textContent = initials;
-      }
-      const pacName = document.querySelector('.pac-name');
-      if (pacName) pacName.textContent = (u.first_name + ' ' + u.last_name).trim() || u.email || '—';
-    } catch (_) {}
-  });
-</script>
+<!-- ═══ SCRIPTS — load order matters ════════════════════════════ -->
 <script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
 <script src="main.js"></script>
-
-<!-- 4. Page-specific script (if any) -->
-<script src="dashboard.js"></script>  <!-- dashboard pages only -->
-<div id="claimsApiMsg" style="display:none;margin-bottom:12px;"></div>
+<script src="dashboard.js"></script>
 <script src="js/api.js"></script>
 <script src="js/dashboard-client-api.js"></script>
 <script src="js/profile-api.js"></script>
+
+<script>
+/**
+ * client-dashboard — inline init
+ * ─────────────────────────────────────────────────────────────────
+ * Wires every button, input, and interactive element via
+ * addEventListener. Zero inline onclick attributes.
+ *
+ * Sections:
+ *   A. Profile pre-fill
+ *   B. Topbar dropdowns (notif + user)
+ *   C. Sidebar nav
+ *   D. Modal (new claim)
+ *   E. Claim detail panel
+ *   F. Quick-action buttons
+ *   G. Claims filter
+ *   H. Roadside problem chips + form
+ *   I. Profile form buttons
+ *   J. Global Escape / outside-click
+ * ─────────────────────────────────────────────────────────────────
+ */
+(function () {
+  'use strict';
+
+  /* ─── helpers ───────────────────────────────────────────────── */
+  function el(id)  { return document.getElementById(id); }
+  function qs(sel) { return document.querySelector(sel); }
+
+  /* ─── A. Profile pre-fill ───────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.first_name) el('pf-first').value = u.first_name;
+      if (u.last_name)  el('pf-last').value  = u.last_name;
+      if (u.email)      el('pf-email').value = u.email;
+      if (u.phone)      el('pf-phone').value = u.phone;
+
+      const pac = qs('.pac-circle');
+      if (pac) pac.textContent = ((u.first_name||'?')[0] + (u.last_name||'?')[0]).toUpperCase();
+      const pacName = qs('.pac-name');
+      if (pacName) pacName.textContent = ((u.first_name||'') + ' ' + (u.last_name||'')).trim() || u.email || '—';
+    } catch (_) {}
+  });
+
+  /* ─── B. Topbar dropdowns ───────────────────────────────────── */
+  let _notifications = [];
+
+  function openDropdown(dropdown, trigger) {
+    if (!dropdown) return;
+    closeAllDropdowns();
+    dropdown.hidden = false;
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  }
+  function closeDropdown(dropdown, trigger) {
+    if (!dropdown) return;
+    dropdown.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+  function closeAllDropdowns() {
+    closeDropdown(el('notifDropdown'), el('notifBtn'));
+    closeDropdown(el('userDropdown'),  el('userMenuBtn'));
+  }
+  function toggleDropdown(dropdown, trigger) {
+    if (!dropdown) return;
+    dropdown.hidden ? openDropdown(dropdown, trigger) : closeDropdown(dropdown, trigger);
+  }
+
+  function renderNotifications(items) {
+    _notifications = Array.isArray(items) ? items : [];
+    const list  = el('notifList');
+    const empty = el('notifEmpty');
+    const dot   = el('notifDot');
+    if (!list || !empty) return;
+
+    const unread = _notifications.filter(n => !n.is_read);
+    if (dot) dot.hidden = (unread.length === 0);
+
+    if (!_notifications.length) {
+      list.innerHTML = '';
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    list.innerHTML = _notifications.slice(0, 10).map(n => `
+      <li class="dtb-notif-item ${n.is_read ? '' : 'dtb-notif-item--unread'}" data-id="${n.id}">
+        <div class="dtb-notif-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div class="dtb-notif-body">
+          <div class="dtb-notif-title">${String(n.title||'Notification').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}</div>
+          <div class="dtb-notif-time">${formatRelative(n.created_at)}</div>
+        </div>
+      </li>`).join('');
+  }
+
+  function formatRelative(d) {
+    if (!d) return '';
+    const s = Math.floor((Date.now() - new Date(d)) / 1000);
+    if (s < 60)    return 'Just now';
+    if (s < 3600)  return Math.floor(s/60) + ' min ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return new Date(d).toLocaleDateString('en-GB');
+  }
+
+  async function loadNotifications() {
+    const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:3000/api/notifications',
+        { headers: { Authorization: 'Bearer ' + token } });
+      if (!res.ok) { renderNotifications([]); return; }
+      const data = await res.json();
+      renderNotifications(data.notifications || data || []);
+    } catch { renderNotifications([]); }
+  }
+
+  function syncUserIdentity() {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!u) return;
+      const name = ((u.first_name||'') + ' ' + (u.last_name||'')).trim() || u.email || 'Client';
+      const initials = name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'CL';
+      ['topbarAvatar'].forEach(id => { const e = el(id); if (e) e.textContent = initials; });
+      const tn = el('topbarName'); if (tn) tn.textContent = name.split(' ')[0];
+      const dfn = el('dropFullName'); if (dfn) dfn.textContent = name;
+      const dr = el('dropRole'); if (dr) dr.textContent = u.role || 'client';
+    } catch (_) {}
+  }
+
+  /* Notif bell */
+  const notifBtn = el('notifBtn');
+  if (notifBtn) {
+    notifBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleDropdown(el('notifDropdown'), notifBtn);
+    });
+  }
+
+  /* Mark all read */
+  const markAllRead = el('markAllRead');
+  if (markAllRead) {
+    markAllRead.addEventListener('click', e => {
+      e.stopPropagation();
+      _notifications.forEach(n => { n.is_read = true; });
+      renderNotifications(_notifications);
+    });
+  }
+
+  /* User menu trigger */
+  const userMenuBtn = el('userMenuBtn');
+  if (userMenuBtn) {
+    userMenuBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleDropdown(el('userDropdown'), userMenuBtn);
+    });
+  }
+
+  /* Logout from dropdown */
+  const logoutDropBtn = el('logoutDropBtn');
+  if (logoutDropBtn) {
+    logoutDropBtn.addEventListener('click', () => {
+      closeAllDropdowns();
+      if (typeof logout === 'function') logout();
+      else {
+        ['token','role','user','caar_auth_token'].forEach(k => localStorage.removeItem(k));
+        window.location.href = 'index.html';
+      }
+    });
+  }
+
+  /* "My Profile" in dropdown → switch SPA section */
+  const goToProfile = el('goToProfile');
+  if (goToProfile) {
+    goToProfile.addEventListener('click', () => {
+      closeAllDropdowns();
+      const navItem = qs('[data-section="profile"]');
+      if (typeof switchSection === 'function') switchSection('profile', navItem);
+    });
+  }
+
+  /* ─── C. Sidebar nav ────────────────────────────────────────── */
+  document.querySelectorAll('.dash-nav-item[data-section]').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      const section = item.getAttribute('data-section');
+      if (typeof switchSection === 'function') switchSection(section, item);
+    });
+  });
+
+  /* Hamburger */
+  const hamburger = el('dashHamburger');
+  if (hamburger) hamburger.addEventListener('click', () => {
+    if (typeof openSidebar === 'function') openSidebar();
+  });
+
+  /* Sidebar overlay */
+  const sidebarOverlay = el('dashSidebarOverlay');
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => {
+    if (typeof closeSidebar === 'function') closeSidebar();
+  });
+
+  /* ─── D. New Claim Modal ─────────────────────────────────────── */
+  /* Modal overlay click → close only if clicking the backdrop */
+  const modalOverlay = el('newClaimModal');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', e => {
+      if (e.target === modalOverlay && typeof closeNewClaimModal === 'function') {
+        closeNewClaimModal();
+      }
+    });
+  }
+
+  /* Close button */
+  const ncClose = el('ncModalCloseBtn');
+  if (ncClose) ncClose.addEventListener('click', () => {
+    if (typeof closeNewClaimModal === 'function') closeNewClaimModal();
+  });
+
+  /* Cancel button */
+  const ncCancel = el('ncCancelBtn');
+  if (ncCancel) ncCancel.addEventListener('click', () => {
+    if (typeof closeNewClaimModal === 'function') closeNewClaimModal();
+  });
+
+  /* Submit button */
+  const ncSubmit = el('ncSubmitBtn');
+  if (ncSubmit) ncSubmit.addEventListener('click', () => {
+    if (typeof submitNewClaim === 'function') submitNewClaim();
+  });
+
+  /* ─── E. Claim detail panel ──────────────────────────────────── */
+  const panelOverlay = el('claimPanelOverlay');
+  if (panelOverlay) panelOverlay.addEventListener('click', () => {
+    if (typeof closeClaimPanel === 'function') closeClaimPanel();
+  });
+
+  const cdpClose = el('cdpCloseBtn');
+  if (cdpClose) cdpClose.addEventListener('click', () => {
+    if (typeof closeClaimPanel === 'function') closeClaimPanel();
+  });
+
+  const cdpFooterClose = el('cdpFooterClose');
+  if (cdpFooterClose) cdpFooterClose.addEventListener('click', () => {
+    if (typeof closeClaimPanel === 'function') closeClaimPanel();
+  });
+
+  const cdpAttach = el('cdpAttachBtn');
+  if (cdpAttach) cdpAttach.addEventListener('click', () => {
+    alert('Document upload will be available in a future update.');
+  });
+
+  /* ─── F. Quick-action buttons ────────────────────────────────── */
+  const qaNewClaim = el('qaNewClaim');
+  if (qaNewClaim) qaNewClaim.addEventListener('click', () => {
+    if (typeof openNewClaimModalGeneric === 'function') openNewClaimModalGeneric();
+  });
+
+  const qaRoadside = el('qaRoadside');
+  if (qaRoadside) qaRoadside.addEventListener('click', () => {
+    const navItem = qs('[data-section="roadside"]');
+    if (typeof switchSection === 'function') switchSection('roadside', navItem);
+  });
+
+  const viewAllClaims = el('viewAllClaims');
+  if (viewAllClaims) viewAllClaims.addEventListener('click', () => {
+    const navItem = qs('[data-section="claims"]');
+    if (typeof switchSection === 'function') switchSection('claims', navItem);
+  });
+
+  const claimsNewClaimBtn = el('claimsNewClaimBtn');
+  if (claimsNewClaimBtn) claimsNewClaimBtn.addEventListener('click', () => {
+    if (typeof openNewClaimModalGeneric === 'function') openNewClaimModalGeneric();
+  });
+
+  /* ─── G. Claims filter ───────────────────────────────────────── */
+  const filterSelect = el('claimsFilterSelect');
+  if (filterSelect) filterSelect.addEventListener('change', function () {
+    if (typeof filterClaims === 'function') filterClaims(this.value);
+  });
+
+  /* ─── H. Roadside problem chips (event delegation) ───────────── */
+  const chipsContainer = el('rfProblemChips');
+  if (chipsContainer) {
+    chipsContainer.addEventListener('click', e => {
+      const chip = e.target.closest('.rf-problem-chip');
+      if (!chip) return;
+      chipsContainer.querySelectorAll('.rf-problem-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      const hiddenInput = el('rfProblemType');
+      if (hiddenInput) hiddenInput.value = chip.getAttribute('data-problem') || '';
+    });
+  }
+
+  /* Roadside submit */
+  const rsSubmitBtn = el('btnRoadsideSubmit');
+  if (rsSubmitBtn) rsSubmitBtn.addEventListener('click', () => {
+    if (typeof submitRoadsideRequest === 'function') submitRoadsideRequest();
+  });
+
+  /* Roadside reset */
+  const rsResetBtn = el('roadsideResetBtn');
+  if (rsResetBtn) rsResetBtn.addEventListener('click', () => {
+    if (typeof resetRoadsideForm === 'function') resetRoadsideForm();
+  });
+
+  /* ─── I. Profile form buttons ────────────────────────────────── */
+  const pfSave = el('pfSaveBtn');
+  if (pfSave) pfSave.addEventListener('click', () => {
+    if (typeof saveProfile === 'function') saveProfile();
+  });
+
+  const pfCancel = el('pfCancelBtn');
+  if (pfCancel) pfCancel.addEventListener('click', () => {
+    if (typeof cancelProfile === 'function') cancelProfile();
+  });
+
+  const pfPw = el('pfPwBtn');
+  if (pfPw) pfPw.addEventListener('click', () => {
+    if (typeof changePassword === 'function') changePassword();
+  });
+
+  /* ─── J. Global Escape + outside-click ──────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    closeAllDropdowns();
+    if (typeof closeClaimPanel    === 'function') closeClaimPanel();
+    if (typeof closeNewClaimModal === 'function') closeNewClaimModal();
+  });
+
+  document.addEventListener('click', e => {
+    /* Close notif dropdown if click is outside it */
+    const notifWrap = el('notifWrap');
+    const notifDrop = el('notifDropdown');
+    if (notifDrop && notifWrap && !notifWrap.contains(e.target)) {
+      closeDropdown(notifDrop, el('notifBtn'));
+    }
+    /* Close user dropdown if click is outside it */
+    const userWrap = el('userWrap');
+    const userDrop = el('userDropdown');
+    if (userDrop && userWrap && !userWrap.contains(e.target)) {
+      closeDropdown(userDrop, el('userMenuBtn'));
+    }
+  });
+
+  /* ─── Bootstrap ──────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    syncUserIdentity();
+    loadNotifications();
+    setTimeout(syncUserIdentity, 800); // re-sync after dashboard.js API calls
+  });
+
+})();
+</script>
+
 </body>
 </html>
