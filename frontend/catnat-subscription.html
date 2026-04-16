@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="main.css"/>
   <link rel="stylesheet" href="header-extras.css"/>
 </head>
-<body> 
- <!-- HEADER — injecté automatiquement -->
+<body>
+  <!-- HEADER — injected automatically -->
   <div id="site-header"></div>
 
 <!-- ===== CATNAT PAGE ===== -->
@@ -44,12 +44,12 @@
   <div class="catnat-form-container">
 
     <!-- ======================================================
-         STEP 1 — QUOTE (Property Details)
+         STEP 1 — QUOTE (Property Details + Plan Selection)
     ====================================================== -->
     <div class="catnat-step" id="form-step-1">
       <div class="form-header">
         <h2>Property Details</h2>
-        <p>Fill in your property information to generate your insurance quote.</p>
+        <p>Fill in your property information and choose your coverage plan.</p>
       </div>
 
       <div class="form-grid">
@@ -57,7 +57,7 @@
         <div class="form-group">
           <label for="wilaya">Wilaya <span class="req">*</span></label>
           <div class="select-wrap">
-            <select id="wilaya" name="wilaya" onchange="onWilayaChange()">
+            <select id="wilaya" name="wilaya">
               <option value="16">16 _ ALGER</option>
               <option value="01">01 _ Adrar</option><option value="02">02 _ Chlef</option>
               <option value="03">03 _ Laghouat</option><option value="04">04 _ Oum El Bouaghi</option>
@@ -113,7 +113,7 @@
         <div class="form-group">
           <label for="year_construction">Year of Construction <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="year_construction" placeholder="e.g. 2005" min="1900" max="2026" oninput="calculatePremium()"/>
+            <input type="number" id="year_construction" placeholder="e.g. 2005" min="1900" max="2026"/>
             <div class="spin-btns">
               <button type="button" onclick="spinUp('year_construction',1)">&#8963;</button>
               <button type="button" onclick="spinDown('year_construction',1)">&#8964;</button>
@@ -125,7 +125,7 @@
         <div class="form-group">
           <label for="built_area">Total Built Area (m²) <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="built_area" placeholder="e.g. 120" min="1" oninput="calculatePremium()"/>
+            <input type="number" id="built_area" placeholder="e.g. 120" min="1"/>
             <div class="spin-btns">
               <button type="button" onclick="spinUp('built_area',10)">&#8963;</button>
               <button type="button" onclick="spinDown('built_area',10)">&#8964;</button>
@@ -169,7 +169,7 @@
         <div class="form-group form-group-full">
           <label for="declared_value">Declared Value (DZD) <span class="req">*</span></label>
           <div class="input-spin-wrap">
-            <input type="number" id="declared_value" placeholder="e.g. 5 000 000" min="0" step="100000" oninput="calculatePremium()"/>
+            <input type="number" id="declared_value" placeholder="e.g. 5 000 000" min="0" step="100000"/>
             <div class="spin-btns">
               <button type="button" onclick="spinUp('declared_value',100000)">&#8963;</button>
               <button type="button" onclick="spinDown('declared_value',100000)">&#8964;</button>
@@ -181,7 +181,7 @@
         <div class="form-group">
           <label for="usage_type">Usage <span class="req">*</span></label>
           <div class="select-wrap">
-            <select id="usage_type" name="usage_type" onchange="calculatePremium()">
+            <select id="usage_type" name="usage_type">
               <option value="Personal">Personal / Residential</option>
               <option value="Professional">Professional</option>
               <option value="Mixed">Mixed</option>
@@ -257,6 +257,51 @@
         </div>
       </div>
 
+      <!-- PLAN SELECTION — populated dynamically by catnat-arch.js -->
+      <div class="plan-section">
+        <div class="plan-section-title">Choose Your Coverage Plan</div>
+        <div class="plan-cards">
+
+          <!-- Basique -->
+          <div class="plan-card" id="plan-basique" data-plan-id="" data-plan-price="" data-plan-name="">
+            <input type="radio" name="plan" value="Basique" class="plan-radio"/>
+            <span class="plan-badge-selected">&#10003; Selected</span>
+            <div class="plan-name">Basique</div>
+            <div class="plan-price">— DZD</div>
+            <div class="plan-price-sub">per year, taxes included</div>
+            <ul class="plan-features">
+              <li>Loading plan details…</li>
+            </ul>
+          </div>
+
+          <!-- Plus (default selection) -->
+          <div class="plan-card popular" id="plan-plus" data-plan-id="" data-plan-price="" data-plan-name="">
+            <span class="plan-popular-badge">&#11088; Most Popular</span>
+            <input type="radio" name="plan" value="Plus" class="plan-radio"/>
+            <span class="plan-badge-selected">&#10003; Selected</span>
+            <div class="plan-name">Plus</div>
+            <div class="plan-price">— DZD</div>
+            <div class="plan-price-sub">per year, taxes included</div>
+            <ul class="plan-features">
+              <li>Loading plan details…</li>
+            </ul>
+          </div>
+
+          <!-- Premium -->
+          <div class="plan-card" id="plan-premium" data-plan-id="" data-plan-price="" data-plan-name="">
+            <input type="radio" name="plan" value="Premium" class="plan-radio"/>
+            <span class="plan-badge-selected">&#10003; Selected</span>
+            <div class="plan-name">Premium</div>
+            <div class="plan-price">— DZD</div>
+            <div class="plan-price-sub">per year, taxes included</div>
+            <ul class="plan-features">
+              <li>Loading plan details…</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
       <!-- PREMIUM BAR -->
       <div class="premium-bar">
         <div class="premium-row">
@@ -278,340 +323,228 @@
         </div>
       </div>
 
+      <!-- Error container for step 1 -->
+      <div id="catnat-error-step1" style="display:none;"></div>
+
       <div class="form-nav-btns">
         <a href="Online_subscription.html" class="btn-back-products">&#8592; Back to Products</a>
-        <button class="btn-continue" type="button" onclick="goToStep(2)">Continue to Purchase &#8594;</button>
+        <button id="btn-continue-step1" class="btn-continue" type="button">Continue to Subscription &#8594;</button>
       </div>
     </div><!-- /form-step-1 -->
 
 
     <!-- ======================================================
-         STEP 2 — SUBSCRIPTION
+         STEP 2 — SUBSCRIPTION (client info + agency)
+         NOTE: review sub-view removed entirely. Flow goes
+         directly to submitAndProceed() → Step 3.
     ====================================================== -->
     <div class="catnat-step hidden" id="form-step-2">
 
-      <!-- SUB-VIEW A: Subscription Form -->
-      <div id="subscription-form-view">
-        <div class="subscription-layout">
+      <div class="subscription-layout">
 
-          <!-- LEFT: Form fields -->
-          <div class="subscription-left">
+        <!-- LEFT: Form fields -->
+        <div class="subscription-left">
 
-            <!-- Policyholder Info -->
-            <div class="form-section">
-              <div class="section-title">
-                <span class="step-badge">1</span>
-                <div>
-                  <h2>Policyholder Information</h2>
-                  <p>Personal details of the insured person</p>
-                </div>
-              </div>
-              <div class="form-grid step2-grid">
-                <div class="form-group">
-                  <label for="title">Title</label>
-                  <div class="select-wrap">
-                    <select id="title">
-                      <option value="Mr">Mr</option>
-                      <option value="Mrs">Mrs</option>
-                      <option value="Ms">Ms</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="last_name">Last Name <span class="req">*</span></label>
-                  <input type="text" id="last_name" placeholder="Owner's last name"/>
-                </div>
-                <div class="form-group">
-                  <label for="first_name">First Name <span class="req">*</span></label>
-                  <input type="text" id="first_name" placeholder="Owner's first name"/>
-                </div>
-                <div class="form-group form-group-full">
-                  <label for="address">Address <span class="req">*</span></label>
-                  <input type="text" id="address" placeholder="Full address"/>
-                </div>
-                <div class="form-group">
-                  <label for="policy_wilaya">Wilaya <span class="req">*</span></label>
-                  <div class="select-wrap">
-                    <select id="policy_wilaya">
-                      <option value="16">16 _ ALGER</option>
-                      <option value="09">09 _ BLIDA</option>
-                      <option value="25">25 _ CONSTANTINE</option>
-                      <option value="31">31 _ ORAN</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="city">City <span class="req">*</span></label>
-                  <input type="text" id="city" placeholder="City"/>
-                </div>
-                <div class="form-group">
-                  <label for="email">Email <span class="req">*</span></label>
-                  <input type="email" id="email" placeholder="your@email.com"/>
-                </div>
-                <div class="form-group">
-                  <label for="confirm_email">Confirm Email <span class="req">*</span></label>
-                  <input type="email" id="confirm_email" placeholder="Confirm Email"/>
-                </div>
-                <div class="form-group">
-                  <label for="mobile_1">Mobile 1 <span class="req">*</span></label>
-                  <input type="tel" id="mobile_1" placeholder="05XX XX XX XX"/>
-                </div>
-                <div class="form-group">
-                  <label for="mobile_2">Mobile 2</label>
-                  <input type="tel" id="mobile_2" placeholder="Optional"/>
-                </div>
+          <!-- Policyholder Info -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="step-badge">1</span>
+              <div>
+                <h2>Policyholder Information</h2>
+                <p>Personal details of the insured person</p>
               </div>
             </div>
-
-            <!-- Property to Insure -->
-            <div class="form-section">
-              <div class="section-title">
-                <span class="step-badge">2</span>
-                <div>
-                  <h2>Property to Insure</h2>
-                  <p>Address of the property to be covered</p>
+            <div class="form-grid step2-grid">
+              <div class="form-group">
+                <label for="title">Title</label>
+                <div class="select-wrap">
+                  <select id="title">
+                    <option value="Mr">Mr</option>
+                    <option value="Mrs">Mrs</option>
+                    <option value="Ms">Ms</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
               </div>
-              <div class="form-grid step2-grid">
-                <div class="form-group form-group-full">
-                  <label for="property_address">Property Address <span class="req">*</span></label>
-                  <input type="text" id="property_address" placeholder="Street address of the insured property"/>
+              <div class="form-group">
+                <label for="last_name">Last Name <span class="req">*</span></label>
+                <input type="text" id="last_name" placeholder="Owner's last name"/>
+              </div>
+              <div class="form-group">
+                <label for="first_name">First Name <span class="req">*</span></label>
+                <input type="text" id="first_name" placeholder="Owner's first name"/>
+              </div>
+              <div class="form-group form-group-full">
+                <label for="address">Address <span class="req">*</span></label>
+                <input type="text" id="address" placeholder="Full address"/>
+              </div>
+              <div class="form-group">
+                <label for="policy_wilaya">Wilaya <span class="req">*</span></label>
+                <div class="select-wrap">
+                  <select id="policy_wilaya">
+                    <option value="16">16 _ ALGER</option>
+                    <option value="09">09 _ BLIDA</option>
+                    <option value="25">25 _ CONSTANTINE</option>
+                    <option value="31">31 _ ORAN</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
-                <div class="form-group">
-                  <label for="property_wilaya">Wilaya <span class="req">*</span></label>
-                  <div class="select-wrap">
-                    <select id="property_wilaya">
-                      <option value="16">16 _ ALGER</option>
-                      <option value="09">09 _ BLIDA</option>
-                      <option value="14">14 _ TIARET</option>
-                      <option value="25">25 _ CONSTANTINE</option>
-                      <option value="31">31 _ ORAN</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
+              </div>
+              <div class="form-group">
+                <label for="city">City <span class="req">*</span></label>
+                <input type="text" id="city" placeholder="City"/>
+              </div>
+              <div class="form-group">
+                <label for="email">Email <span class="req">*</span></label>
+                <input type="email" id="email" placeholder="your@email.com"/>
+              </div>
+              <div class="form-group">
+                <label for="confirm_email">Confirm Email <span class="req">*</span></label>
+                <input type="email" id="confirm_email" placeholder="Confirm Email"/>
+              </div>
+              <div class="form-group">
+                <label for="mobile_1">Mobile <span class="req">*</span></label>
+                <input type="tel" id="mobile_1" placeholder="05XX XX XX XX"/>
+              </div>
+              <div class="form-group">
+                <label for="mobile_2">Mobile 2</label>
+                <input type="tel" id="mobile_2" placeholder="Optional"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Property to Insure -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="step-badge">2</span>
+              <div>
+                <h2>Property to Insure</h2>
+                <p>Address of the property to be covered</p>
+              </div>
+            </div>
+            <div class="form-grid step2-grid">
+              <div class="form-group form-group-full">
+                <label for="property_address">Property Address <span class="req">*</span></label>
+                <input type="text" id="property_address" placeholder="Street address of the insured property"/>
+              </div>
+              <div class="form-group">
+                <label for="property_wilaya">Wilaya <span class="req">*</span></label>
+                <div class="select-wrap">
+                  <select id="property_wilaya">
+                    <option value="16">16 _ ALGER</option>
+                    <option value="09">09 _ BLIDA</option>
+                    <option value="14">14 _ TIARET</option>
+                    <option value="25">25 _ CONSTANTINE</option>
+                    <option value="31">31 _ ORAN</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
-                <div class="form-group">
-                  <label for="property_city">City <span class="req">*</span></label>
-                  <input type="text" id="property_city" placeholder="City / Zone"/>
-                </div>
-                <div class="form-group">
-                  <label for="postal_code">Postal Code</label>
-                  <div class="select-wrap">
-                    <select id="postal_code">
-                      <option value="16000">16000</option>
-                      <option value="02215">02215</option>
-                      <option value="25000">25000</option>
-                      <option value="14431">14431</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
+              </div>
+              <div class="form-group">
+                <label for="property_city">City <span class="req">*</span></label>
+                <input type="text" id="property_city" placeholder="City / Zone"/>
+              </div>
+              <div class="form-group">
+                <label for="postal_code">Postal Code</label>
+                <div class="select-wrap">
+                  <select id="postal_code">
+                    <option value="16000">16000</option>
+                    <option value="02215">02215</option>
+                    <option value="25000">25000</option>
+                    <option value="14431">14431</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Choose Agency -->
-            <div class="form-section">
-              <div class="section-title">
-                <span class="step-badge">3</span>
-                <div>
-                  <h2>Choose Your Agency</h2>
-                  <p>Select the CAAR agency that will handle your policy</p>
+          <!-- Choose Agency — populated dynamically by catnat-arch.js -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="step-badge">3</span>
+              <div>
+                <h2>Choose Your Agency</h2>
+                <p>Select the CAAR agency that will handle your policy</p>
+              </div>
+            </div>
+            <div class="form-grid step2-grid">
+              <div class="form-group">
+                <label for="agency_wilaya">Filter by Wilaya</label>
+                <div class="select-wrap">
+                  <select id="agency_wilaya">
+                    <option value="">All Wilayas</option>
+                    <!-- populated dynamically -->
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
               </div>
-              <div class="form-grid step2-grid">
-                <div class="form-group">
-                  <label for="agency_wilaya">Wilaya</label>
-                  <div class="select-wrap">
-                    <select id="agency_wilaya" onchange="updateAgencyList()">
-                      <option value="16">16 _ ALGER</option>
-                      <option value="09">09 _ BLIDA</option>
-                      <option value="25">25 _ CONSTANTINE</option>
-                      <option value="13">13 _ TLEMCEN</option>
-                      <option value="31">31 _ ORAN</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="agency">Agency</label>
-                  <div class="select-wrap">
-                    <select id="agency" onchange="updateAgencyCard()">
-                      <option value="203">203 _ ALGER (Belouizded)</option>
-                      <option value="210">210 _ ALGER (Kouba)</option>
-                      <option value="233">233 _ ALGER (Ain Naadja)</option>
-                      <option value="601">601 _ ALGER (El Djaouhara)</option>
-                      <option value="602">602 _ ALGER (Didouche Mourad)</option>
-                    </select>
-                    <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
-                  </div>
-                </div>
-              </div>
-              <div class="agency-card" id="agency-info-card">
-                <div class="agency-icon">&#127970;</div>
-                <div class="agency-content">
-                  <div class="agency-top">
-                    <strong id="agency-card-name">Agency 203 — ALGER</strong>
-                    <span class="agency-status">&#8226; Open</span>
-                  </div>
-                  <p id="agency-card-addr">23, Rue Mohamed Belouizded, ALGER</p>
-                  <p id="agency-card-phone">021 65 10 24 — 021 65 40 92</p>
-                  <p id="agency-card-fax">Fax: 021 66 06 76</p>
+              <div class="form-group">
+                <label for="agency">Agency</label>
+                <div class="select-wrap">
+                  <select id="agency">
+                    <option value="">Loading agencies…</option>
+                  </select>
+                  <svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
                 </div>
               </div>
             </div>
-          </div><!-- /subscription-left -->
-
-          <!-- RIGHT: Quote Summary Sidebar -->
-          <div class="subscription-right">
-            <div class="quote-summary-box">
-              <div class="summary-title">&#128221; Your Quote Summary</div>
-              <div class="summary-row"><span>Construction type</span><strong id="sum-constr">—</strong></div>
-              <div class="summary-row"><span>Usage</span><strong id="sum-usage">—</strong></div>
-              <div class="summary-row"><span>Built area</span><strong id="sum-area">—</strong></div>
-              <div class="summary-row"><span>Year built</span><strong id="sum-year">—</strong></div>
-              <div class="summary-row"><span>Declared value</span><strong id="sum-dvalue">—</strong></div>
-              <div class="summary-row"><span>Start date</span><strong id="sum-start">—</strong></div>
-              <div class="summary-row"><span>End date</span><strong id="sum-end">—</strong></div>
-              <hr class="summary-divider"/>
-              <div class="summary-row"><span>Net premium</span><strong id="sum-net">0.00 DZD</strong></div>
-              <div class="summary-row"><span>Taxes &amp; fees</span><strong id="sum-tax">0.00 DZD</strong></div>
-              <hr class="summary-divider"/>
-              <div class="summary-total"><span>Total to pay</span><strong id="sum-total">0.00 DZD</strong></div>
-            </div>
-
-            <div class="guarantees-box">
-              <div class="guarantees-title">Guarantees Included</div>
-              <ul id="guarantees-list">
-                <li>Earthquakes</li>
-              </ul>
-            </div>
-
-            <div class="form-nav-btns" style="flex-direction:column;">
-              <button class="btn-back-products" type="button" onclick="goToStep(1)" style="width:100%;justify-content:center;">&#8592; Back to Quote</button>
-              <button type="button" class="btn-continue" onclick="showReviewView()" style="width:100%;justify-content:center;">Review Summary &#8594;</button>
-            </div>
-          </div><!-- /subscription-right -->
-
-        </div>
-      </div><!-- /subscription-form-view -->
-
-      <!-- SUB-VIEW B: Review Summary -->
-      <div id="subscription-review-view" class="hidden">
-        <div class="review-page">
-          <div class="review-note">
-            &#128203; Please review all information carefully before confirming your subscription
-          </div>
-
-          <!-- Property Details review -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#127968; Property Details</div>
-              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-            </div>
-            <div class="review-grid">
-              <div class="review-item"><span class="review-label">Construction type</span><span class="review-value" id="rv-constr">—</span></div>
-              <div class="review-item"><span class="review-label">Usage</span><span class="review-value" id="rv-usage">—</span></div>
-              <div class="review-item"><span class="review-label">Number of Floors</span><span class="review-value" id="rv-floors">—</span></div>
-              <div class="review-item"><span class="review-label">Total Built Area</span><span class="review-value" id="rv-area">—</span></div>
-              <div class="review-item"><span class="review-label">Declared Value</span><span class="review-value" id="rv-dvalue">—</span></div>
-              <div class="review-item"><span class="review-label">Year Built</span><span class="review-value" id="rv-year">—</span></div>
-            </div>
-          </div>
-
-          <!-- Policyholder review -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#128100; Policyholder Information</div>
-              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-            </div>
-            <div class="review-grid">
-              <div class="review-item"><span class="review-label">Full Name</span><span class="review-value" id="rv-name">—</span></div>
-              <div class="review-item"><span class="review-label">Wilaya</span><span class="review-value" id="rv-wilaya">—</span></div>
-              <div class="review-item review-item-full"><span class="review-label">Address</span><span class="review-value" id="rv-addr">—</span></div>
-              <div class="review-item"><span class="review-label">Phone</span><span class="review-value" id="rv-phone">—</span></div>
-              <div class="review-item review-item-full"><span class="review-label">Email</span><span class="review-value" id="rv-email">—</span></div>
-            </div>
-          </div>
-
-          <!-- Property location review -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#128205; Insured Property Location</div>
-              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-            </div>
-            <div class="review-grid">
-              <div class="review-item review-item-full"><span class="review-label">Address</span><span class="review-value" id="rv-prop-addr">—</span></div>
-              <div class="review-item"><span class="review-label">Wilaya</span><span class="review-value" id="rv-prop-wilaya">—</span></div>
-              <div class="review-item"><span class="review-label">City</span><span class="review-value" id="rv-prop-city">—</span></div>
-            </div>
-          </div>
-
-          <!-- Agency review -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#127970; Selected Agency</div>
-              <button type="button" class="review-edit-btn" onclick="showSubscriptionForm()">Edit</button>
-            </div>
-            <div class="review-grid">
-              <div class="review-item"><span class="review-label">Agency</span><span class="review-value" id="rv-agency">—</span></div>
-              <div class="review-item"><span class="review-label">Address</span><span class="review-value" id="rv-agency-addr">—</span></div>
-            </div>
-          </div>
-
-          <!-- Contract & Pricing review -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#128196; Contract &amp; Pricing</div>
-              <button type="button" class="review-edit-btn" onclick="goToStep(1)">Edit</button>
-            </div>
-            <div class="review-grid">
-              <div class="review-item"><span class="review-label">Start Date</span><span class="review-value" id="rv-start">—</span></div>
-              <div class="review-item"><span class="review-label">End Date</span><span class="review-value" id="rv-end">—</span></div>
-              <div class="review-item"><span class="review-label">Net Premium</span><span class="review-value" id="rv-net">—</span></div>
-              <div class="review-item"><span class="review-label">Taxes &amp; Fees</span><span class="review-value" id="rv-tax">—</span></div>
-            </div>
-            <div class="review-total-bar">
-              <span>Total to Pay</span>
-              <strong id="rv-total">—</strong>
-            </div>
-          </div>
-
-          <!-- Consents -->
-          <div class="review-consents">
-            <label class="review-checkbox">
-              <input type="checkbox" id="confirm-info"/>
-              <span>I confirm that all the information provided is correct and complete.</span>
-            </label>
-            <label class="review-checkbox">
-              <input type="checkbox" id="confirm-terms"/>
-              <span>I accept the <a href="#">general terms and conditions</a> of online sale — الشروط العامة للبيع عن بعد</span>
-            </label>
-          </div>
-
-          <!-- Identity Upload (optional) -->
-          <div class="review-card">
-            <div class="review-card-header">
-              <div class="review-card-title">&#128206; Identity Document Upload (optional)</div>
-            </div>
-            <p class="review-upload-text">Attach a copy of your national ID card or passport to speed up processing.</p>
-            <div class="upload-box" onclick="document.getElementById('idUpload').click()">
-              <div class="upload-icon">&#128196;</div>
-              <div class="upload-main">
-                <strong>Click to upload or drag &amp; drop</strong>
-                <span>PDF, JPG, PNG — Max 5 MB</span>
+            <div class="agency-card" id="agency-info-card">
+              <div class="agency-icon">&#127970;</div>
+              <div class="agency-content">
+                <div class="agency-top">
+                  <strong id="agency-card-name">Select an agency above</strong>
+                  <span class="agency-status">&#8226; Open</span>
+                </div>
+                <p id="agency-card-addr">Agency details will appear here</p>
+                <p id="agency-card-phone">—</p>
+                <p id="agency-card-fax">—</p>
               </div>
-              <input type="file" id="idUpload" accept=".pdf,.jpg,.jpeg,.png" style="display:none"/>
             </div>
           </div>
 
-          <div class="form-nav-btns review-nav">
-            <button class="btn-back-products" type="button" onclick="showSubscriptionForm()">&#8592; Back</button>
-            <button class="btn-continue" type="button" onclick="goToStep(3)">Pay with CIB/Baridi Mob &#8594;</button>
+        </div><!-- /subscription-left -->
+
+        <!-- RIGHT: Quote Summary Sidebar -->
+        <div class="subscription-right">
+          <div class="quote-summary-box">
+            <div class="summary-title">&#128221; Your Quote Summary</div>
+            <div class="summary-row"><span>Construction type</span><strong id="sum-constr">—</strong></div>
+            <div class="summary-row"><span>Usage</span><strong id="sum-usage">—</strong></div>
+            <div class="summary-row"><span>Built area</span><strong id="sum-area">—</strong></div>
+            <div class="summary-row"><span>Year built</span><strong id="sum-year">—</strong></div>
+            <div class="summary-row"><span>Declared value</span><strong id="sum-dvalue">—</strong></div>
+            <div class="summary-row"><span>Start date</span><strong id="sum-start">—</strong></div>
+            <div class="summary-row"><span>End date</span><strong id="sum-end">—</strong></div>
+            <hr class="summary-divider"/>
+            <div class="summary-row"><span>Net premium</span><strong id="sum-net">0.00 DZD</strong></div>
+            <div class="summary-row"><span>Taxes &amp; fees</span><strong id="sum-tax">0.00 DZD</strong></div>
+            <hr class="summary-divider"/>
+            <div class="summary-total"><span>Total to pay</span><strong id="sum-total">0.00 DZD</strong></div>
           </div>
-        </div>
-      </div><!-- /subscription-review-view -->
+
+          <div class="guarantees-box">
+            <div class="guarantees-title">Guarantees Included</div>
+            <ul id="guarantees-list">
+              <li>Earthquakes</li>
+            </ul>
+          </div>
+
+          <!-- Error container for step 2 -->
+          <div id="catnat-error-step2" style="display:none;"></div>
+
+          <div class="form-nav-btns" style="flex-direction:column;">
+            <button id="btn-back-step2" class="btn-back-products" type="button" style="width:100%;justify-content:center;">
+              &#8592; Back to Quote
+            </button>
+            <button id="btn-pay-cib" type="button" class="btn-continue" style="width:100%;justify-content:center;">
+              Continue to Payment &#8594;
+            </button>
+          </div>
+
+        </div><!-- /subscription-right -->
+
+      </div>
     </div><!-- /form-step-2 -->
 
 
@@ -686,10 +619,13 @@
             </div>
           </div>
 
+          <!-- Error container for payment step -->
+          <div id="pay-error-msg" style="display:none;background:#fff0f0;border:1px solid #e53e3e;border-radius:8px;padding:10px 14px;margin:8px 14px;font-size:0.82rem;color:#c53030;font-weight:600;"></div>
+
           <div class="payment-actions">
-            <button type="button" class="btn-cancel-payment" onclick="goToStep(2)">&#x2715; Cancel</button>
-            <button type="button" class="btn-reset-payment" onclick="resetPaymentForm()">&#8635; Reset</button>
-            <button type="button" class="btn-validate-payment" onclick="validatePayment()">&#10003; Validate Payment</button>
+            <button type="button" class="btn-cancel-payment" id="btn-cancel-payment">&#x2715; Cancel</button>
+            <button type="button" class="btn-reset-payment"  id="btn-reset-payment">&#8635; Reset</button>
+            <button type="button" class="btn-validate-payment" id="btn-validate-pay">&#10003; Validate Payment</button>
           </div>
 
           <div class="payment-footer-bar">
@@ -704,7 +640,7 @@
 
 
     <!-- ======================================================
-         STEP 4 — CONFIRMATION
+         STEP 4 — CONFIRMATION (real data from API)
     ====================================================== -->
     <div class="catnat-step hidden" id="form-step-4">
       <div class="success-page">
@@ -719,8 +655,8 @@
 
           <div class="policy-ref-box">
             <div class="policy-ref-label">Policy Reference</div>
-            <div class="policy-ref-code" id="confirm-policy-ref">POLA-20260310-XXXX</div>
-            <div class="policy-ref-dates" id="confirm-dates">Issued: — · Valid until: —</div>
+            <div class="policy-ref-code" id="confirm-policy-ref">—</div>
+            <div class="policy-ref-dates" id="confirm-dates">—</div>
           </div>
 
           <div class="success-metrics">
@@ -739,7 +675,7 @@
           </div>
 
           <div class="success-actions">
-            <a href="index.html" class="success-btn primary">Go to My Space &#8594;</a>
+            <a href="client-dashboard.html" class="success-btn primary">Go to My Space &#8594;</a>
             <button type="button" class="success-btn" onclick="downloadCertificate()">&#128196; Download Certificate</button>
             <button type="button" class="success-btn" onclick="window.print()">&#128424; Print</button>
           </div>
@@ -776,14 +712,14 @@
   </div><!-- /catnat-form-container -->
 </div><!-- /catnat-page -->
 
-  <!-- FOOTER — injecté automatiquement -->
+  <!-- FOOTER — injected automatically -->
   <div id="site-footer"></div>
-
 
 <script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
 <script src="main.js"></script>
+<script src="js/catnat-arch.js"></script>
 
 </body>
 </html>
