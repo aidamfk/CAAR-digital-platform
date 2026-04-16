@@ -170,4 +170,89 @@ async function processPayment(req, res) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-module.exports = { createQuote, confirmQuote, processPayment };
+async function createRoadsideRequest(req, res) {
+  const {
+    contract_id,
+    problem_type,
+    issue_type,
+    description,
+    phone,
+    contact_phone,
+    location_address,
+    address,
+    wilaya_code,
+    wilaya,
+    city,
+  } = req.body;
+
+  try {
+    const result = await roadsideService.createRoadsideRequest(
+      {
+        contract_id,
+        problem_type: problem_type || issue_type,
+        description,
+        contact_phone: contact_phone || phone,
+        location_address: location_address || address,
+        wilaya_code: wilaya_code || wilaya,
+        city,
+      },
+      req.user.id
+    );
+
+    return res.status(201).json({
+      message: 'Roadside request submitted successfully',
+      ...result,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}
+
+async function listMyRoadsideRequests(req, res) {
+  try {
+    const requests = await roadsideService.listMyRoadsideRequests(req.user.id);
+    return res.status(200).json({ count: requests.length, requests });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}
+
+async function listRoadsideRequests(req, res) {
+  try {
+    const requests = await roadsideService.listAllRoadsideRequests();
+    return res.status(200).json({ count: requests.length, requests });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}
+
+async function updateRoadsideRequestStatus(req, res) {
+  const requestId = parseInt(req.params.id, 10);
+  if (isNaN(requestId) || requestId < 1) {
+    return res.status(400).json({ error: 'Request id must be a positive integer' });
+  }
+
+  try {
+    const result = await roadsideService.updateRoadsideRequestStatus(
+      requestId,
+      req.body.status
+    );
+
+    return res.status(200).json({
+      message: 'Roadside request status updated successfully',
+      ...result,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}
+
+module.exports = {
+  createQuote,
+  confirmQuote,
+  processPayment,
+  createRoadsideRequest,
+  listMyRoadsideRequests,
+  listRoadsideRequests,
+  updateRoadsideRequestStatus,
+};

@@ -1,45 +1,19 @@
 'use strict';
 
 const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
 const crypto  = require('crypto');
 const pool    = require('../db');
 const m       = require('../models/catnatModel');
 const { createContractPDF } = require('../utils/pdfGenerator');
 const { sendContractEmail } = require('../utils/mailer');
-const SECRET_KEY = process.env.JWT_SECRET;
-if (!SECRET_KEY) throw new Error('FATAL: JWT_SECRET is not set.');
+const {
+  generateInsuranceNumber,
+  generatePolicyReference,
+  getAnnualContractDates,
+  issueAuthToken,
+} = require('../utils/subscriptionHelpers');
 
 // ─── HELPERS ─────────────────────────────────────────────────
-
-function _generateInsuranceNumber() {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand  = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 4);
-  return `CAAR-${date}-${rand}`;
-}
-
-function _generatePolicyReference(quoteId) {
-  const date   = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const padded = String(quoteId).padStart(6, '0');
-  return `CAT-${date}-${padded}`;
-}
-
-function _getContractDates() {
-  const start = new Date();
-  const end   = new Date(start);
-  end.setFullYear(end.getFullYear() + 1);
-  end.setDate(end.getDate() - 1);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  return { start_date: fmt(start), end_date: fmt(end) };
-}
-
-function _signToken(user) {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    SECRET_KEY,
-    { expiresIn: '1d' }
-  );
-}
 
 // ─── PREMIUM ─────────────────────────────────────────────────
 
@@ -114,7 +88,7 @@ async function createQuote(data) {
       ? existingClient.id
       : await m.createClient(conn, {
           user_id: userId,
-          insurance_number: _generateInsuranceNumber(),
+          insurance_number: generateInsuranceNumber(),
         });
 
     const propertyId = await m.createProperty(conn, {
@@ -158,7 +132,7 @@ async function createQuote(data) {
 
     await conn.commit();
 
-    const token = _signToken({ id: userId, email, role: userRole });
+    const token = issueAuthToken({ id: userId, email, role: userRole });
 
     return { quote_id: quoteId, estimated_amount, token };
 
@@ -278,8 +252,8 @@ async function processPayment(quoteId, userId, documentData = null) {
       }
     }
 
-    const { start_date, end_date } = _getContractDates();
-    const policy_reference = _generatePolicyReference(quoteId);
+    const { start_date, end_date } = getAnnualContractDates();
+    const policy_reference = generatePolicyReference('CAT', quoteId);
 
     const contractId = await m.createContract(conn, {
       client_id:      quote.client_id,

@@ -11,6 +11,8 @@
  *   claimStatusUpdated → notify the client who owns the claim
  *   expertAssigned     → notify the assigned expert
  *   roadsideCreated    → notify every admin user
+ *   roadsideRequestCreated → notify every admin user
+ *   roadsideRequestStatusUpdated → notify the client who owns the request
  *   messageReceived    → notify every admin user
  *
  * Storage: notifications table (already in the DB).
@@ -86,6 +88,7 @@ async function claimStatusUpdated(conn, { claim_id, new_status, client_user_id }
     under_review:    'is now under review',
     expert_assigned: 'has been assigned to an expert',
     reported:        'has received an expert report',
+    approved:        'has been approved',
     closed:          'has been closed',
     rejected:        'has been rejected',
   };
@@ -139,6 +142,62 @@ async function roadsideCreated(conn, { quote_id, client_name }) {
 }
 
 /**
+ * Trigger: client submits a contract-backed roadside assistance request.
+ * Notifies all admin users.
+ *
+ * @param {object} conn
+ * @param {object} opts
+ * @param {number} opts.request_id
+ * @param {string} opts.request_reference
+ * @param {string} opts.client_name
+ * @param {number} opts.contract_id
+ */
+async function roadsideRequestCreated(
+  conn,
+  { request_id, request_reference, client_name, contract_id }
+) {
+  const adminIds = await _getAdminUserIds();
+  for (const admin_id of adminIds) {
+    await _insert(conn, {
+      user_id: admin_id,
+      title: 'New Roadside Request',
+      message: `${client_name || 'A client'} submitted roadside request ${request_reference || '#' + request_id} for contract #${contract_id}.`,
+      type: 'roadside',
+    });
+  }
+}
+
+/**
+ * Trigger: admin updates a roadside request status.
+ * Notifies the client who owns the request.
+ *
+ * @param {object} conn
+ * @param {object} opts
+ * @param {number} opts.request_id
+ * @param {string} opts.request_reference
+ * @param {string} opts.new_status
+ * @param {number} opts.client_user_id
+ */
+async function roadsideRequestStatusUpdated(
+  conn,
+  { request_id, request_reference, new_status, client_user_id }
+) {
+  const statusLabels = {
+    dispatched: 'has been dispatched',
+    completed: 'has been completed',
+  };
+  const label = statusLabels[new_status] || `status changed to "${new_status}"`;
+  const ref = request_reference || `#${request_id}`;
+
+  await _insert(conn, {
+    user_id: client_user_id,
+    title: 'Roadside Request Updated',
+    message: `Your roadside request ${ref} ${label}.`,
+    type: 'roadside',
+  });
+}
+
+/**
  * Trigger: a contact message is received.
  * Notifies all admin users.
  *
@@ -165,5 +224,7 @@ module.exports = {
   claimStatusUpdated,
   expertAssigned,
   roadsideCreated,
+  roadsideRequestCreated,
+  roadsideRequestStatusUpdated,
   messageReceived,
 };

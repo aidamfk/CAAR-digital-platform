@@ -1,16 +1,10 @@
-/**
- * controllers/contractsController.js
- *
- * GET /api/contracts/my  — client only
- * Returns contracts that belong to the authenticated user.
- * user_id is sourced from the verified JWT — never from the request body.
- */
+'use strict';
 
-const contractsModel = require('../models/Contractsmodel');
+const contractsService = require('../services/contractsService');
 
 async function listMy(req, res) {
   try {
-    const contracts = await contractsModel.getContractsByUserId(req.user.id);
+    const contracts = await contractsService.listMyContracts(req.user.id);
     return res.status(200).json({ count: contracts.length, contracts });
   } catch (err) {
     console.error('[Contracts] listMy error:', err.message);

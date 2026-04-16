@@ -1,9 +1,8 @@
-const pool = require('../db');
-const crypto = require('crypto');
+'use strict';
 
-/**
- * Find a user by their email address.
- */
+const pool = require('../db');
+const { generateInsuranceNumber } = require('../utils/subscriptionHelpers');
+
 async function findByEmail(email) {
   const [rows] = await pool.query(
     'SELECT * FROM users WHERE email = ?',
@@ -12,21 +11,16 @@ async function findByEmail(email) {
   return rows[0] || null;
 }
 
-/**
- * Find a user by their id (no password_hash).
- */
 async function findById(id) {
   const [rows] = await pool.query(
     `SELECT id, first_name, last_name, email, phone, role, created_at
-     FROM users WHERE id = ?`,
+     FROM users
+     WHERE id = ?`,
     [id]
   );
   return rows[0] || null;
 }
 
-/**
- * Insert a new user row.
- */
 async function createUser({ first_name, last_name, email, password_hash, phone, role }) {
   const [result] = await pool.query(
     `INSERT INTO users (first_name, last_name, email, password_hash, phone, role)
@@ -36,20 +30,27 @@ async function createUser({ first_name, last_name, email, password_hash, phone, 
   return result.insertId;
 }
 
-/**
- * Insert a client profile row for a newly registered user.
- * Generates a unique insurance number: CAAR-YYYYMMDD-XXXX
- */
 async function createClient(userId) {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 4);
-  const insurance_number = `CAAR-${date}-${rand}`;
-
   const [result] = await pool.query(
     'INSERT INTO clients (user_id, insurance_number) VALUES (?, ?)',
-    [userId, insurance_number]
+    [userId, generateInsuranceNumber()]
   );
   return result.insertId;
 }
 
-module.exports = { findByEmail, findById, createUser, createClient };
+async function updateProfile(userId, { first_name, last_name, email, phone }) {
+  await pool.query(
+    `UPDATE users
+     SET first_name = ?, last_name = ?, email = ?, phone = ?
+     WHERE id = ?`,
+    [first_name, last_name, email, phone || null, userId]
+  );
+}
+
+module.exports = {
+  findByEmail,
+  findById,
+  createUser,
+  createClient,
+  updateProfile,
+};

@@ -134,12 +134,12 @@ async function updateClaimStatusTx(conn, claimId, status) {
 }
 
 /**
- * Assign expert + set status inside a transaction.
+ * Assign expert inside a transaction.
  */
 async function assignExpertTx(conn, claimId, expertId) {
   await conn.execute(
-    'UPDATE claims SET expert_id = ?, status = ? WHERE id = ?',
-    [expertId, 'expert_assigned', claimId]
+    'UPDATE claims SET expert_id = ? WHERE id = ?',
+    [expertId, claimId]
   );
 }
 

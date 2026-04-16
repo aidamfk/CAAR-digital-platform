@@ -537,6 +537,81 @@ window.resetRoadsideForm = function () {
   if (success) { success.style.display = 'none'; success.classList.remove('show'); }
 };
 
+window.submitRoadsideRequest = async function () {
+  const plate   = (document.getElementById('rfLicensePlate') || {}).value || '';
+  const brand   = ((document.getElementById('rfBrand') || {}).value || '').trim();
+  const wilaya  = (document.getElementById('rfWilaya') || {}).value || '';
+  const city    = ((document.getElementById('rfCity') || {}).value || '').trim();
+  const address = ((document.getElementById('rfAddress') || {}).value || '').trim();
+  const desc    = ((document.getElementById('rfDescription') || {}).value || '').trim();
+  const phone   = ((document.getElementById('rfPhone') || {}).value || '').trim();
+
+  if (!selectedProblemType) { showToast('Please select the type of problem.', 'error'); return; }
+  if (!plate)   { showToast('Please enter your license plate.', 'error'); return; }
+  if (!wilaya)  { showToast('Please select your wilaya.', 'error'); return; }
+  if (!address) { showToast('Please enter your location.', 'error'); return; }
+  if (!desc)    { showToast('Please describe the problem.', 'error'); return; }
+  if (!phone)   { showToast('Please enter your phone number.', 'error'); return; }
+
+  const btn = document.getElementById('btnRoadsideSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+  try {
+    if (!ALL_CONTRACTS.length) {
+      const contractsResult = await apiRequest('/api/contracts/my');
+      ALL_CONTRACTS = (contractsResult.ok && contractsResult.data.contracts) ? contractsResult.data.contracts : [];
+    }
+
+    const roadsideContracts = ALL_CONTRACTS.filter(function (co) {
+      return co.status === 'active'
+        && /roadside assistance/i.test(co.product_name || '');
+    });
+
+    if (!roadsideContracts.length) {
+      showToast('You need an active Roadside Assistance contract before sending a request.', 'error');
+      return;
+    }
+
+    if (roadsideContracts.length > 1) {
+      showToast('Multiple active roadside contracts found. Please keep one active roadside contract before sending this request.', 'error');
+      return;
+    }
+
+    const contract = roadsideContracts[0];
+    const result = await apiRequest('/api/roadside/requests', {
+      method: 'POST',
+      body: {
+        contract_id: contract.contract_id,
+        problem_type: selectedProblemType,
+        description: desc,
+        phone: phone,
+        address: address,
+        wilaya: wilaya,
+        city: city || null,
+        license_plate: plate,
+        vehicle_label: brand || null
+      }
+    });
+
+    if (!result.ok) {
+      showToast((result.data && result.data.error) || 'Failed to submit roadside request.', 'error');
+      return;
+    }
+
+    const refEl = document.getElementById('rsRequestRef');
+    if (refEl) refEl.textContent = result.data.request_reference || ('REQ #' + result.data.request_id);
+    const body = document.getElementById('roadsideFormBody');
+    if (body) body.style.display = 'none';
+    const success = document.getElementById('roadsideSuccess');
+    if (success) { success.style.display = 'block'; success.classList.add('show'); }
+    showToast('Roadside request submitted successfully.');
+  } catch (_) {
+    showToast('Network error while sending the roadside request.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send Assistance Request'; }
+  }
+};
+
 /* ============================================================
    PROFILE
    ============================================================ */

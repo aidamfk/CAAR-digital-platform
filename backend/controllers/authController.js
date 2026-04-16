@@ -1,13 +1,8 @@
 const authService = require('../services/authService');
 
-/**
- * POST /api/auth/register
- * Body: { first_name, last_name, email, password, phone? }
- */
 async function register(req, res) {
   const { first_name, last_name, email, password, phone } = req.body;
 
-  // Input validation — keep controllers thin but catch obvious mistakes
   if (!first_name || !last_name || !email || !password) {
     return res.status(400).json({
       error: 'first_name, last_name, email and password are required',
@@ -21,20 +16,23 @@ async function register(req, res) {
   }
 
   try {
-    const userId = await authService.register({ first_name, last_name, email, password, phone });
+    const userId = await authService.register({
+      first_name: first_name.trim(),
+      last_name: last_name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      phone: phone ? phone.trim() : null,
+    });
+
     return res.status(201).json({
       message: 'Account created successfully',
-      userId,
+      user_id: userId,
     });
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message });
   }
 }
 
-/**
- * POST /api/auth/login
- * Body: { email, password }
- */
 async function login(req, res) {
   const { email, password } = req.body;
 
@@ -43,17 +41,16 @@ async function login(req, res) {
   }
 
   try {
-    const { token, user } = await authService.login({ email, password });
+    const { token, user } = await authService.login({
+      email: email.trim().toLowerCase(),
+      password,
+    });
     return res.status(200).json({ token, user });
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message });
   }
 }
 
-/**
- * GET /api/auth/me
- * Protected — requires valid JWT (set by authMiddleware)
- */
 async function getMe(req, res) {
   try {
     const user = await authService.getMe(req.user.id);
@@ -63,4 +60,35 @@ async function getMe(req, res) {
   }
 }
 
-module.exports = { register, login, getMe };
+async function updateProfile(req, res) {
+  const { first_name, last_name, email, phone } = req.body;
+
+  if (!first_name || !last_name || !email) {
+    return res.status(400).json({
+      error: 'first_name, last_name and email are required',
+    });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  try {
+    const user = await authService.updateProfile(req.user.id, {
+      first_name: first_name.trim(),
+      last_name: last_name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone ? phone.trim() : null,
+    });
+
+    return res.status(200).json({
+      message: 'Profile updated',
+      user,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+}
+
+module.exports = { register, login, getMe, updateProfile };

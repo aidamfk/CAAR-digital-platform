@@ -356,7 +356,7 @@ CREATE TABLE IF NOT EXISTS `claims` (
   `claim_date` date NOT NULL,
   `incident_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `incident_wilaya_id` smallint UNSIGNED DEFAULT NULL,
-  `status` enum('pending','under_review','expert_assigned','reported','closed','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `status` enum('pending','under_review','expert_assigned','reported','approved','rejected','closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -641,6 +641,34 @@ CREATE TABLE IF NOT EXISTS `quotes` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `roadside_requests`
+--
+
+DROP TABLE IF EXISTS `roadside_requests`;
+CREATE TABLE IF NOT EXISTS `roadside_requests` (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `contract_id` int UNSIGNED NOT NULL,
+  `client_id` int UNSIGNED NOT NULL,
+  `request_reference` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `problem_type` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `contact_phone` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `location_address` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `wilaya_code` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `city` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','dispatched','completed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_roadside_request_reference` (`request_reference`),
+  KEY `idx_roadside_request_contract` (`contract_id`),
+  KEY `idx_roadside_request_client` (`client_id`),
+  KEY `idx_roadside_request_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -845,6 +873,13 @@ ALTER TABLE `quotes`
   ADD CONSTRAINT `fk_quote_plan` FOREIGN KEY (`plan_id`) REFERENCES `plans` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_quote_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_quote_vehicle` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `roadside_requests`
+--
+ALTER TABLE `roadside_requests`
+  ADD CONSTRAINT `fk_roadside_request_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_roadside_request_contract` FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `vehicles`

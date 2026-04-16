@@ -1,74 +1,35 @@
 /**
- * PATCH: roadsideService.js — createQuote notification hook
- *
- * Add this require at the top of roadsideService.js:
- *   const notificationService = require('./notificationService');
- *
- * Then, inside createQuote(), immediately after `await conn.commit();`
- * and before `const token = signToken(...)`, insert:
- *
- *   // ── NOTIFICATION: notify admins about new roadside subscription ────────
- *   try {
- *     const displayName = (first_name + ' ' + last_name).trim() || email;
- *     await notificationService.roadsideCreated(pool, {
- *       quote_id:    quoteId,
- *       client_name: displayName,
- *     });
- *   } catch (notifErr) {
- *     console.error('[Roadside] roadsideCreated notification failed:', notifErr.message);
- *   }
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * Below is the complete updated roadsideService.js with the hook already
- * applied so you can drop it in directly.
+ * Roadside service layer.
+ * Supports both the subscription quote/payment flow and
+ * the contract-backed roadside assistance request workflow.
  */
 
 const bcrypt = require('bcryptjs');
-const jwt    = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool   = require('../db');
 const m      = require('../models/roadsideModel');
 const notificationService = require('/notificationService');
 const { createContractPDF } = require('../utils/pdfGenerator');
 const { sendContractEmail } = require('../utils/mailer');
-const SECRET_KEY = process.env.JWT_SECRET || 'SECRET_KEY_CAAR';
+const {
+  assertRoadsideRequestStatusTransition,
+} = require('../utils/roadsideLifecycle');
+const {
+  generateInsuranceNumber,
+  generatePolicyReference,
+  getAnnualContractDates,
+  issueAuthToken,
+} = require('../utils/subscriptionHelpers');
 
-// ─── Helpers (unchanged) ─────────────────────────────────────────────────────
 
-function generateInsuranceNumber() {
-  const today = new Date();
-  const date  = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const rand  = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 4);
-  return `CAAR-${date}-${rand}`;
+function generateRoadsideRequestReference() {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const rand = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `RSA-REQ-${date}-${rand}`;
 }
 
-function generatePolicyReference(quoteId) {
-  const today  = new Date();
-  const date   = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const padded = String(quoteId).padStart(6, '0');
-  return `RSA-${date}-${padded}`;
-}
-
-function getContractDates() {
-  const start = new Date();
-  const end   = new Date(start);
-  end.setFullYear(end.getFullYear() + 1);
-  end.setDate(end.getDate() - 1);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  return { start_date: fmt(start), end_date: fmt(end) };
-}
-
-function signToken(user) {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    SECRET_KEY,
-    { expiresIn: '1d' }
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. CREATE QUOTE  (notification added)
-// ─────────────────────────────────────────────────────────────────────────────
 
 async function createQuote({
   first_name, last_name, email, phone,
@@ -130,7 +91,7 @@ async function createQuote({
 
     await conn.commit();
 
-    // ── NOTIFICATION: notify all admins about new roadside subscription ──
+    // â”€â”€ NOTIFICATION: notify all admins about new roadside subscription â”€â”€
     try {
       const displayName = (first_name + ' ' + last_name).trim() || email;
       await notificationService.roadsideCreated(pool, {
@@ -141,7 +102,7 @@ async function createQuote({
       console.error('[Roadside] roadsideCreated notification failed:', notifErr.message);
     }
 
-    const token = signToken({ id: userId, email: userEmail, role: userRole });
+    const token = issueAuthToken({ id: userId, email: userEmail, role: userRole });
 
     return {
       quote_id:         quoteId,
@@ -156,9 +117,9 @@ async function createQuote({
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 2. CONFIRM QUOTE (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function confirmQuote(quoteId, authenticatedUserId) {
   const quote = await m.getQuoteById(quoteId);
@@ -179,9 +140,9 @@ async function confirmQuote(quoteId, authenticatedUserId) {
   return { message: 'Quote confirmed successfully', quote_id: quoteId };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 3. PROCESS PAYMENT (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function processPayment(quoteId, authenticatedUserId, documentData = null) {
   const conn = await pool.getConnection();
@@ -204,8 +165,8 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
       err.status = 409; throw err;
     }
 
-    const policy_reference          = generatePolicyReference(quoteId);
-    const { start_date, end_date }  = getContractDates();
+    const policy_reference          = generatePolicyReference('RSA', quoteId);
+    const { start_date, end_date }  = getAnnualContractDates();
     const today                     = new Date().toISOString().slice(0, 10);
 
     const contractId = await m.createContract(conn, {
@@ -281,4 +242,180 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
   }
 }
 
-module.exports = { createQuote, confirmQuote, processPayment };
+async function createRoadsideRequest(
+  {
+    contract_id,
+    problem_type,
+    description,
+    contact_phone,
+    location_address,
+    wilaya_code,
+    city,
+  },
+  authenticatedUserId
+) {
+  const missing = [];
+  if (!contract_id) missing.push('contract_id');
+  if (!problem_type) missing.push('problem_type');
+  if (!description) missing.push('description');
+  if (!contact_phone) missing.push('contact_phone');
+  if (!location_address) missing.push('location_address');
+  if (!wilaya_code) missing.push('wilaya_code');
+
+  if (missing.length) {
+    const err = new Error(`Missing required fields: ${missing.join(', ')}`);
+    err.status = 400;
+    throw err;
+  }
+
+  const contractIdNum = parseInt(contract_id, 10);
+  if (isNaN(contractIdNum) || contractIdNum < 1) {
+    const err = new Error('contract_id must be a positive integer');
+    err.status = 400;
+    throw err;
+  }
+
+  const normalizedProblemType = String(problem_type).trim();
+  const normalizedDescription = String(description).trim();
+  const normalizedPhone = String(contact_phone).trim();
+  const normalizedAddress = String(location_address).trim();
+  const normalizedWilaya = String(wilaya_code).trim();
+  const normalizedCity = city ? String(city).trim() : null;
+
+  if (normalizedProblemType.length < 3) {
+    const err = new Error('problem_type must be at least 3 characters');
+    err.status = 400;
+    throw err;
+  }
+
+  if (normalizedDescription.length < 10) {
+    const err = new Error('description must be at least 10 characters');
+    err.status = 400;
+    throw err;
+  }
+
+  if (normalizedPhone.length < 6) {
+    const err = new Error('contact_phone must be at least 6 characters');
+    err.status = 400;
+    throw err;
+  }
+
+  if (!/^\d{1,3}$/.test(normalizedWilaya)) {
+    const err = new Error('wilaya_code must be a numeric wilaya code');
+    err.status = 400;
+    throw err;
+  }
+
+  const contract = await m.getActiveRoadsideContractByIdAndUserId(
+    contractIdNum,
+    authenticatedUserId
+  );
+  if (!contract) {
+    const err = new Error(
+      'Contract not found, does not belong to your account, is not active, or is not a roadside assistance contract'
+    );
+    err.status = 403;
+    throw err;
+  }
+
+  const requestReference = generateRoadsideRequestReference();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const requestId = await m.createRoadsideRequest(conn, {
+      contract_id: contractIdNum,
+      client_id: contract.client_id,
+      request_reference: requestReference,
+      problem_type: normalizedProblemType,
+      contact_phone: normalizedPhone,
+      location_address: normalizedAddress,
+      wilaya_code: normalizedWilaya,
+      city: normalizedCity,
+      description: normalizedDescription,
+    });
+
+    await notificationService.roadsideRequestCreated(conn, {
+      request_id: requestId,
+      request_reference: requestReference,
+      client_name: contract.client_name,
+      contract_id: contractIdNum,
+    });
+
+    await conn.commit();
+
+    return {
+      request_id: requestId,
+      request_reference: requestReference,
+      contract_id: contractIdNum,
+      status: 'pending',
+    };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+async function listMyRoadsideRequests(authenticatedUserId) {
+  return m.getRoadsideRequestsByUserId(authenticatedUserId);
+}
+
+async function listAllRoadsideRequests() {
+  return m.getAllRoadsideRequests();
+}
+
+async function updateRoadsideRequestStatus(requestId, status) {
+  const nextStatus = typeof status === 'string' ? status.trim() : status;
+  if (!nextStatus) {
+    const err = new Error('status is required');
+    err.status = 400;
+    throw err;
+  }
+
+  const request = await m.getRoadsideRequestById(requestId);
+  if (!request) {
+    const err = new Error('Roadside request not found');
+    err.status = 404;
+    throw err;
+  }
+
+  assertRoadsideRequestStatusTransition(request.status, nextStatus);
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await m.updateRoadsideRequestStatusTx(conn, requestId, nextStatus);
+    await notificationService.roadsideRequestStatusUpdated(conn, {
+      request_id: requestId,
+      request_reference: request.request_reference,
+      new_status: nextStatus,
+      client_user_id: request.user_id,
+    });
+
+    await conn.commit();
+
+    return {
+      request_id: requestId,
+      request_reference: request.request_reference,
+      status: nextStatus,
+    };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = {
+  createQuote,
+  confirmQuote,
+  processPayment,
+  createRoadsideRequest,
+  listMyRoadsideRequests,
+  listAllRoadsideRequests,
+  updateRoadsideRequestStatus,
+};

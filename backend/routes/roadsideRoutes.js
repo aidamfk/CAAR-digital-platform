@@ -10,6 +10,7 @@
 const express        = require('express');
 const router         = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const requireRole    = require('../middleware/roleMiddleware');
 const ctrl           = require('../controllers/roadsideController');
 
 // ── Public ────────────────────────────────────────────────────────────────────
@@ -17,6 +18,11 @@ const ctrl           = require('../controllers/roadsideController');
 // POST /api/roadside/quote
 // Body: { first_name, last_name, email, phone, license_plate, brand, model, year, wilaya, plan_id }
 // Returns: { quote_id, estimated_amount, plan_name, token }
+router.get('/requests/my', authMiddleware, requireRole('client'), ctrl.listMyRoadsideRequests);
+router.get('/requests', authMiddleware, requireRole('admin'), ctrl.listRoadsideRequests);
+router.post('/requests', authMiddleware, requireRole('client'), ctrl.createRoadsideRequest);
+router.patch('/requests/:id/status', authMiddleware, requireRole('admin'), ctrl.updateRoadsideRequestStatus);
+
 router.post('/quote', ctrl.createQuote);
 
 // ── Protected (valid JWT required) ───────────────────────────────────────────

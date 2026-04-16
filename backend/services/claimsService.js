@@ -9,17 +9,9 @@ const pool               = require('../db');
 const claimsModel        = require('../models/claimsModel');
 const agencyModel        = require('../models/agencyModel');
 const notificationService = require('/notificationService');
+const { assertClaimStatusTransition } = require('../utils/claimLifecycle');
 
 // ─── Status machine ──────────────────────────────────────────────────────────
-const VALID_TRANSITIONS = {
-  pending:         ['under_review', 'rejected'],
-  under_review:    ['expert_assigned', 'rejected'],
-  expert_assigned: ['reported', 'rejected'],
-  reported:        ['closed'],
-  closed:          [],
-  rejected:        [],
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CREATE CLAIM — client
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,7 +136,9 @@ async function listMyClaims(authUserId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function updateClaimStatus(claimId, status) {
-  if (!status) {
+  const nextStatus = typeof status === 'string' ? status.trim() : status;
+
+  if (!nextStatus) {
     const err = new Error('status is required'); err.status = 400; throw err;
   }
 
@@ -153,29 +147,22 @@ async function updateClaimStatus(claimId, status) {
     const err = new Error('Claim not found'); err.status = 404; throw err;
   }
 
-  const allowed = VALID_TRANSITIONS[claim.status] || [];
-  if (!allowed.includes(status)) {
-    const err = new Error(
-      `Cannot transition from '${claim.status}' to '${status}'. ` +
-      `Allowed: ${allowed.join(', ') || 'none'}`
-    );
-    err.status = 409; throw err;
-  }
+  assertClaimStatusTransition(claim.status, nextStatus);
 
-  await claimsModel.updateClaimStatus(claimId, status);
+  await claimsModel.updateClaimStatus(claimId, nextStatus);
 
   // ── NOTIFICATION: notify the client about status change ─────────────────
   try {
     await notificationService.claimStatusUpdated(pool, {
       claim_id:        claimId,
-      new_status:      status,
+      new_status:      nextStatus,
       client_user_id:  claim.user_id,   // claim row carries user_id via JOIN
     });
   } catch (notifErr) {
     console.error('[Claims] claimStatusUpdated notification failed:', notifErr.message);
   }
 
-  return { claim_id: claimId, status };
+  return { claim_id: claimId, status: nextStatus };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -188,34 +175,30 @@ async function assignExpert(claimId, expertId) {
     const err = new Error('Claim not found'); err.status = 404; throw err;
   }
 
-  if (!['pending', 'under_review'].includes(claim.status)) {
-    const err = new Error(
-      `Expert can only be assigned when claim is pending or under_review ` +
-      `(current: ${claim.status})`
-    );
-    err.status = 409; throw err;
-  }
+  assertClaimStatusTransition(claim.status, 'expert_assigned');
 
   // Resolve expert's user_id for the notification
   const [expertRows] = await pool.execute(
     'SELECT user_id FROM experts WHERE id = ?',
     [expertId]
   );
+  if (!expertRows.length) {
+    const err = new Error('Expert not found'); err.status = 404; throw err;
+  }
 
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
     await claimsModel.assignExpertTx(conn, claimId, expertId);
+    await claimsModel.updateClaimStatusTx(conn, claimId, 'expert_assigned');
     await claimsModel.setExpertAvailabilityTx(conn, expertId, false);
 
     // ── NOTIFICATION: notify the expert ───────────────────────────────────
-    if (expertRows.length) {
-      await notificationService.expertAssigned(conn, {
-        claim_id:        claimId,
-        expert_user_id:  expertRows[0].user_id,
-      });
-    }
+    await notificationService.expertAssigned(conn, {
+      claim_id:        claimId,
+      expert_user_id:  expertRows[0].user_id,
+    });
 
     await conn.commit();
     return { claim_id: claimId, expert_id: expertId, status: 'expert_assigned' };
@@ -272,9 +255,7 @@ async function createExpertReport(
   if (claim.expert_id !== expert.id) {
     const err = new Error('You are not assigned to this claim'); err.status = 403; throw err;
   }
-  if (['closed', 'rejected'].includes(claim.status)) {
-    const err = new Error(`Cannot report on a ${claim.status} claim`); err.status = 409; throw err;
-  }
+  assertClaimStatusTransition(claim.status, 'reported');
 
   const existing = await claimsModel.getReportByClaimId(claimIdNum);
   if (existing) {

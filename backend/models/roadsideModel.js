@@ -187,6 +187,177 @@ async function updateQuoteStatusTx(conn, quoteId, status) {
   );
 }
 
+/**
+ * Verify that an active roadside contract belongs to the authenticated user.
+ */
+async function getActiveRoadsideContractByIdAndUserId(contractId, userId) {
+  const [rows] = await pool.execute(
+    `SELECT
+       co.id AS contract_id,
+       co.client_id,
+       co.policy_reference,
+       u.id AS user_id,
+       CONCAT(u.first_name, ' ', u.last_name) AS client_name
+     FROM contracts co
+     JOIN clients c ON c.id = co.client_id
+     JOIN users u ON u.id = c.user_id
+     JOIN products p ON p.id = co.product_id
+     WHERE co.id = ?
+       AND u.id = ?
+       AND co.status = 'active'
+       AND p.name = 'Roadside Assistance'`,
+    [contractId, userId]
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Create a roadside request inside a transaction.
+ */
+async function createRoadsideRequest(
+  conn,
+  {
+    contract_id,
+    client_id,
+    request_reference,
+    problem_type,
+    contact_phone,
+    location_address,
+    wilaya_code,
+    city,
+    description,
+  }
+) {
+  const [result] = await conn.execute(
+    `INSERT INTO roadside_requests
+       (
+         contract_id,
+         client_id,
+         request_reference,
+         problem_type,
+         contact_phone,
+         location_address,
+         wilaya_code,
+         city,
+         description,
+         status
+       )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+    [
+      contract_id,
+      client_id,
+      request_reference,
+      problem_type,
+      contact_phone,
+      location_address,
+      wilaya_code,
+      city || null,
+      description,
+    ]
+  );
+  return result.insertId;
+}
+
+/**
+ * Fetch one roadside request with ownership metadata.
+ */
+async function getRoadsideRequestById(requestId) {
+  const [rows] = await pool.execute(
+    `SELECT
+       rr.id AS request_id,
+       rr.request_reference,
+       rr.contract_id,
+       rr.client_id,
+       rr.problem_type,
+       rr.contact_phone,
+       rr.location_address,
+       rr.wilaya_code,
+       rr.city,
+       rr.description,
+       rr.status,
+       rr.created_at,
+       rr.updated_at,
+       c.user_id,
+       co.policy_reference
+     FROM roadside_requests rr
+     JOIN clients c ON c.id = rr.client_id
+     JOIN contracts co ON co.id = rr.contract_id
+     WHERE rr.id = ?`,
+    [requestId]
+  );
+  return rows[0] || null;
+}
+
+/**
+ * List roadside requests for a client.
+ */
+async function getRoadsideRequestsByUserId(userId) {
+  const [rows] = await pool.execute(
+    `SELECT
+       rr.id AS request_id,
+       rr.request_reference,
+       rr.contract_id,
+       co.policy_reference,
+       rr.problem_type,
+       rr.contact_phone,
+       rr.location_address,
+       rr.wilaya_code,
+       rr.city,
+       rr.description,
+       rr.status,
+       rr.created_at,
+       rr.updated_at
+     FROM roadside_requests rr
+     JOIN clients c ON c.id = rr.client_id
+     JOIN contracts co ON co.id = rr.contract_id
+     WHERE c.user_id = ?
+     ORDER BY rr.created_at DESC`,
+    [userId]
+  );
+  return rows;
+}
+
+/**
+ * List all roadside requests for admins.
+ */
+async function getAllRoadsideRequests() {
+  const [rows] = await pool.execute(
+    `SELECT
+       rr.id AS request_id,
+       rr.request_reference,
+       rr.contract_id,
+       co.policy_reference,
+       rr.client_id,
+       CONCAT(u.first_name, ' ', u.last_name) AS client_name,
+       u.email AS client_email,
+       rr.problem_type,
+       rr.contact_phone,
+       rr.location_address,
+       rr.wilaya_code,
+       rr.city,
+       rr.description,
+       rr.status,
+       rr.created_at,
+       rr.updated_at
+     FROM roadside_requests rr
+     JOIN clients c ON c.id = rr.client_id
+     JOIN users u ON u.id = c.user_id
+     JOIN contracts co ON co.id = rr.contract_id
+     ORDER BY rr.created_at DESC`
+  );
+  return rows;
+}
+
+/**
+ * Update a roadside request status inside a transaction.
+ */
+async function updateRoadsideRequestStatusTx(conn, requestId, status) {
+  await conn.execute(
+    'UPDATE roadside_requests SET status = ? WHERE id = ?',
+    [status, requestId]
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -300,6 +471,13 @@ module.exports = {
   getQuoteByIdForUpdate,
   updateQuoteStatus,
   updateQuoteStatusTx,
+  // roadside requests
+  getActiveRoadsideContractByIdAndUserId,
+  createRoadsideRequest,
+  getRoadsideRequestById,
+  getRoadsideRequestsByUserId,
+  getAllRoadsideRequests,
+  updateRoadsideRequestStatusTx,
   // contract
   createContract,
   // payment
