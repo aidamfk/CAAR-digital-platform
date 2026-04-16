@@ -644,3 +644,11 @@ document.addEventListener('DOMContentLoaded', function () {
   window.closeArticleDetail = closeDetail;
   renderPage(1);
 });
+// Dans le callback de loadComponent('site-header', ...)
+var path = window.location.pathname.split('/').pop() || 'index.html';
+document.querySelectorAll('.nav-link').forEach(function(link) {
+  var href = link.getAttribute('href');
+  if (href === path || (path === '' && href === 'index.html')) {
+    link.classList.add('active');
+  }
+});

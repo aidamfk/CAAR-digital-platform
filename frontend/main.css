@@ -142,16 +142,18 @@ textarea     { font-family: var(--font-sans); }
 .logo-block {
   display: flex;
   align-items: center;
-  padding: 10px 20px 10px 0;
+  padding: 8px 20px 8px 0;
   flex-shrink: 0;
-  border-right: 1px solid rgba(255,255,255,0.15);
+  border-right: none;              /* ← SUPPRIME la ligne verticale */
 }
 
 .logo-img {
-  width: 110px;
-  height: 110px;
+  width: 130px;                    /* ← un peu plus grand */
+  height: 130px;
   object-fit: contain;
   display: block;
+  border-radius: 0;                /* ← pas de cercle si l'image n'est pas ronde */
+  background: transparent;
 }
 
 
@@ -169,6 +171,7 @@ textarea     { font-family: var(--font-sans); }
   align-items: center;
   gap: 14px;
   padding: 14px 0 14px 20px;
+  
 }
 
 .bottom-row {
@@ -300,12 +303,16 @@ textarea     { font-family: var(--font-sans); }
   background: none;
   border: none;
   cursor: pointer;
-   display: flex !important;
+  display: flex !important;
   align-items: center;
   gap: 5px;
   padding: 6px 8px;
   border-radius: 6px;
+  color: rgba(255,255,255,0.85);   /* ← AJOUTER */
   transition: background .2s;
+}
+.icon-btn svg {
+  stroke: rgba(255,255,255,0.85);  /* ← AJOUTER */
 }
 .icon-btn:hover { background: rgba(255,255,255,0.08); }
 .icon-img        { width: 26px; height: 26px; object-fit: contain; }
