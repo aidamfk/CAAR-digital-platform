@@ -1,10 +1,20 @@
 /* ============================================================
-   CAAR — dashboard.js  (v4 — auth-guarded, real API data)
+   CAAR — dashboard.js  (v5 — ACTION CENTER)
+   
+   Transforms the client dashboard from a passive stats display
+   into an actionable control center.
+   
+   What's new:
+   - Contextual alert banners based on real state
+   - Recent activity feed (claims + roadside requests)
+   - Clickable stat cards → navigate to filtered views
+   - Contextual "next step" prompts
+   - Mini timeline inside claim detail panel
    ============================================================ */
 
 'use strict';
 
-/* ── FIX 2: STRICT AUTH GUARD — runs immediately, before anything else ── */
+/* ── STRICT AUTH GUARD ─────────────────────────────────────── */
 const _authUser  = JSON.parse(localStorage.getItem('user')  || 'null');
 const _authToken = localStorage.getItem('token');
 
@@ -15,145 +25,433 @@ if (_authUser && _authUser.role !== 'client') {
   window.location.href = 'index.html';
 }
 
-/* ── Verify state module is loaded ── */
 if (typeof window.apiRequest === 'undefined') {
   console.error('[CAAR] dashboard.js — app-state.js not loaded!');
 }
 
-/* ── Global state ── */
-var ALL_CLAIMS    = [];
-var ALL_CONTRACTS = [];
+/* ── Global state ────────────────────────────────────────────── */
+var ALL_CLAIMS          = [];
+var ALL_CONTRACTS       = [];
+var ALL_ROADSIDE        = [];
+var _dashStats          = {};
+
+/* ── Status config ───────────────────────────────────────────── */
+var STATUS_CONFIG = {
+  pending:         { cls: 'status-badge--pending',         label: 'Pending',         icon: '⏳' },
+  under_review:    { cls: 'status-badge--under-review',    label: 'Under Review',    icon: '🔍' },
+  expert_assigned: { cls: 'status-badge--expert-assigned', label: 'Expert Assigned', icon: '👤' },
+  reported:        { cls: 'status-badge--approved',        label: 'Reported',        icon: '📋' },
+  closed:          { cls: 'status-badge--closed',          label: 'Closed',          icon: '✅' },
+  rejected:        { cls: 'status-badge--rejected',        label: 'Rejected',        icon: '❌' },
+  approved:        { cls: 'status-badge--closed',          label: 'Approved',        icon: '✅' },
+};
+
+/* ── Roadside status config ──────────────────────────────────── */
+var ROADSIDE_STATUS = {
+  pending:    { cls: 'status-badge--pending',      label: 'Pending',    icon: '⏳' },
+  dispatched: { cls: 'status-badge--under-review', label: 'Dispatched', icon: '🚗' },
+  completed:  { cls: 'status-badge--closed',       label: 'Completed',  icon: '✅' },
+};
 
 /* ============================================================
    BOOT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
   renderUserIdentity();
-  loadDashboard();
+  loadAllData();
 });
 
 /* ============================================================
-   FIX 3 + 6: REAL DATA — loadDashboard
+   LOAD ALL DATA — parallel fetch
    ============================================================ */
-async function loadDashboard() {
+async function loadAllData() {
   try {
-    const res = await fetch('/api/claims/my', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    const [statsRes, claimsRes, contractsRes, roadsideRes] = await Promise.allSettled([
+      apiRequest('/api/dashboard/stats'),
+      apiRequest('/api/claims/my'),
+      apiRequest('/api/contracts/my'),
+      apiRequest('/api/roadside/requests/my'),
+    ]);
 
-    /* FIX 4: log raw text if parsing fails */
-    if (!res.ok) {
-      const text = await res.text();
-      console.log('[CAAR] /api/claims/my raw response:', text);
-      return;
+    // Stats
+    if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+      _dashStats = statsRes.value.data || {};
     }
 
-    const data = await res.json();
-    const claims = data.claims || data || [];
-
-    ALL_CLAIMS = claims;
-
-    /* FIX 6: only real values, never hardcoded */
-    const totalEl  = document.querySelector('.summary-card--orange .sc-value');
-    const activeEl = document.querySelector('.summary-card--amber  .sc-value');
-
-    if (totalEl)  totalEl.textContent  = claims.length;
-    if (activeEl) activeEl.textContent = claims.filter(
-      c => !['closed', 'rejected'].includes(c.status)
-    ).length;
-
-    /* Update sidebar badge */
-    const badge = document.querySelector('[data-section="claims"] .dash-nav-item__badge');
-    const open  = claims.filter(c => !['closed', 'rejected'].includes(c.status)).length;
-    if (badge) badge.textContent = open || '';
-
-  } catch (err) {
-    console.error('[CAAR] Dashboard error:', err);
-  }
-
-  /* Load contracts count separately */
-  try {
-    const res2 = await fetch('/api/contracts/my', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-
-    if (!res2.ok) {
-      const text = await res2.text();
-      console.log('[CAAR] /api/contracts/my raw response:', text);
-      return;
+    // Claims
+    if (claimsRes.status === 'fulfilled' && claimsRes.value.ok) {
+      ALL_CLAIMS = claimsRes.value.data.claims || [];
     }
 
-    const data2 = await res2.json();
-    const contracts = data2.contracts || [];
-    ALL_CONTRACTS = contracts;
-
-    const contractEl = document.querySelector('.summary-card--blue .sc-value');
-    if (contractEl) contractEl.textContent = contracts.length;
-
-  } catch (err) {
-    console.error('[CAAR] Contracts load error:', err);
-  }
-
-  /* Load payments count */
-  try {
-    const statsRes = await fetch('/api/dashboard/stats', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-
-    if (statsRes.ok) {
-      const stats = await statsRes.json();
-      const payEl = document.querySelector('.summary-card--green .sc-value');
-      if (payEl && stats.total_payments != null) payEl.textContent = stats.total_payments;
+    // Contracts
+    if (contractsRes.status === 'fulfilled' && contractsRes.value.ok) {
+      ALL_CONTRACTS = contractsRes.value.data.contracts || [];
     }
+
+    // Roadside requests
+    if (roadsideRes.status === 'fulfilled' && roadsideRes.value.ok) {
+      ALL_ROADSIDE = roadsideRes.value.data.requests || [];
+    }
+
   } catch (err) {
-    console.error('[CAAR] Stats error:', err);
+    console.error('[CAAR] loadAllData error:', err);
   }
+
+  // Render everything
+  renderSummaryCards();
+  renderAlertBanners();
+  renderRecentActivity();
+  renderContextualNextStep();
+  populateClaimModalContracts();
+}
+
+/* ============================================================
+   SUMMARY CARDS — clickable, data-driven
+   ============================================================ */
+function renderSummaryCards() {
+  const activeClaims   = ALL_CLAIMS.filter(c => !['closed','rejected'].includes(c.status));
+  const pendingClaims  = ALL_CLAIMS.filter(c => c.status === 'pending');
+  const activeContracts = ALL_CONTRACTS.filter(c => c.status === 'active');
+
+  // Update card values
+  safeSetText('.summary-card--orange .sc-value', ALL_CLAIMS.length);
+  safeSetText('.summary-card--amber  .sc-value', activeClaims.length);
+  safeSetText('.summary-card--blue   .sc-value', ALL_CONTRACTS.length);
+  safeSetText('.summary-card--green  .sc-value', _dashStats.total_payments || 0);
+
+  // Update sub-labels
+  safeSetText('.summary-card--orange .sc-sub', activeClaims.length + ' active');
+  safeSetText('.summary-card--amber  .sc-sub', pendingClaims.length + ' awaiting review');
+  safeSetText('.summary-card--blue   .sc-sub', activeContracts.length + ' active');
+
+  // Make cards clickable
+  const orangeCard = document.querySelector('.summary-card--orange');
+  const amberCard  = document.querySelector('.summary-card--amber');
+  const blueCard   = document.querySelector('.summary-card--blue');
+
+  if (orangeCard) {
+    orangeCard.style.cursor = 'pointer';
+    orangeCard.addEventListener('click', function () { switchSection('claims', document.querySelector('[data-section="claims"]')); });
+    orangeCard.title = 'View all claims';
+  }
+  if (amberCard) {
+    amberCard.style.cursor = 'pointer';
+    amberCard.addEventListener('click', function () {
+      switchSection('claims', document.querySelector('[data-section="claims"]'));
+      setTimeout(function () {
+        var sel = document.getElementById('claimsFilterSelect');
+        if (sel) { sel.value = 'pending'; filterClaims('pending'); }
+      }, 300);
+    });
+    amberCard.title = 'View active claims';
+  }
+  if (blueCard) {
+    blueCard.style.cursor = 'pointer';
+    blueCard.addEventListener('click', function () { switchSection('contracts', document.querySelector('[data-section="contracts"]')); });
+    blueCard.title = 'View all contracts';
+  }
+
+  // Badge on claims nav item
+  const badge = document.querySelector('[data-section="claims"] .dash-nav-item__badge');
+  const openCount = activeClaims.length;
+  if (badge) badge.textContent = openCount || '';
+}
+
+/* ============================================================
+   ALERT BANNERS — contextual, state-driven
+   ============================================================ */
+function renderAlertBanners() {
+  const container = document.getElementById('dashAlertContainer');
+  if (!container) return;
+
+  const alerts = [];
+  const pendingClaims  = ALL_CLAIMS.filter(c => c.status === 'pending');
+  const expertClaims   = ALL_CLAIMS.filter(c => c.status === 'expert_assigned');
+  const activeClaims   = ALL_CLAIMS.filter(c => !['closed','rejected'].includes(c.status));
+  const activeContracts = ALL_CONTRACTS.filter(c => c.status === 'active');
+  const pendingRoadside = ALL_ROADSIDE.filter(r => r.status === 'pending');
+
+  // Alert: no contracts at all
+  if (ALL_CONTRACTS.length === 0) {
+    alerts.push({
+      type: 'info',
+      icon: '🛡️',
+      title: 'Get insured today',
+      message: 'You have no insurance contracts yet. Explore our products to protect what matters.',
+      action: { label: 'Browse Products', fn: function () { window.location.href = 'Online_subscription.html'; } },
+    });
+  }
+
+  // Alert: pending claims awaiting review
+  if (pendingClaims.length > 0) {
+    alerts.push({
+      type: 'warning',
+      icon: '⏳',
+      title: pendingClaims.length === 1
+        ? 'You have 1 claim awaiting review'
+        : 'You have ' + pendingClaims.length + ' claims awaiting review',
+      message: 'Our team will review your claim shortly. You\'ll be notified when the status changes.',
+      action: { label: 'View Claims', fn: function () { switchSection('claims', document.querySelector('[data-section="claims"]')); } },
+    });
+  }
+
+  // Alert: expert assigned
+  if (expertClaims.length > 0) {
+    alerts.push({
+      type: 'success',
+      icon: '👤',
+      title: expertClaims.length === 1
+        ? 'An expert has been assigned to your claim'
+        : expertClaims.length + ' of your claims have an expert assigned',
+      message: 'Your claim is being actively handled. The expert will contact you soon.',
+      action: { label: 'View Details', fn: function () {
+        switchSection('claims', document.querySelector('[data-section="claims"]'));
+        if (expertClaims[0]) setTimeout(function () { openClaimPanel(expertClaims[0].claim_id); }, 400);
+      }},
+    });
+  }
+
+  // Alert: active roadside request
+  if (pendingRoadside.length > 0) {
+    alerts.push({
+      type: 'warning',
+      icon: '🚗',
+      title: 'Roadside request pending',
+      message: 'Your roadside assistance request is being processed. Our team will dispatch help shortly.',
+      action: { label: 'View Request', fn: function () { switchSection('roadside', document.querySelector('[data-section="roadside"]')); } },
+    });
+  }
+
+  // Alert: no active claims and has contract — prompt to file
+  if (ALL_CONTRACTS.length > 0 && activeClaims.length === 0 && ALL_CLAIMS.length === 0) {
+    alerts.push({
+      type: 'info',
+      icon: '📋',
+      title: 'No active claims',
+      message: 'Experienced an incident? File a claim now and our team will guide you through the process.',
+      action: { label: 'File a Claim', fn: openNewClaimModalGeneric },
+    });
+  }
+
+  // Render alerts
+  if (alerts.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = alerts.map(function (a, i) {
+    var colorMap = {
+      warning: { bg: '#fffbeb', border: '#f59e0b', icon: '#d97706', text: '#92400e' },
+      success: { bg: '#f0fdf4', border: '#22c55e', icon: '#16a34a', text: '#166534' },
+      error:   { bg: '#fff1f2', border: '#f43f5e', icon: '#be123c', text: '#9f1239' },
+      info:    { bg: '#eff6ff', border: '#3b82f6', icon: '#1d4ed8', text: '#1e40af' },
+    };
+    var c = colorMap[a.type] || colorMap.info;
+    return '<div class="dash-alert" style="' +
+      'display:flex;align-items:flex-start;gap:14px;' +
+      'background:' + c.bg + ';border:1.5px solid ' + c.border + ';' +
+      'border-left:4px solid ' + c.border + ';' +
+      'border-radius:12px;padding:14px 18px;margin-bottom:12px;' +
+      'animation:alertSlideIn .3s ease ' + (i * 0.08) + 's both;">' +
+      '<span style="font-size:1.25rem;flex-shrink:0;margin-top:1px;">' + a.icon + '</span>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:700;font-size:.88rem;color:' + c.text + ';margin-bottom:3px;">' + a.title + '</div>' +
+        '<div style="font-size:.78rem;color:' + c.text + ';opacity:.8;line-height:1.5;">' + a.message + '</div>' +
+      '</div>' +
+      (a.action ? '<button onclick="(' + a.action.fn.toString() + ')()" style="' +
+        'flex-shrink:0;padding:7px 14px;background:' + c.border + ';color:#fff;' +
+        'border:none;border-radius:8px;font-size:.75rem;font-weight:700;' +
+        'cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .2s;"' +
+        ' onmouseover="this.style.opacity=.85" onmouseout="this.style.opacity=1">' +
+        a.action.label + '</button>' : '') +
+    '</div>';
+  }).join('');
+}
+
+/* ============================================================
+   RECENT ACTIVITY — last 5 combined (claims + roadside)
+   ============================================================ */
+function renderRecentActivity() {
+  const container = document.getElementById('recentActivityList');
+  if (!container) return;
+
+  // Build unified activity list
+  var items = [];
+
+  ALL_CLAIMS.slice(0, 5).forEach(function (c) {
+    var sc = STATUS_CONFIG[c.status] || { label: c.status, icon: '📄' };
+    items.push({
+      type:    'claim',
+      id:      c.claim_id,
+      icon:    sc.icon,
+      title:   'Claim #' + c.claim_id,
+      sub:     'Contract #' + c.contract_id,
+      status:  sc.label,
+      cls:     sc.cls,
+      date:    c.claim_date,
+      raw:     c,
+    });
+  });
+
+  ALL_ROADSIDE.slice(0, 3).forEach(function (r) {
+    var sc = ROADSIDE_STATUS[r.status] || { label: r.status, icon: '🚗' };
+    items.push({
+      type:   'roadside',
+      id:     r.request_id,
+      icon:   sc.icon,
+      title:  'Roadside ' + (r.request_reference || '#' + r.request_id),
+      sub:    r.problem_type || 'Assistance request',
+      status: sc.label,
+      cls:    sc.cls,
+      date:   r.created_at,
+      raw:    r,
+    });
+  });
+
+  // Sort by date descending
+  items.sort(function (a, b) {
+    return new Date(b.date || 0) - new Date(a.date || 0);
+  });
+
+  items = items.slice(0, 5);
+
+  if (items.length === 0) {
+    container.innerHTML =
+      '<div class="activity-item">' +
+        '<div class="activity-dot activity-dot--amber">' +
+          '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+          '<polyline points="14 2 14 8 20 8"/></svg></div>' +
+        '<div class="activity-body">' +
+          '<div class="activity-body-title">No recent activity</div>' +
+          '<div class="activity-body-sub">Your claims and roadside requests will appear here</div>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(function (item) {
+    var dotCls = item.type === 'roadside' ? 'activity-dot--blue' : 'activity-dot--amber';
+    var dateStr = item.date ? new Date(item.date).toLocaleDateString('en-GB') : '';
+
+    return '<div class="activity-item" style="cursor:pointer;" onclick="' +
+      (item.type === 'claim'
+        ? 'openClaimPanel(' + item.id + ')'
+        : 'switchSection(\'roadside\', document.querySelector(\'[data-section="roadside"]\'))') +
+      '">' +
+      '<div class="activity-dot ' + dotCls + '" style="font-size:.75rem;">' + item.icon + '</div>' +
+      '<div class="activity-body" style="flex:1;">' +
+        '<div class="activity-body-title">' + item.title + '</div>' +
+        '<div class="activity-body-sub">' + item.sub + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">' +
+        '<span class="status-badge ' + item.cls + '" style="font-size:.6rem;">' + item.status + '</span>' +
+        '<span class="activity-time">' + dateStr + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ============================================================
+   CONTEXTUAL NEXT STEP
+   ============================================================ */
+function renderContextualNextStep() {
+  const container = document.getElementById('nextStepWidget');
+  if (!container) return;
+
+  var step = null;
+  const activeContracts = ALL_CONTRACTS.filter(c => c.status === 'active');
+
+  if (ALL_CONTRACTS.length === 0) {
+    step = {
+      emoji: '🛡️',
+      title: 'Start your first policy',
+      desc:  'Subscribe to an insurance product to unlock all dashboard features.',
+      btnLabel: 'Browse Products',
+      btnFn: 'window.location.href="Online_subscription.html"',
+    };
+  } else if (activeContracts.length > 0 && ALL_CLAIMS.length === 0) {
+    step = {
+      emoji: '📋',
+      title: 'File your first claim',
+      desc:  'Had an incident? File a claim in minutes and our team will take care of it.',
+      btnLabel: 'File a Claim',
+      btnFn: 'openNewClaimModalGeneric()',
+    };
+  } else if (activeContracts.length > 0 && ALL_ROADSIDE.length === 0) {
+    step = {
+      emoji: '🚗',
+      title: 'Request roadside assistance',
+      desc:  'Stranded on the road? Get immediate help from our 24/7 assistance team.',
+      btnLabel: 'Request Assistance',
+      btnFn: 'switchSection("roadside", document.querySelector("[data-section=roadside]"))',
+    };
+  } else {
+    step = {
+      emoji: '✅',
+      title: 'Your account is active',
+      desc:  'All your contracts and services are running. Contact us if you need anything.',
+      btnLabel: 'Contact Support',
+      btnFn: 'window.location.href="contact.html"',
+    };
+  }
+
+  container.innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:14px;">' +
+      '<div style="font-size:1.6rem;flex-shrink:0;">' + step.emoji + '</div>' +
+      '<div style="flex:1;">' +
+        '<div style="font-weight:700;font-size:.86rem;color:var(--dark);margin-bottom:4px;">' + step.title + '</div>' +
+        '<div style="font-size:.76rem;color:var(--gray);line-height:1.5;margin-bottom:12px;">' + step.desc + '</div>' +
+        '<button onclick="' + step.btnFn + '" style="' +
+          'padding:8px 18px;background:var(--orange);color:#fff;border:none;' +
+          'border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;' +
+          'font-family:inherit;transition:background .2s;"' +
+          ' onmouseover="this.style.background=\'var(--orange-dark)\'" onmouseout="this.style.background=\'var(--orange)\'">' +
+          step.btnLabel + '</button>' +
+      '</div>' +
+    '</div>';
 }
 
 /* ============================================================
    USER IDENTITY
    ============================================================ */
 function renderUserIdentity() {
-  const user = _authUser;
+  var user = _authUser;
   if (!user) return;
 
-  const name = user.first_name
+  var name = user.first_name
     ? (user.first_name + ' ' + (user.last_name || '')).trim()
     : (user.email || 'Client');
-
-  const initials = name.trim().split(/\s+/)
-    .map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'CL';
+  var initials = name.trim().split(/\s+/).map(function (w) { return w[0]; }).join('').toUpperCase().slice(0, 2) || 'CL';
 
   safeSetText('.dash-sidebar__user-name', name);
   safeSetText('.dash-sidebar__user-role', user.role || 'client');
-  const sideAvatar = document.querySelector('.dash-sidebar__avatar');
+  var sideAvatar = document.querySelector('.dash-sidebar__avatar');
   if (sideAvatar) sideAvatar.textContent = initials;
 
   safeSetText('.dash-topbar__user-name', name.split(' ')[0]);
-  const topAvatar = document.querySelector('.dash-topbar__user-avatar');
+  var topAvatar = document.querySelector('.dash-topbar__user-avatar');
   if (topAvatar) topAvatar.textContent = initials;
 
-  safeSetText('.dash-content__header-title',
-    'Welcome back, ' + (user.first_name || 'there') + ' 👋');
+  safeSetText('.dash-content__header-title', 'Welcome back, ' + (user.first_name || 'there') + ' 👋');
 
   safeSetValue('pf-first', user.first_name || '');
   safeSetValue('pf-last',  user.last_name  || '');
   safeSetValue('pf-email', user.email      || '');
   safeSetValue('pf-phone', user.phone      || '');
 
-  const pac = document.querySelector('.pac-circle');
+  var pac = document.querySelector('.pac-circle');
   if (pac) pac.textContent = initials;
-  const pacName = document.querySelector('.pac-name');
+  var pacName = document.querySelector('.pac-name');
   if (pacName) pacName.textContent = name;
 }
 
 function safeSetText(selector, value) {
-  const el = document.querySelector(selector);
+  var el = document.querySelector(selector);
   if (el) el.textContent = value;
 }
 
 function safeSetValue(id, value) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   if (el && !el.value) el.value = value;
 }
 
@@ -170,24 +468,23 @@ var SECTION_CONFIG = {
 };
 
 window.switchSection = function (key, _el) {
-  document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.dash-section').forEach(function (s) { s.classList.remove('active'); });
+  document.querySelectorAll('.dash-nav-item').forEach(function (i) { i.classList.remove('active'); });
 
-  const target = document.getElementById(key + '-section');
+  var target = document.getElementById(key + '-section');
   if (target) target.classList.add('active');
 
-  const navItem = document.querySelector('[data-section="' + key + '"]');
+  var navItem = document.querySelector('[data-section="' + key + '"]');
   if (navItem) navItem.classList.add('active');
 
-  const cfg = SECTION_CONFIG[key] || SECTION_CONFIG.dashboard;
+  var cfg = SECTION_CONFIG[key] || SECTION_CONFIG.dashboard;
   safeSetText('#topbarTitle', cfg.title);
-  const iconEl = document.getElementById('topbarIcon');
-  if (iconEl) iconEl.innerHTML =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
-    + ' stroke-linecap="round" stroke-linejoin="round">' + cfg.icon + '</svg>';
+  var iconEl = document.getElementById('topbarIcon');
+  if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + cfg.icon + '</svg>';
 
   closeSidebar();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
   if (key === 'claims')    loadClaims();
   if (key === 'contracts') loadContractsSection();
 };
@@ -208,65 +505,80 @@ window.closeSidebar = function () {
    CONTRACTS
    ============================================================ */
 async function loadContractsSection() {
-  const contracts = await loadContracts('contracts-cards-grid');
+  var contracts = await loadContracts('contracts-cards-grid');
   ALL_CONTRACTS = contracts;
+  populateClaimModalContracts();
   window.__openClaimForContract = function (contractId, policyRef) {
     openNewClaimModal(contractId, policyRef);
   };
 }
 
+function populateClaimModalContracts() {
+  var select = document.getElementById('ncContractSelect');
+  if (!select) return;
+
+  var active = ALL_CONTRACTS.filter(function (c) { return c.status === 'active'; });
+
+  if (!active.length) {
+    select.innerHTML = '<option value="">— No active contracts found —</option>';
+    return;
+  }
+
+  select.innerHTML = '<option value="">— Select a contract —</option>' +
+    active.map(function (c) {
+      return '<option value="' + c.contract_id + '">' +
+        (c.policy_reference || '#' + c.contract_id) +
+        ' — ' + (c.product_name || 'Insurance') +
+        ' (expires ' + (c.end_date ? new Date(c.end_date).toLocaleDateString('en-GB') : '') + ')' +
+        '</option>';
+    }).join('');
+}
+
 /* ============================================================
    CLAIMS
    ============================================================ */
-var STATUS_CONFIG = {
-  pending:         { cls: 'status-badge--pending',         label: 'Pending' },
-  under_review:    { cls: 'status-badge--under-review',    label: 'Under Review' },
-  expert_assigned: { cls: 'status-badge--expert-assigned', label: 'Expert Assigned' },
-  reported:        { cls: 'status-badge--approved',        label: 'Reported' },
-  closed:          { cls: 'status-badge--closed',          label: 'Closed' },
-  rejected:        { cls: 'status-badge--rejected',        label: 'Rejected' },
-};
-
 async function loadClaims() {
-  const tbody   = document.getElementById('claimsTableBody');
-  const emptyEl = document.getElementById('claimsEmpty');
-  const countEl = document.getElementById('claimsCountNum');
+  var tbody   = document.getElementById('claimsTableBody');
+  var emptyEl = document.getElementById('claimsEmpty');
+  var countEl = document.getElementById('claimsCountNum');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#999;font-size:.82rem;">'
-    + '<div style="width:22px;height:22px;border:2px solid #f0ece6;border-top-color:#E8761E;'
-    + 'border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;"></div>'
-    + 'Loading your claims…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#999;font-size:.82rem;">' +
+    '<div style="width:22px;height:22px;border:2px solid #f0ece6;border-top-color:#E8761E;' +
+    'border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;"></div>' +
+    'Loading your claims…</td></tr>';
 
-  let result;
+  var result;
   try {
     result = await apiRequest('/api/claims/my');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#e53e3e;">'
-      + '⚠ Network error. Please refresh.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#e53e3e;">⚠ Network error. Please refresh.</td></tr>';
     return;
   }
 
   if (result.status === 404) { ALL_CLAIMS = []; renderClaimsTable([]); return; }
   if (!result.ok) {
-    console.log('[CAAR] Claims raw:', result.data);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#e53e3e;">'
-      + '⚠ Unable to load claims (HTTP ' + result.status + ').</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#e53e3e;">⚠ Unable to load claims (HTTP ' + result.status + ').</td></tr>';
     return;
   }
 
   ALL_CLAIMS = result.data.claims || [];
   renderClaimsTable(ALL_CLAIMS);
 
-  const badge = document.querySelector('[data-section="claims"] .dash-nav-item__badge');
-  const open  = ALL_CLAIMS.filter(c => !['closed', 'rejected'].includes(c.status)).length;
+  // Refresh the badge
+  var badge = document.querySelector('[data-section="claims"] .dash-nav-item__badge');
+  var open  = ALL_CLAIMS.filter(function (c) { return !['closed','rejected'].includes(c.status); }).length;
   if (badge) badge.textContent = open || '';
+
+  // Refresh alerts on the dashboard section too
+  renderAlertBanners();
+  renderRecentActivity();
 }
 
 function renderClaimsTable(claims) {
-  const tbody   = document.getElementById('claimsTableBody');
-  const emptyEl = document.getElementById('claimsEmpty');
-  const countEl = document.getElementById('claimsCountNum');
+  var tbody   = document.getElementById('claimsTableBody');
+  var emptyEl = document.getElementById('claimsEmpty');
+  var countEl = document.getElementById('claimsCountNum');
 
   if (countEl) countEl.textContent = claims.length;
 
@@ -277,80 +589,143 @@ function renderClaimsTable(claims) {
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
-  tbody.innerHTML = claims.map(c => {
-    const sc   = STATUS_CONFIG[c.status] || { cls: 'status-badge--pending', label: c.status };
-    const date = c.claim_date ? new Date(c.claim_date).toLocaleDateString('en-GB') : '';
-    return '<tr>'
-      + '<td><span class="claim-id-cell">#' + c.claim_id + '</span></td>'
-      + '<td>' + date + '</td>'
-      + '<td><span class="type-chip">Contract #' + c.contract_id + '</span></td>'
-      + '<td><span class="status-badge ' + sc.cls + '">' + sc.label + '</span></td>'
-      + '<td><button class="btn-claim-view" onclick="openClaimPanel(' + c.claim_id + ')">'
-      + '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>'
-      + '<circle cx="12" cy="12" r="3"/></svg>View</button></td>'
-      + '</tr>';
+  tbody.innerHTML = claims.map(function (c) {
+    var sc   = STATUS_CONFIG[c.status] || { cls: 'status-badge--pending', label: c.status };
+    var date = c.claim_date ? new Date(c.claim_date).toLocaleDateString('en-GB') : '';
+    return '<tr>' +
+      '<td><span class="claim-id-cell">#' + c.claim_id + '</span></td>' +
+      '<td>' + date + '</td>' +
+      '<td><span class="type-chip">Contract #' + c.contract_id + '</span></td>' +
+      '<td><span class="status-badge ' + sc.cls + '">' + sc.label + '</span></td>' +
+      '<td><button class="btn-claim-view" onclick="openClaimPanel(' + c.claim_id + ')">' +
+      '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+      '<circle cx="12" cy="12" r="3"/></svg>View</button></td>' +
+      '</tr>';
   }).join('');
 }
 
 window.filterClaims = function (status) {
-  const filtered = status === 'all'
+  var filtered = status === 'all'
     ? ALL_CLAIMS
-    : ALL_CLAIMS.filter(c => c.status === status);
+    : ALL_CLAIMS.filter(function (c) { return c.status === status; });
   renderClaimsTable(filtered);
 };
 
 /* ============================================================
-   CLAIM DETAIL PANEL
+   CLAIM DETAIL PANEL — with mini timeline
    ============================================================ */
+var TIMELINE_STEPS = [
+  { key: 'pending',         label: 'Claim Filed' },
+  { key: 'under_review',   label: 'Under Review' },
+  { key: 'expert_assigned',label: 'Expert Assigned' },
+  { key: 'reported',        label: 'Report Submitted' },
+  { key: 'approved',        label: 'Approved' },
+  { key: 'closed',          label: 'Closed' },
+];
+
 window.openClaimPanel = function (claimId) {
-  const claim = ALL_CLAIMS.find(c =>
-    c.claim_id === claimId || c.claim_id === String(claimId));
+  var claim = ALL_CLAIMS.find(function (c) {
+    return c.claim_id === claimId || c.claim_id === String(claimId);
+  });
   if (!claim) return;
 
   document.getElementById('cdpTitle').textContent    = 'Claim #' + claim.claim_id;
-  document.getElementById('cdpSubtitle').textContent =
-    'Contract #' + claim.contract_id + ' · ' + (STATUS_CONFIG[claim.status] || {}).label;
+  document.getElementById('cdpSubtitle').textContent = 'Contract #' + claim.contract_id + ' · ' + (STATUS_CONFIG[claim.status] || {}).label;
 
-  const sc    = STATUS_CONFIG[claim.status] || { cls: 'status-badge--pending', label: claim.status };
-  const STEPS = ['pending', 'under_review', 'expert_assigned', 'reported', 'closed'];
-  const curIdx = STEPS.indexOf(claim.status);
+  var sc = STATUS_CONFIG[claim.status] || { cls: 'status-badge--pending', label: claim.status };
 
-  const timelineHTML = STEPS.map((step, i) => {
-    const dotCls = i < curIdx ? 'cdp-timeline-dot--done'
-      : i === curIdx ? 'cdp-timeline-dot--current' : 'cdp-timeline-dot--pending';
-    const label = (STATUS_CONFIG[step] || {}).label || step;
-    return '<div class="cdp-timeline-item"><div class="cdp-timeline-dot ' + dotCls + '">'
-      + (i < curIdx ? '✓' : (i + 1)) + '</div>'
-      + '<div class="cdp-timeline-content"><div class="cdp-timeline-event">' + label + '</div>'
-      + (i === curIdx ? '<div class="cdp-timeline-date">Current status</div>' : '')
-      + '</div></div>';
+  // Build timeline — handle rejected path
+  var isRejected  = claim.status === 'rejected';
+  var curIdx      = TIMELINE_STEPS.findIndex(function (s) { return s.key === claim.status; });
+  var stepsToShow = isRejected ? TIMELINE_STEPS.slice(0, 4) : TIMELINE_STEPS;
+
+  var timelineHTML = stepsToShow.map(function (step, i) {
+    var stepIdx = TIMELINE_STEPS.findIndex(function (s) { return s.key === step.key; });
+    var dotCls;
+    if (isRejected && i === stepsToShow.length - 1) {
+      dotCls = 'cdp-timeline-dot--rejected';
+    } else if (stepIdx < curIdx) {
+      dotCls = 'cdp-timeline-dot--done';
+    } else if (stepIdx === curIdx) {
+      dotCls = 'cdp-timeline-dot--current';
+    } else {
+      dotCls = 'cdp-timeline-dot--pending';
+    }
+    var label = isRejected && i === stepsToShow.length - 1 ? 'Rejected' : step.label;
+    var isCur = stepIdx === curIdx;
+    return '<div class="cdp-timeline-item">' +
+      '<div class="cdp-timeline-dot ' + dotCls + '">' +
+        (dotCls === 'cdp-timeline-dot--done' ? '✓' : String(i + 1)) +
+      '</div>' +
+      '<div class="cdp-timeline-content">' +
+        '<div class="cdp-timeline-event">' + label + '</div>' +
+        (isCur ? '<div class="cdp-timeline-date">Current status</div>' : '') +
+      '</div>' +
+    '</div>';
   }).join('');
 
+  // If rejected, add rejected badge at end
+  if (isRejected) {
+    timelineHTML += '<div class="cdp-timeline-item">' +
+      '<div class="cdp-timeline-dot" style="background:#f43f5e;color:#fff;">✗</div>' +
+      '<div class="cdp-timeline-content">' +
+        '<div class="cdp-timeline-event" style="color:#be123c;">Claim Rejected</div>' +
+        '<div class="cdp-timeline-date">Final status</div>' +
+      '</div>' +
+    '</div>';
+  }
+
   document.getElementById('cdpBody').innerHTML =
-    '<div class="cdp-section"><div class="cdp-section-title">Claim Details</div>'
-    + '<div class="cdp-info-grid">'
-    + '<div class="cdp-info-item"><div class="cdp-info-label">Status</div>'
-    + '<div class="cdp-info-value"><span class="status-badge ' + sc.cls + '">' + sc.label + '</span></div></div>'
-    + '<div class="cdp-info-item"><div class="cdp-info-label">Date Filed</div>'
-    + '<div class="cdp-info-value">' + (claim.claim_date ? new Date(claim.claim_date).toLocaleDateString('en-GB') : '') + '</div></div>'
-    + '<div class="cdp-info-item"><div class="cdp-info-label">Contract</div>'
-    + '<div class="cdp-info-value">#' + claim.contract_id + '</div></div>'
-    + '<div class="cdp-info-item"><div class="cdp-info-label">Location</div>'
-    + '<div class="cdp-info-value">' + (claim.incident_location || 'Not specified') + '</div></div>'
-    + '</div></div>'
-    + '<div class="cdp-section"><div class="cdp-section-title">Description</div>'
-    + '<div class="cdp-description">' + (claim.description || 'No description.') + '</div></div>'
-    + (claim.rejection_reason
-      ? '<div class="cdp-section"><div class="cdp-section-title">Rejection Reason</div>'
-        + '<div class="cdp-description" style="border-color:#f43f5e;background:#fff1f2;color:#be123c;">'
-        + claim.rejection_reason + '</div></div>' : '')
-    + '<div class="cdp-section"><div class="cdp-section-title">Progress</div>'
-    + '<div class="cdp-timeline">' + timelineHTML + '</div></div>';
+    // Status + details
+    '<div class="cdp-section"><div class="cdp-section-title">Claim Details</div>' +
+    '<div class="cdp-info-grid">' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Status</div>' +
+        '<div class="cdp-info-value"><span class="status-badge ' + sc.cls + '">' + sc.label + '</span></div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Date Filed</div>' +
+        '<div class="cdp-info-value">' + (claim.claim_date ? new Date(claim.claim_date).toLocaleDateString('en-GB') : '—') + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Contract</div>' +
+        '<div class="cdp-info-value">#' + claim.contract_id + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Location</div>' +
+        '<div class="cdp-info-value">' + (claim.incident_location || 'Not specified') + '</div></div>' +
+    '</div></div>' +
+    // Description
+    '<div class="cdp-section"><div class="cdp-section-title">Description</div>' +
+      '<div class="cdp-description">' + (claim.description || 'No description provided.') + '</div></div>' +
+    // Rejection reason
+    (claim.rejection_reason ?
+      '<div class="cdp-section"><div class="cdp-section-title">Rejection Reason</div>' +
+      '<div class="cdp-description" style="border-color:#f43f5e;background:#fff1f2;color:#be123c;">' +
+      claim.rejection_reason + '</div></div>' : '') +
+    // Mini timeline
+    '<div class="cdp-section"><div class="cdp-section-title">Progress Timeline</div>' +
+      '<div class="cdp-timeline">' + timelineHTML + '</div></div>' +
+    // Action hint based on status
+    _buildClaimActionHint(claim);
 
   document.getElementById('claimPanelOverlay').classList.add('open');
   document.getElementById('claimDetailPanel').classList.add('open');
   document.body.style.overflow = 'hidden';
 };
+
+function _buildClaimActionHint(claim) {
+  var hints = {
+    pending:         { icon: '⏳', text: 'Your claim is in the queue. We\'ll notify you when our team starts the review.' },
+    under_review:    { icon: '🔍', text: 'Our team is reviewing your claim. An expert may be assigned shortly.' },
+    expert_assigned: { icon: '👤', text: 'An expert has been assigned and will contact you. Please be available.' },
+    reported:        { icon: '📋', text: 'The expert has submitted their report. A decision will follow shortly.' },
+    approved:        { icon: '✅', text: 'Your claim has been approved. Compensation details will be communicated soon.' },
+    closed:          { icon: '✅', text: 'This claim has been closed. Contact support if you have questions.' },
+    rejected:        { icon: '❌', text: 'This claim was rejected. Contact our support team if you believe this is an error.' },
+  };
+  var hint = hints[claim.status];
+  if (!hint) return '';
+
+  return '<div style="background:#f8f9fa;border-radius:10px;padding:12px 14px;margin-top:4px;' +
+    'display:flex;align-items:flex-start;gap:10px;">' +
+    '<span style="font-size:1rem;flex-shrink:0;">' + hint.icon + '</span>' +
+    '<div style="font-size:.78rem;color:#555;line-height:1.5;">' + hint.text + '</div>' +
+  '</div>';
+}
 
 window.closeClaimPanel = function () {
   document.getElementById('claimPanelOverlay').classList.remove('open');
@@ -362,24 +737,20 @@ window.closeClaimPanel = function () {
    NEW CLAIM MODAL
    ============================================================ */
 window.openNewClaimModalGeneric = async function () {
-  let result;
-
-  try {
-    result = await apiRequest('/api/contracts/my');
-    ALL_CONTRACTS = (result.ok && result.data.contracts) ? result.data.contracts : [];
-  } catch (e) {
-    ALL_CONTRACTS = [];
-  }
-
-  const active = ALL_CONTRACTS.filter(c => c.status === 'active');
+  // Use already-loaded contracts, fallback to API
+  var active = ALL_CONTRACTS.filter(function (c) { return c.status === 'active'; });
 
   if (!active.length) {
-    showToast('You have no active contracts. Please subscribe first.', 'error');
-    return;
+    // Try fetching
+    try {
+      var result = await apiRequest('/api/contracts/my');
+      ALL_CONTRACTS = (result.ok && result.data.contracts) ? result.data.contracts : [];
+      active = ALL_CONTRACTS.filter(function (c) { return c.status === 'active'; });
+    } catch (e) {}
   }
 
-  if (active.length === 1) {
-    openNewClaimModal(active[0].contract_id, active[0].policy_reference);
+  if (!active.length) {
+    showToast('You have no active contracts. Please subscribe to an insurance product first.', 'error');
     return;
   }
 
@@ -387,7 +758,7 @@ window.openNewClaimModalGeneric = async function () {
 };
 
 window.openNewClaimModal = function (contractId, policyRef, contractList) {
-  const modal = document.getElementById('newClaimModal');
+  var modal = document.getElementById('newClaimModal');
   if (!modal) return;
 
   document.getElementById('claimFormError').style.display = 'none';
@@ -396,39 +767,40 @@ window.openNewClaimModal = function (contractId, policyRef, contractList) {
   document.getElementById('ncClaimDate').value            = new Date().toISOString().slice(0, 10);
   document.getElementById('ncLocation').value             = '';
 
-  const select = document.getElementById('ncContractSelect');
-  const pool   = contractList || ALL_CONTRACTS.filter(c => c.status === 'active');
+  var select = document.getElementById('ncContractSelect');
+  var pool   = contractList || ALL_CONTRACTS.filter(function (c) { return c.status === 'active'; });
 
   select.innerHTML = !pool.length
     ? '<option value="">— No active contracts found —</option>'
-    : '<option value="">— Select a contract —</option>'
-      + pool.map(c =>
-          '<option value="' + c.contract_id + '">'
-          + (c.policy_reference || '#' + c.contract_id)
-          + ' — ' + (c.product_name || 'Insurance')
-          + ' (expires ' + (c.end_date ? new Date(c.end_date).toLocaleDateString('en-GB') : '') + ')'
-          + '</option>').join('');
+    : '<option value="">— Select a contract —</option>' +
+      pool.map(function (c) {
+        return '<option value="' + c.contract_id + '">' +
+          (c.policy_reference || '#' + c.contract_id) +
+          ' — ' + (c.product_name || 'Insurance') +
+          ' (expires ' + (c.end_date ? new Date(c.end_date).toLocaleDateString('en-GB') : '') + ')' +
+          '</option>';
+      }).join('');
 
   if (contractId) select.value = String(contractId);
 
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('ncDescription').focus(), 100);
+  setTimeout(function () { document.getElementById('ncDescription').focus(); }, 100);
 };
 
 window.closeNewClaimModal = function () {
-  const modal = document.getElementById('newClaimModal');
+  var modal = document.getElementById('newClaimModal');
   if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
 };
 
 window.submitNewClaim = async function () {
-  const contractId  = document.getElementById('ncContractSelect').value;
-  const description = document.getElementById('ncDescription').value.trim();
-  const claimDate   = document.getElementById('ncClaimDate').value;
-  const location    = document.getElementById('ncLocation').value.trim();
-  const errEl       = document.getElementById('claimFormError');
-  const submitBtn   = document.getElementById('ncSubmitBtn');
+  var contractId  = document.getElementById('ncContractSelect').value;
+  var description = document.getElementById('ncDescription').value.trim();
+  var claimDate   = document.getElementById('ncClaimDate').value;
+  var location    = document.getElementById('ncLocation').value.trim();
+  var errEl       = document.getElementById('claimFormError');
+  var submitBtn   = document.getElementById('ncSubmitBtn');
 
   function showErr(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
   if (!contractId)              { showErr('Please select a contract.'); return; }
@@ -436,15 +808,19 @@ window.submitNewClaim = async function () {
   if (!claimDate)               { showErr('Please enter the incident date.'); return; }
 
   errEl.style.display = 'none';
-
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Submitting…';
 
-  let result;
+  var result;
   try {
     result = await apiRequest('/api/claims', {
       method: 'POST',
-      body: { contract_id: parseInt(contractId, 10), description, claim_date: claimDate, incident_location: location || null }
+      body: {
+        contract_id:       parseInt(contractId, 10),
+        description:       description,
+        claim_date:        claimDate,
+        incident_location: location || null,
+      }
     });
   } catch (e) {
     showErr('Network error — please check your connection.');
@@ -462,6 +838,8 @@ window.submitNewClaim = async function () {
   showToast('Claim #' + result.data.claim_id + ' submitted successfully!');
   ALL_CLAIMS = [];
   loadClaims();
+  renderAlertBanners();
+  renderRecentActivity();
   submitBtn.disabled = false; submitBtn.textContent = 'Submit Claim';
 };
 
@@ -469,13 +847,13 @@ window.submitNewClaim = async function () {
    TOAST
    ============================================================ */
 function showToast(msg, type) {
-  let t = document.getElementById('caar-toast');
+  var t = document.getElementById('caar-toast');
   if (!t) {
     t = document.createElement('div');
     t.id = 'caar-toast';
-    t.style.cssText = 'position:fixed;bottom:28px;right:28px;z-index:9999;'
-      + 'padding:14px 22px;border-radius:10px;font-size:.84rem;font-weight:600;'
-      + 'box-shadow:0 8px 24px rgba(0,0,0,.18);transition:opacity .3s ease;max-width:340px;';
+    t.style.cssText = 'position:fixed;bottom:28px;right:28px;z-index:9999;' +
+      'padding:14px 22px;border-radius:10px;font-size:.84rem;font-weight:600;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,.18);transition:opacity .3s ease;max-width:340px;';
     document.body.appendChild(t);
   }
   t.style.background = (type === 'error') ? '#c53030' : '#1a1a1a';
@@ -483,7 +861,7 @@ function showToast(msg, type) {
   t.style.opacity    = '1';
   t.textContent      = msg;
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+  t._timer = setTimeout(function () { t.style.opacity = '0'; }, 3500);
 }
 
 /* ============================================================
@@ -491,60 +869,14 @@ function showToast(msg, type) {
    ============================================================ */
 var selectedProblemType = '';
 
-window.selectProblemChip = function (el, value) {
-  document.querySelectorAll('.rf-problem-chip').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedProblemType = value;
-};
-
-window.submitRoadsideRequest = function () {
-  const plate   = (document.getElementById('rfLicensePlate') || {}).value || '';
-  const wilaya  = (document.getElementById('rfWilaya') || {}).value || '';
-  const address = ((document.getElementById('rfAddress') || {}).value || '').trim();
-  const desc    = ((document.getElementById('rfDescription') || {}).value || '').trim();
-  const phone   = ((document.getElementById('rfPhone') || {}).value || '').trim();
-
-  if (!selectedProblemType) { showToast('Please select the type of problem.', 'error'); return; }
-  if (!plate)   { showToast('Please enter your license plate.', 'error'); return; }
-  if (!wilaya)  { showToast('Please select your wilaya.', 'error'); return; }
-  if (!address) { showToast('Please enter your location.', 'error'); return; }
-  if (!desc)    { showToast('Please describe the problem.', 'error'); return; }
-  if (!phone)   { showToast('Please enter your phone number.', 'error'); return; }
-
-  const btn = document.getElementById('btnRoadsideSubmit');
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-
-  setTimeout(() => {
-    if (btn) { btn.disabled = false; btn.textContent = 'Send Assistance Request'; }
-    const ref = 'RSA-REQ-' + Date.now().toString(36).toUpperCase();
-    const refEl = document.getElementById('rsRequestRef');
-    if (refEl) refEl.textContent = ref;
-    const body = document.getElementById('roadsideFormBody');
-    if (body) body.style.display = 'none';
-    const success = document.getElementById('roadsideSuccess');
-    if (success) { success.style.display = 'block'; success.classList.add('show'); }
-  }, 1400);
-};
-
-window.resetRoadsideForm = function () {
-  ['rfLicensePlate', 'rfBrand', 'rfAddress', 'rfDescription', 'rfPhone', 'rfCity']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  selectedProblemType = '';
-  document.querySelectorAll('.rf-problem-chip').forEach(c => c.classList.remove('selected'));
-  const body = document.getElementById('roadsideFormBody');
-  if (body) body.style.display = '';
-  const success = document.getElementById('roadsideSuccess');
-  if (success) { success.style.display = 'none'; success.classList.remove('show'); }
-};
-
 window.submitRoadsideRequest = async function () {
-  const plate   = (document.getElementById('rfLicensePlate') || {}).value || '';
-  const brand   = ((document.getElementById('rfBrand') || {}).value || '').trim();
-  const wilaya  = (document.getElementById('rfWilaya') || {}).value || '';
-  const city    = ((document.getElementById('rfCity') || {}).value || '').trim();
-  const address = ((document.getElementById('rfAddress') || {}).value || '').trim();
-  const desc    = ((document.getElementById('rfDescription') || {}).value || '').trim();
-  const phone   = ((document.getElementById('rfPhone') || {}).value || '').trim();
+  var plate   = (document.getElementById('rfLicensePlate') || {}).value || '';
+  var brand   = ((document.getElementById('rfBrand') || {}).value || '').trim();
+  var wilaya  = (document.getElementById('rfWilaya') || {}).value || '';
+  var city    = ((document.getElementById('rfCity') || {}).value || '').trim();
+  var address = ((document.getElementById('rfAddress') || {}).value || '').trim();
+  var desc    = ((document.getElementById('rfDescription') || {}).value || '').trim();
+  var phone   = ((document.getElementById('rfPhone') || {}).value || '').trim();
 
   if (!selectedProblemType) { showToast('Please select the type of problem.', 'error'); return; }
   if (!plate)   { showToast('Please enter your license plate.', 'error'); return; }
@@ -553,43 +885,32 @@ window.submitRoadsideRequest = async function () {
   if (!desc)    { showToast('Please describe the problem.', 'error'); return; }
   if (!phone)   { showToast('Please enter your phone number.', 'error'); return; }
 
-  const btn = document.getElementById('btnRoadsideSubmit');
+  var btn = document.getElementById('btnRoadsideSubmit');
   if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
 
   try {
-    if (!ALL_CONTRACTS.length) {
-      const contractsResult = await apiRequest('/api/contracts/my');
-      ALL_CONTRACTS = (contractsResult.ok && contractsResult.data.contracts) ? contractsResult.data.contracts : [];
-    }
-
-    const roadsideContracts = ALL_CONTRACTS.filter(function (co) {
-      return co.status === 'active'
-        && /roadside assistance/i.test(co.product_name || '');
+    var activeRoadside = ALL_CONTRACTS.filter(function (co) {
+      return co.status === 'active' && /roadside assistance/i.test(co.product_name || '');
     });
 
-    if (!roadsideContracts.length) {
-      showToast('You need an active Roadside Assistance contract before sending a request.', 'error');
+    if (!activeRoadside.length) {
+      showToast('You need an active Roadside Assistance contract before submitting a request.', 'error');
       return;
     }
 
-    if (roadsideContracts.length > 1) {
-      showToast('Multiple active roadside contracts found. Please keep one active roadside contract before sending this request.', 'error');
-      return;
-    }
-
-    const contract = roadsideContracts[0];
-    const result = await apiRequest('/api/roadside/requests', {
+    var contract = activeRoadside[0];
+    var result = await apiRequest('/api/roadside/requests', {
       method: 'POST',
       body: {
-        contract_id: contract.contract_id,
-        problem_type: selectedProblemType,
-        description: desc,
-        phone: phone,
-        address: address,
-        wilaya: wilaya,
-        city: city || null,
-        license_plate: plate,
-        vehicle_label: brand || null
+        contract_id:      contract.contract_id,
+        problem_type:     selectedProblemType,
+        description:      desc,
+        phone:            phone,
+        address:          address,
+        wilaya:           wilaya,
+        city:             city || null,
+        license_plate:    plate,
+        vehicle_label:    brand || null,
       }
     });
 
@@ -598,13 +919,19 @@ window.submitRoadsideRequest = async function () {
       return;
     }
 
-    const refEl = document.getElementById('rsRequestRef');
+    var refEl = document.getElementById('rsRequestRef');
     if (refEl) refEl.textContent = result.data.request_reference || ('REQ #' + result.data.request_id);
-    const body = document.getElementById('roadsideFormBody');
+    var body = document.getElementById('roadsideFormBody');
     if (body) body.style.display = 'none';
-    const success = document.getElementById('roadsideSuccess');
+    var success = document.getElementById('roadsideSuccess');
     if (success) { success.style.display = 'block'; success.classList.add('show'); }
+
+    // Add to local list and refresh alerts
+    ALL_ROADSIDE.unshift({ request_id: result.data.request_id, request_reference: result.data.request_reference, status: 'pending', created_at: new Date().toISOString() });
+    renderAlertBanners();
+    renderRecentActivity();
     showToast('Roadside request submitted successfully.');
+
   } catch (_) {
     showToast('Network error while sending the roadside request.', 'error');
   } finally {
@@ -612,20 +939,31 @@ window.submitRoadsideRequest = async function () {
   }
 };
 
+window.resetRoadsideForm = function () {
+  ['rfLicensePlate', 'rfBrand', 'rfAddress', 'rfDescription', 'rfPhone', 'rfCity']
+    .forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  selectedProblemType = '';
+  document.querySelectorAll('.rf-problem-chip').forEach(function (c) { c.classList.remove('selected'); });
+  var body = document.getElementById('roadsideFormBody');
+  if (body) body.style.display = '';
+  var success = document.getElementById('roadsideSuccess');
+  if (success) { success.style.display = 'none'; success.classList.remove('show'); }
+};
+
 /* ============================================================
    PROFILE
    ============================================================ */
 window.saveProfile = function () {
-  const first = (document.getElementById('pf-first') || {}).value || '';
-  const last  = (document.getElementById('pf-last')  || {}).value || '';
+  var first = (document.getElementById('pf-first') || {}).value || '';
+  var last  = (document.getElementById('pf-last')  || {}).value || '';
   if (!first || !last) { showToast('Name fields cannot be empty.', 'error'); return; }
-  const ok = document.getElementById('pfb-success');
-  if (ok) { ok.style.display = 'flex'; setTimeout(() => { ok.style.display = 'none'; }, 3000); }
+  var ok = document.getElementById('pfb-success');
+  if (ok) { ok.style.display = 'flex'; setTimeout(function () { ok.style.display = 'none'; }, 3000); }
   showToast('Profile saved.');
 };
 
 window.cancelProfile = function () {
-  const user = _authUser || {};
+  var user = _authUser || {};
   safeSetValue('pf-first', user.first_name || '');
   safeSetValue('pf-last',  user.last_name  || '');
   safeSetValue('pf-email', user.email      || '');
@@ -633,23 +971,23 @@ window.cancelProfile = function () {
 };
 
 window.changePassword = function () {
-  const pw1  = (document.getElementById('pf-pw-new')     || {}).value || '';
-  const pw2  = (document.getElementById('pf-pw-confirm') || {}).value || '';
-  const errEl = document.getElementById('pfb-pw-error');
-  const okEl  = document.getElementById('pfb-pw-success');
+  var pw1   = (document.getElementById('pf-pw-new')     || {}).value || '';
+  var pw2   = (document.getElementById('pf-pw-confirm') || {}).value || '';
+  var errEl = document.getElementById('pfb-pw-error');
+  var okEl  = document.getElementById('pfb-pw-success');
   if (pw1 !== pw2) {
     if (errEl) errEl.style.display = 'flex';
-    setTimeout(() => { if (errEl) errEl.style.display = 'none'; }, 3000);
+    setTimeout(function () { if (errEl) errEl.style.display = 'none'; }, 3000);
     return;
   }
-  if (okEl) { okEl.style.display = 'flex'; setTimeout(() => { okEl.style.display = 'none'; }, 3000); }
+  if (okEl) { okEl.style.display = 'flex'; setTimeout(function () { okEl.style.display = 'none'; }, 3000); }
   showToast('Password updated.');
 };
 
 /* ============================================================
    KEYBOARD
    ============================================================ */
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     if (typeof window.closeClaimPanel    === 'function') window.closeClaimPanel();
     if (typeof window.closeNewClaimModal === 'function') window.closeNewClaimModal();
