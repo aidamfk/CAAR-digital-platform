@@ -2,25 +2,45 @@ const pool = require('../db');
 
 /**
  * Insert a new contact message.
- * Returns the insertId of the new record.
+ * sender_user_id and sender_role are optional — only set when a logged-in
+ * user submits the form.
  */
-async function createMessage({ name, email, subject, message }) {
+async function createMessage({ name, email, subject, message, sender_user_id, sender_role }) {
   const [result] = await pool.execute(
-    `INSERT INTO contact_messages (full_name, email, subject, message, status)
-     VALUES (?, ?, ?, ?, 'new')`,
-    [name, email, subject, message]
+    `INSERT INTO contact_messages
+       (full_name, email, subject, message, status, sender_user_id, sender_role)
+     VALUES (?, ?, ?, ?, 'new', ?, ?)`,
+    [name, email, subject, message,
+     sender_user_id || null,
+     sender_role    || null]
   );
   return result.insertId;
 }
 
 /**
- * Fetch all contact messages, newest first.
+ * Fetch all contact messages, newest first. (Admin)
  */
 async function getAllMessages() {
   const [rows] = await pool.execute(
-    `SELECT id, full_name AS name, email, subject, message, status, created_at
+    `SELECT id, full_name AS name, email, subject, message,
+            status, sender_user_id, sender_role, created_at
      FROM contact_messages
      ORDER BY created_at DESC`
+  );
+  return rows;
+}
+
+/**
+ * Fetch messages sent by a specific user. (Client — "my messages")
+ */
+async function getMessagesByUserId(userId) {
+  const [rows] = await pool.execute(
+    `SELECT id, full_name AS name, email, subject, message,
+            status, created_at
+     FROM contact_messages
+     WHERE sender_user_id = ?
+     ORDER BY created_at DESC`,
+    [userId]
   );
   return rows;
 }
@@ -30,7 +50,8 @@ async function getAllMessages() {
  */
 async function getMessageById(id) {
   const [rows] = await pool.execute(
-    `SELECT id, full_name AS name, email, subject, message, status, created_at
+    `SELECT id, full_name AS name, email, subject, message,
+            status, sender_user_id, sender_role, created_at
      FROM contact_messages
      WHERE id = ?`,
     [id]
@@ -51,6 +72,7 @@ async function updateMessageStatus(id, status) {
 module.exports = {
   createMessage,
   getAllMessages,
+  getMessagesByUserId,
   getMessageById,
   updateMessageStatus,
 };

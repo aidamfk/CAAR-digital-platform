@@ -2,12 +2,13 @@
  * services/claimsService.js
  *
  * Business logic only. All SQL goes through claimsModel.
- * No pool references here.
+ * Notifications are dispatched via notificationService.
  */
 
-const pool        = require('../db');   // only for getConnection() — transactions
-const claimsModel = require('../models/claimsModel');
-const agencyModel = require('../models/agencyModel');
+const pool               = require('../db');
+const claimsModel        = require('../models/claimsModel');
+const agencyModel        = require('../models/agencyModel');
+const notificationService = require('/notificationService');
 
 // ─── Status machine ──────────────────────────────────────────────────────────
 const VALID_TRANSITIONS = {
@@ -55,11 +56,7 @@ async function createClaim(
   }
 
   // Ownership check — also validates contract is active
-  // Returns { id: contractId, client_id } or null
-  const contract = await claimsModel.getActiveContractByIdAndUserId(
-    contractIdNum,
-    authUserId
-  );
+  const contract = await claimsModel.getActiveContractByIdAndUserId(contractIdNum, authUserId);
   if (!contract) {
     const err = new Error(
       'Contract not found, does not belong to your account, or is not active'
@@ -67,7 +64,7 @@ async function createClaim(
     err.status = 403; throw err;
   }
 
-  // Auto-assign nearest Claims-capable agency from incident coordinates
+  // Auto-assign nearest Claims-capable agency
   let nearestAgencyId = null;
   const lat = parseFloat(incident_lat);
   const lng = parseFloat(incident_lng);
@@ -75,20 +72,38 @@ async function createClaim(
     try {
       const nearest = await agencyModel.getNearestAgency(lat, lng, 'Claims');
       if (nearest) nearestAgencyId = nearest.id;
-    } catch {
-      // non-fatal — claim still created without agency
-    }
+    } catch { /* non-fatal */ }
   }
 
   const claimId = await claimsModel.createClaim({
     contract_id:        contractIdNum,
-    client_id:          contract.client_id,   // FIX: resolved from contract row
+    client_id:          contract.client_id,
     agency_id:          nearestAgencyId,
     description:        description.trim(),
     claim_date,
     incident_location:  incident_location  || null,
     incident_wilaya_id: incident_wilaya_id ? parseInt(incident_wilaya_id, 10) : null,
   });
+
+  // ── NOTIFICATION: notify all admins about new claim ──────────────────────
+  try {
+    // Resolve the user's display name
+    const [userRows] = await pool.execute(
+      `SELECT CONCAT(u.first_name, ' ', u.last_name) AS full_name
+       FROM users u WHERE u.id = ?`,
+      [authUserId]
+    );
+    const clientName = userRows[0] ? userRows[0].full_name : `User #${authUserId}`;
+
+    await notificationService.claimCreated(pool, {
+      claim_id:    claimId,
+      client_name: clientName,
+      contract_id: contractIdNum,
+    });
+  } catch (notifErr) {
+    // Non-fatal — claim is already saved, notification failure must not abort
+    console.error('[Claims] claimCreated notification failed:', notifErr.message);
+  }
 
   return {
     claim_id:    claimId,
@@ -113,9 +128,7 @@ async function listAllClaims() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function listMyClaims(authUserId) {
-  // Resolve client_id from user_id
-  const pool_ = require('../db');
-  const [rows] = await pool_.execute(
+  const [rows] = await pool.execute(
     'SELECT id FROM clients WHERE user_id = ?',
     [authUserId]
   );
@@ -150,6 +163,18 @@ async function updateClaimStatus(claimId, status) {
   }
 
   await claimsModel.updateClaimStatus(claimId, status);
+
+  // ── NOTIFICATION: notify the client about status change ─────────────────
+  try {
+    await notificationService.claimStatusUpdated(pool, {
+      claim_id:        claimId,
+      new_status:      status,
+      client_user_id:  claim.user_id,   // claim row carries user_id via JOIN
+    });
+  } catch (notifErr) {
+    console.error('[Claims] claimStatusUpdated notification failed:', notifErr.message);
+  }
+
   return { claim_id: claimId, status };
 }
 
@@ -171,13 +196,26 @@ async function assignExpert(claimId, expertId) {
     err.status = 409; throw err;
   }
 
+  // Resolve expert's user_id for the notification
+  const [expertRows] = await pool.execute(
+    'SELECT user_id FROM experts WHERE id = ?',
+    [expertId]
+  );
+
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
-    // FIX: use model method — no raw SQL in service
     await claimsModel.assignExpertTx(conn, claimId, expertId);
     await claimsModel.setExpertAvailabilityTx(conn, expertId, false);
+
+    // ── NOTIFICATION: notify the expert ───────────────────────────────────
+    if (expertRows.length) {
+      await notificationService.expertAssigned(conn, {
+        claim_id:        claimId,
+        expert_user_id:  expertRows[0].user_id,
+      });
+    }
 
     await conn.commit();
     return { claim_id: claimId, expert_id: expertId, status: 'expert_assigned' };
@@ -197,10 +235,10 @@ async function createExpertReport(
   authUserId
 ) {
   const missing = [];
-  if (!claim_id)               missing.push('claim_id');
-  if (!report)                 missing.push('report');
+  if (!claim_id)                missing.push('claim_id');
+  if (!report)                  missing.push('report');
   if (estimated_damage == null) missing.push('estimated_damage');
-  if (!report_date)            missing.push('report_date');
+  if (!report_date)             missing.push('report_date');
   if (missing.length) {
     const err = new Error(`Missing required fields: ${missing.join(', ')}`);
     err.status = 400; throw err;
@@ -210,26 +248,21 @@ async function createExpertReport(
   const damageNum  = parseFloat(estimated_damage);
 
   if (isNaN(claimIdNum) || claimIdNum < 1) {
-    const err = new Error('claim_id must be a positive integer');
-    err.status = 400; throw err;
+    const err = new Error('claim_id must be a positive integer'); err.status = 400; throw err;
   }
   if (isNaN(damageNum) || damageNum < 0) {
-    const err = new Error('estimated_damage must be a non-negative number');
-    err.status = 400; throw err;
+    const err = new Error('estimated_damage must be a non-negative number'); err.status = 400; throw err;
   }
   if (report.trim().length < 10) {
-    const err = new Error('report must be at least 10 characters');
-    err.status = 400; throw err;
+    const err = new Error('report must be at least 10 characters'); err.status = 400; throw err;
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(report_date)) {
-    const err = new Error('report_date must be YYYY-MM-DD');
-    err.status = 400; throw err;
+    const err = new Error('report_date must be YYYY-MM-DD'); err.status = 400; throw err;
   }
 
   const expert = await claimsModel.getExpertByUserId(authUserId);
   if (!expert) {
-    const err = new Error('No expert profile for your account');
-    err.status = 403; throw err;
+    const err = new Error('No expert profile for your account'); err.status = 403; throw err;
   }
 
   const claim = await claimsModel.getClaimById(claimIdNum);
@@ -237,12 +270,10 @@ async function createExpertReport(
     const err = new Error('Claim not found'); err.status = 404; throw err;
   }
   if (claim.expert_id !== expert.id) {
-    const err = new Error('You are not assigned to this claim');
-    err.status = 403; throw err;
+    const err = new Error('You are not assigned to this claim'); err.status = 403; throw err;
   }
   if (['closed', 'rejected'].includes(claim.status)) {
-    const err = new Error(`Cannot report on a ${claim.status} claim`);
-    err.status = 409; throw err;
+    const err = new Error(`Cannot report on a ${claim.status} claim`); err.status = 409; throw err;
   }
 
   const existing = await claimsModel.getReportByClaimId(claimIdNum);
@@ -265,8 +296,6 @@ async function createExpertReport(
     });
 
     await claimsModel.updateClaimStatusTx(conn, claimIdNum, 'reported');
-
-    // FIX: use model method — no raw pool call here
     await claimsModel.setExpertAvailabilityTx(conn, expert.id, true);
 
     await conn.commit();
