@@ -8,7 +8,7 @@
 const pool               = require('../db');
 const claimsModel        = require('../models/claimsModel');
 const agencyModel        = require('../models/agencyModel');
-const notificationService = require('/notificationService');
+const notificationService = require('./notificationService');
 const { assertClaimStatusTransition } = require('../utils/claimLifecycle');
 
 // ─── Status machine ──────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const pool   = require('../db');
 const m      = require('../models/roadsideModel');
-const notificationService = require('/notificationService');
+const notificationService = require('./notificationService');
 const { createContractPDF } = require('../utils/pdfGenerator');
 const { sendContractEmail } = require('../utils/mailer');
 const {
