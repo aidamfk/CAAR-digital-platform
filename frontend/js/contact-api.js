@@ -49,13 +49,16 @@ async function submitContactAPI() {
   btnLoading(btn, 'Sending…');
   hideMsg('contactApiMsg');
 
-  var result = await apiRequest('/api/messages', 'POST', {
+var result = await apiRequest('/api/messages', {
+  method: 'POST',
+  body: {
     name: name,
     email: email,
     phone: phone || null,
     subject: subject,
     message: message
-  });
+  }
+});
 
   btnReset(btn);
 

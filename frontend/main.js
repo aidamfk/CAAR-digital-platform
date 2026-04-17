@@ -435,63 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
     el.className = 'cf-char-count' + (count > max * 0.9 ? ' warn' : '') + (count >= max ? ' over' : '');
   };
 
-  form.addEventListener('submit', function (e) { e.preventDefault(); submitContactForm(); });
-
-  async function submitContactForm() {
-    var subject = (document.getElementById('cfSubject') || {}).value || '';
-    var name    = ((document.getElementById('cfName')    || {}).value || '').trim();
-    var email   = ((document.getElementById('cfEmail')   || {}).value || '').trim();
-    var phone   = ((document.getElementById('cfPhone')   || {}).value || '').trim();
-    var message = ((document.getElementById('cfMessage') || {}).value || '').trim();
-    var consent = (document.getElementById('cfConsent') || {}).checked;
-    var robot   = (document.getElementById('cfRobot')   || {}).checked;
-
-    var hasError = false;
-    if (!RULES.subject(subject)) { showErr('cfSubject', 'err-subject'); hasError = true; } else clearErr('cfSubject', 'err-subject');
-    if (!RULES.name(name))       { showErr('cfName',    'err-name');    hasError = true; } else clearErr('cfName',    'err-name');
-    if (!RULES.email(email))     { showErr('cfEmail',   'err-email');   hasError = true; } else clearErr('cfEmail',   'err-email');
-    if (phone && !RULES.phone(phone)) { showErr('cfPhone', 'err-phone'); hasError = true; } else clearErr('cfPhone', 'err-phone');
-    if (!RULES.message(message)) { showErr('cfMessage', 'err-message'); hasError = true; } else clearErr('cfMessage', 'err-message');
-
-    var ec = document.getElementById('err-consent');
-    if (!consent) { if (ec) ec.classList.add('visible'); hasError = true; }
-    else           { if (ec) ec.classList.remove('visible'); }
-
-    var rw = document.getElementById('cfRobotWrap');
-    var er = document.getElementById('err-robot');
-    if (!robot) { if (rw) rw.classList.add('robot-error'); if (er) er.classList.add('visible'); hasError = true; }
-    else        { if (rw) rw.classList.remove('robot-error'); if (er) er.classList.remove('visible'); }
-
-    if (hasError) {
-      var first = document.querySelector('.field-error, .cf-field-error.visible');
-      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    var btn = document.getElementById('sendBtn');
-    if (!btn) return;
-    btn.textContent = 'Sending…'; btn.disabled = true; btn.classList.add('loading');
-
-    try {
-      var res  = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message }),
-      });
-      var data = await res.json().catch(function () { return {}; });
-      if (!res.ok) { alert(data.error || 'Something went wrong.'); return; }
-      var ff = document.getElementById('formFields');
-      var ss = document.getElementById('successState');
-      if (ff) ff.style.display = 'none';
-      if (ss) ss.classList.add('show');
-    } catch (err) {
-      alert('Server error. Please try again later.');
-    } finally {
-      btn.disabled = false; btn.classList.remove('loading'); btn.textContent = 'Send my request';
-    }
-  }
-
-  window.resetForm = function () {
+  window.resetContactForm = function () {
     form.reset();
     form.querySelectorAll('.cf-input,.cf-select,.cf-textarea').forEach(function (el) {
       el.classList.remove('field-error', 'field-ok');
