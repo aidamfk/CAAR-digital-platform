@@ -6,10 +6,16 @@
   <title>CAAR — Compagnie Algérienne d'Assurances et de Réassurance</title>
   <link rel="stylesheet" href="main.css"/>
   <link rel="stylesheet" href="header-extras.css"/>
-  <link rel="stylesheet" href="main_fixes.css"/>
+  <!--
+    DO NOT add a static <header> element.
+    The header is injected from components/header.html by main.js.
+    CSS for the header lives in header.css (imported by main.css)
+    and header-extras.css.
+  -->
 </head>
 <body>
 
+<!-- ═══ HEADER PLACEHOLDER — injected by main.js ═══ -->
 <div id="site-header"></div>
 
 <!-- ═══ HERO ═══ -->
@@ -63,7 +69,6 @@
       <img src="img/industry.webp" alt="Technical Risks"/>
       <span class="product-card__label">Technical Risks</span>
     </a>
-    <!-- FIX: "Our Other Solutions" card — hover now keeps text visible -->
     <a href="products.html" class="product-card other-card">
       Our Other<br/>Solutions
       <div class="arrow-circle">→</div>
@@ -72,7 +77,6 @@
 </section>
 
 <!-- ═══ WHY CHOOSE CAAR ═══ -->
-<!-- FIX: Removed orange artifact (::before disabled via main_fixes.css) -->
 <section class="why">
   <div class="why-header">
     <div class="why-header__label">Our commitment</div>
@@ -129,7 +133,6 @@
 </section>
 
 <!-- ═══ NETWORK + NEWS ═══ -->
-<!-- FIX: Alignment improved, "Read more" links to news.html -->
 <section class="network-news">
   <div class="network-outer">
     <div class="network-main">
@@ -150,21 +153,20 @@
           <a href="news.html" class="news-all">View All News →</a>
         </div>
         <div class="news-grid">
-          <!-- FIX: "Read more" now links to news.html (not home page) -->
           <div class="news-card">
             <span class="news-date">September 25, 2025</span>
             <h4>Agency 228 – Larbâa Nath Irathen</h4>
-            <a href="news.html">Read more</a>
+            <a href="#">Read more</a>
           </div>
           <div class="news-card">
             <span class="news-date">October 4, 2025</span>
             <h4>Information Day – Béjaïa</h4>
-            <a href="news.html">Read more</a>
+            <a href="#">Read more</a>
           </div>
           <div class="news-card">
             <span class="news-date">September 24, 2025</span>
             <h4>Agency 602 – Didouche Mourad</h4>
-            <a href="news.html">Read more</a>
+            <a href="#">Read more</a>
           </div>
         </div>
       </div>
@@ -176,7 +178,6 @@
 </section>
 
 <!-- ═══ CTA ═══ -->
-<!-- FIX: Subtle animation + enhanced hover on button -->
 <section class="cta">
   <div class="cta-inner">
     <h2>Need more information? Contact CAAR.</h2>
@@ -185,12 +186,156 @@
   </div>
 </section>
 
+<!-- ═══ FOOTER PLACEHOLDER — injected by main.js ═══ -->
 <div id="site-footer"></div>
 
+<!--
+  ══════════════════════════════════════════════
+  MANDATORY SCRIPT LOAD ORDER — DO NOT CHANGE
+  ══════════════════════════════════════════════
+  1. app-state.js      → JWT auth primitives, apiRequest, loadContracts
+  2. auth.js           → backward-compat shims (getRole, isLoggedIn, etc.)
+  3. header-controller.js → all header behaviour (events, render, init)
+  4. main.js           → boot: injects header/footer, calls Header.init()
+                          + page utilities (product panels, forms, etc.)
+
+  NEVER add a 5th "legacy" header script.
+  NEVER call initHeader(), renderUserState(), or initUserMenu() — they are GONE.
+-->
 <script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
 <script src="main.js"></script>
 
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Smooth scroll ── */
+  document.documentElement.style.scrollBehavior = 'smooth';
+
+  var ANIMATIONS = [
+    { sel: '.caar-hero__text',
+      style: 'opacity:0;transform:translateX(-40px)',
+      anim:  'opacity:1;transform:translateX(0);transition:opacity .7s ease,transform .7s ease' },
+    { sel: '.caar-hero__image',
+      style: 'opacity:0;transform:translateX(40px)',
+      anim:  'opacity:1;transform:translateX(0);transition:opacity .7s ease .15s,transform .7s ease .15s' },
+    { sel: '.caar-hero__tag',
+      style: 'opacity:0;transform:translateY(-12px)',
+      anim:  'opacity:1;transform:translateY(0);transition:opacity .5s ease,transform .5s ease' },
+    { sel: '.products-header',
+      style: 'opacity:0;transform:translateY(30px)',
+      anim:  'opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease' },
+    { sel: '.why-header',
+      style: 'opacity:0;transform:translateY(30px)',
+      anim:  'opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease' },
+    { sel: '.network-left',
+      style: 'opacity:0;transform:translateX(-36px)',
+      anim:  'opacity:1;transform:translateX(0);transition:opacity .7s ease,transform .7s ease' },
+    { sel: '.network-illustration',
+      style: 'opacity:0;transform:translateX(36px)',
+      anim:  'opacity:1;transform:translateX(0);transition:opacity .7s ease .1s,transform .7s ease .1s' },
+    { sel: '.cta-inner',
+      style: 'opacity:0;transform:translateY(24px)',
+      anim:  'opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease' },
+  ];
+
+  var STAGGER_GROUPS = [
+    { parent: '.products-grid', child: '.product-card',        delay: 0.10 },
+    { parent: '.why-grid',      child: '.why-card',            delay: 0.12 },
+    { parent: '.news-grid',     child: '.news-card',           delay: 0.10 },
+    { parent: '.why-circles',   child: '.circle',              delay: 0.10 },
+  ];
+
+  function camelize(str) {
+    return str.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); });
+  }
+
+  function applyStyle(el, styleStr) {
+    styleStr.split(';').forEach(function (rule) {
+      var idx  = rule.indexOf(':');
+      if (idx < 0) return;
+      var prop = rule.slice(0, idx).trim();
+      var val  = rule.slice(idx + 1).trim();
+      if (prop) el.style[camelize(prop)] = val;
+    });
+  }
+
+  function initAnimations() {
+    /* Évite double-init si appelé plusieurs fois */
+    if (window.__caarAnimDone) return;
+    window.__caarAnimDone = true;
+
+    var observed = [];
+    var reduced  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Éléments simples */
+    ANIMATIONS.forEach(function (cfg) {
+      document.querySelectorAll(cfg.sel).forEach(function (el) {
+        if (reduced) return;
+        applyStyle(el, cfg.style);
+        observed.push({ el: el, anim: cfg.anim, done: false });
+      });
+    });
+
+    /* Groupes stagger */
+    STAGGER_GROUPS.forEach(function (grp) {
+      document.querySelectorAll(grp.parent).forEach(function (parent) {
+        Array.prototype.forEach.call(
+          parent.querySelectorAll(grp.child),
+          function (child, idx) {
+            if (reduced) return;
+            child.style.opacity   = '0';
+            child.style.transform = 'translateY(28px)';
+            var d = (idx * grp.delay).toFixed(2);
+            observed.push({
+              el:   child,
+              done: false,
+              anim: 'opacity:1;transform:translateY(0);' +
+                    'transition:opacity .55s ease ' + d + 's,' +
+                    'transform .55s ease ' + d + 's',
+            });
+          }
+        );
+      });
+    });
+
+    if (reduced || !observed.length) return;
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        for (var i = 0; i < observed.length; i++) {
+          if (observed[i].el === entry.target && !observed[i].done) {
+            observed[i].done = true;
+            applyStyle(observed[i].el, observed[i].anim);
+            io.unobserve(entry.target);
+            break;
+          }
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    observed.forEach(function (o) { io.observe(o.el); });
+  }
+
+  /* ── Lancement : attendre DOMContentLoaded + délai pour main.js ── */
+  function tryInit() {
+    /* main.js injecte header/footer via fetch — on attend qu'il soit prêt */
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(initAnimations, 120);
+      });
+    } else {
+      setTimeout(initAnimations, 120);
+    }
+  }
+
+  tryInit();
+
+})();
+</script>
 </body>
 </html>

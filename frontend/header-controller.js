@@ -249,6 +249,22 @@ const Header = (() => {
     if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobile);
     if (mobileNav)     mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobile));
 
+    /* 5b. Auto-close mobile nav on resize to desktop */
+var _mobileBreakpoint = 768;
+var _resizeTimer = null;
+
+window.addEventListener('resize', function () {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(function () {
+    if (window.innerWidth > _mobileBreakpoint) {
+      var nav = document.getElementById('mobileNav');
+      if (nav && nav.classList.contains('open')) {
+        closeMobile();
+      }
+    }
+  }, 100);
+});
+
     /* 6. Touch-friendly dropdowns */
     document.querySelectorAll('.dropdown').forEach(dd => {
       dd.addEventListener('touchstart', e => {
@@ -266,6 +282,12 @@ const Header = (() => {
 
     /* 7. Escape */
     document.addEventListener('keydown', e => { if (e.key === 'Escape') resetState(); });
+    /* 7b. Mobile login link — hide when authenticated */
+var mobileLoginLink = document.getElementById('mobileLoginLink');
+if (mobileLoginLink) {
+  var _token = localStorage.getItem('token');
+  if (_token) mobileLoginLink.style.display = 'none';
+}
 
     /* 8. Active nav */
     _setActiveNav();
