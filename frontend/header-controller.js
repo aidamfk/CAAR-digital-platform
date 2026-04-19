@@ -181,6 +181,48 @@ const Header = (() => {
       });
     }
 
+    /* 2b. Dashboard role redirect */
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    if (dashboardBtn) {
+      dashboardBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
+
+        if (!token) {
+          window.location.href = "/frontend/login.html";
+          return;
+        }
+
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const role = payload.role;
+
+          console.log("Decoded payload:", payload);
+          console.log("User role:", role);
+
+          if (role === "admin") {
+            window.location.href = "/frontend/admin-dashboard.html";
+          }
+          else if (role === "expert") {
+            window.location.href = "/frontend/expert-dashboard.html";
+          }
+          else if (role === "client") {
+            window.location.href = "/frontend/client-dashboard.html";
+          }
+          else {
+            console.warn("Unknown role");
+            window.location.href = "/frontend/login.html";
+          }
+
+        } catch (err) {
+          console.error("Invalid token", err);
+          window.location.href = "/frontend/login.html";
+        }
+      });
+    }
+
     /* 3. Search bar */
     const searchBtn   = document.getElementById('searchBtn');
     const searchBar   = document.getElementById('searchBar');
