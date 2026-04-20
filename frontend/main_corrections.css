@@ -1,0 +1,334 @@
+/* ==========================================================================
+   MAIN_CORRECTIONS.CSS
+   À inclure dans TOUTES les pages après main.css :
+   <link rel="stylesheet" href="main_corrections.css"/>
+
+   Contient :
+   - FIX 1 : Icône recherche visible sur desktop
+   - FIX 2 : Section network-news redesignée
+   - FIX 3 : Suppression cercle décoratif section CTA
+   ========================================================================== */
+
+
+/* ==========================================================================
+   FIX 1 — ICÔNE RECHERCHE DESKTOP
+   L'icône recherche doit être visible sur desktop ET mobile.
+   Seul le hamburger reste caché sur desktop.
+   ========================================================================== */
+
+.mobile-menu-btn {
+  display: none !important;
+}
+
+.icon-btn#searchBtn {
+  display: inline-flex !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  .icon-btn#searchBtn {
+    display: flex !important;
+  }
+}
+
+
+/* ==========================================================================
+   FIX 2 — SECTION "A network that stays close to you"
+   Redesign complet : alignement parfait, dense, professionnel
+   ========================================================================== */
+
+.network-news {
+  padding: 0;
+  border-top: 2px solid #000;
+  background: #fff;
+  overflow: hidden;
+}
+
+.network-outer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.network-main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  align-items: stretch;
+  min-height: 480px;
+}
+
+.network-left {
+  display: flex;
+  flex-direction: column;
+  padding: 52px 52px 52px 7%;
+  gap: 0;
+  border-right: 1px solid #e8e0d8;
+}
+
+.network-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.network-pin {
+  width: 40px;
+  height: 48px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.network-title-group h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1C1C1C;
+  margin: 0;
+}
+
+.network-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 36px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #e8e0d8;
+}
+
+.network-desc {
+  font-size: 0.88rem;
+  color: #555;
+  line-height: 1.6;
+  flex: 1;
+  margin: 0;
+  font-weight: 400;
+}
+
+.network-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border: 2px solid #E8761E;
+  background: #E8761E;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.network-btn:hover {
+  background: #c9601a;
+  border-color: #c9601a;
+  transform: translateY(-1px);
+}
+
+.news-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.news-header h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1C1C1C;
+  margin: 0;
+}
+
+.news-all {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #E8761E;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 14px;
+  border: 1.5px solid rgba(232, 118, 30, 0.35);
+  border-radius: 20px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.news-all:hover {
+  background: #fff5e6;
+  border-color: #E8761E;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: #fdf6ee;
+  border: 1px solid #e8d4b8;
+  border-radius: 10px;
+  border-top: 3px solid #E8761E;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.news-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(232, 118, 30, 0.12);
+}
+
+.news-date {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #E8761E;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+}
+
+.news-card h4 {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1C1C1C;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+
+.news-card > a {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #E8761E;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 4px 0;
+  transition: gap 0.2s, color 0.15s;
+  border-bottom: 1.5px solid transparent;
+}
+
+.news-card > a:hover {
+  color: #c9601a;
+  gap: 10px;
+  border-bottom-color: #E8761E;
+}
+
+.network-illustration {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(160deg, #fdf6ee 0%, #f0e4d2 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.network-illustration::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #e8d4b8 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.22;
+}
+
+.network-illustration img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: top center;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  .network-main {
+    grid-template-columns: 1fr 260px;
+  }
+  .network-left {
+    padding: 40px 40px 40px 5%;
+  }
+}
+
+@media (max-width: 768px) {
+  .network-main {
+    grid-template-columns: 1fr;
+  }
+  .network-left {
+    padding: 32px 16px;
+    border-right: none;
+    border-bottom: 1px solid #e8e0d8;
+  }
+  .network-illustration {
+    height: 240px;
+    order: -1;
+  }
+  .network-illustration img {
+    height: 240px;
+    object-position: top center;
+  }
+  .network-desc-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .network-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .news-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .news-header h3 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .network-illustration {
+    height: 200px;
+  }
+  .network-illustration img {
+    height: 200px;
+  }
+  .network-title-group h2 {
+    font-size: 1.3rem;
+  }
+  .network-left {
+    padding: 28px 14px;
+  }
+}
+
+
+/* ==========================================================================
+   FIX 3 — SECTION CTA "Need more information? Contact CAAR."
+   Suppression du cercle décoratif parasite visible à droite.
+   Fond orange uni, propre, sans éléments visuels parasites.
+   ========================================================================== */
+
+/* Supprime le pseudo-élément ::before (radial gradient pulsant en fond) */
+.cta::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Supprime le pseudo-élément ::after (cercle décoratif en haut à droite) */
+.cta::after {
+  display: none !important;
+  content: none !important;
+}
