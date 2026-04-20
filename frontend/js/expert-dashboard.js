@@ -86,7 +86,7 @@
     const submitBtn = document.getElementById('submitReportBtn');
     if (noClaimsEl) {
       noClaimsEl.style.display = show ? 'block' : 'none';
-      noClaimsEl.textContent = show ? 'No claims available for reporting' : '';
+      noClaimsEl.textContent = show ? 'No assigned claims ready for report submission' : '';
     }
     if (claimSelect) claimSelect.disabled = show;
     if (submitBtn) submitBtn.disabled = show;
@@ -132,14 +132,12 @@
       .join('');
   }
 
-  function updateMetrics(claims, actionableClaims) {
-    const assignedCount = claims.length;
-    const inProgressCount = claims.filter((c) => c.status === 'reported').length;
-    const completedCount = claims.filter((c) => c.status === 'approved' || c.status === 'rejected').length;
+  function updateMetrics(actionableClaims) {
+    const assignedCount = actionableClaims.length;
 
     setStat('esAssigned', assignedCount);
-    setStat('esProgress', inProgressCount);
-    setStat('esCompleted', completedCount);
+    setStat('esProgress', assignedCount);
+    setStat('esCompleted', 0);
     setStat('esReports', actionableClaims.length);
   }
 
@@ -153,13 +151,15 @@
       setMsg((assignedRes.data && assignedRes.data.error) || 'Failed to load assigned claims.', true);
       renderClaims([]);
       renderClaimSelection([]);
-      updateMetrics([], []);
+      updateMetrics([]);
       return;
     }
 
     ASSIGNED_CLAIMS = Array.isArray(assignedRes.data.claims) ? assignedRes.data.claims : [];
+    console.log('[Expert Dashboard] API response claims:', ASSIGNED_CLAIMS);
+
     ACTIONABLE_CLAIMS = ASSIGNED_CLAIMS.filter((claim) => claim.status === 'expert_assigned');
-    console.log('[Expert Dashboard] filtered actionable claims:', ACTIONABLE_CLAIMS);
+    console.log('[Expert Dashboard] filtered claims (status=expert_assigned):', ACTIONABLE_CLAIMS);
 
     const expert = assignedRes.data.expert || null;
     const av = document.getElementById('expertAvailability');
@@ -169,7 +169,7 @@
 
     renderClaims(ACTIONABLE_CLAIMS);
     renderClaimSelection(ACTIONABLE_CLAIMS);
-    updateMetrics(ASSIGNED_CLAIMS, ACTIONABLE_CLAIMS);
+    updateMetrics(ACTIONABLE_CLAIMS);
 
     setMsg('Expert data loaded.', false);
     setTimeout(() => setMsg('', false), 1400);

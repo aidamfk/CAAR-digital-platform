@@ -418,10 +418,13 @@ document.getElementById('loginForm').addEventListener('submit', async function (
       return;
     }
 
+    const user = data.user || {};
+    const role = user.role || 'client';
+
     // Store auth data
     localStorage.setItem('token', data.token);
-    localStorage.setItem('role',  data.user.role);
-    localStorage.setItem('user',  JSON.stringify(data.user));
+    localStorage.setItem('role', role);
+    localStorage.setItem('user', JSON.stringify(user));
     // Keep legacy key so dashboard.js guard still works during transition
     localStorage.setItem('caar_auth_token', data.token);
 
@@ -432,12 +435,12 @@ document.getElementById('loginForm').addEventListener('submit', async function (
       expert: 'expert-dashboard.html'
     };
 
-    const roleHome = map[data.user.role] || 'client-dashboard.html';
+    const roleHome = map[role] || 'client-dashboard.html';
     const returnTo = getSafeReturnTo();
     const canUseReturnTo = !!returnTo && (
-      data.user.role === 'client' ||
-      (data.user.role === 'admin' && returnTo.startsWith('admin-dashboard.html')) ||
-      (data.user.role === 'expert' && returnTo.startsWith('expert-dashboard.html'))
+      role === 'client' ||
+      (role === 'admin' && returnTo.startsWith('admin-dashboard.html')) ||
+      (role === 'expert' && returnTo.startsWith('expert-dashboard.html'))
     );
 
     window.location.href = canUseReturnTo ? returnTo : roleHome;
