@@ -158,8 +158,8 @@
     ASSIGNED_CLAIMS = Array.isArray(assignedRes.data.claims) ? assignedRes.data.claims : [];
     console.log('[Expert Dashboard] API response claims:', ASSIGNED_CLAIMS);
 
-    ACTIONABLE_CLAIMS = ASSIGNED_CLAIMS.filter((claim) => claim.status === 'expert_assigned');
-    console.log('[Expert Dashboard] filtered claims (status=expert_assigned):', ACTIONABLE_CLAIMS);
+    ACTIONABLE_CLAIMS = ASSIGNED_CLAIMS;
+    console.log('[Expert Dashboard] backend-filtered assigned claims:', ACTIONABLE_CLAIMS);
 
     const expert = assignedRes.data.expert || null;
     const av = document.getElementById('expertAvailability');

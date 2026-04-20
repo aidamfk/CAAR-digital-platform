@@ -112,6 +112,7 @@ async function createClaim(
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function listAllClaims() {
+  await claimsModel.promotePendingClaimsToUnderReview();
   return claimsModel.getAllClaims();
 }
 
@@ -137,9 +138,16 @@ async function listMyClaims(authUserId) {
 
 async function updateClaimStatus(claimId, status) {
   const nextStatus = typeof status === 'string' ? status.trim() : status;
+  const ADMIN_DECISIONS = ['approved', 'rejected'];
 
   if (!nextStatus) {
     const err = new Error('status is required'); err.status = 400; throw err;
+  }
+
+  if (!ADMIN_DECISIONS.includes(nextStatus)) {
+    const err = new Error("Admin can only set claim status to 'approved' or 'rejected'");
+    err.status = 400;
+    throw err;
   }
 
   const claim = await claimsModel.getClaimById(claimId);
@@ -147,13 +155,20 @@ async function updateClaimStatus(claimId, status) {
     const err = new Error('Claim not found'); err.status = 404; throw err;
   }
 
-  assertClaimStatusTransition(claim.status, nextStatus);
-
-  if (nextStatus === 'expert_assigned' && !claim.expert_id) {
-    const err = new Error('Cannot set status to expert_assigned before assigning an expert');
+  if (claim.status !== 'reported') {
+    const err = new Error("Claim can only be approved/rejected after expert report submission");
     err.status = 409;
     throw err;
   }
+
+  const report = await claimsModel.getReportByClaimId(claimId);
+  if (!report) {
+    const err = new Error('Cannot approve/reject claim without an expert report');
+    err.status = 409;
+    throw err;
+  }
+
+  assertClaimStatusTransition(claim.status, nextStatus);
 
   await claimsModel.updateClaimStatus(claimId, nextStatus);
 
@@ -176,31 +191,44 @@ async function updateClaimStatus(claimId, status) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assignExpert(claimId, expertId) {
-  const claim = await claimsModel.getClaimById(claimId);
-  if (!claim) {
-    const err = new Error('Claim not found'); err.status = 404; throw err;
-  }
-
-  if (claim.expert_id) {
-    const err = new Error('This claim already has an assigned expert');
-    err.status = 409;
-    throw err;
-  }
-
-  assertClaimStatusTransition(claim.status, 'expert_assigned');
-
-  // Resolve expert's user_id for the notification
-  const [expertRows] = await pool.execute(
-    'SELECT user_id FROM experts WHERE id = ?',
-    [expertId]
-  );
-  if (!expertRows.length) {
-    const err = new Error('Expert not found'); err.status = 404; throw err;
-  }
-
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    const claim = await claimsModel.getClaimByIdForUpdateTx(conn, claimId);
+    if (!claim) {
+      const err = new Error('Claim not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (claim.expert_id) {
+      const err = new Error('This claim already has an assigned expert');
+      err.status = 409;
+      throw err;
+    }
+
+    let currentStatus = claim.status;
+    if (currentStatus === 'pending') {
+      assertClaimStatusTransition(currentStatus, 'under_review');
+      await claimsModel.updateClaimStatusTx(conn, claimId, 'under_review');
+      currentStatus = 'under_review';
+    }
+
+    if (currentStatus !== 'under_review') {
+      const err = new Error('Claim must be under review before assigning an expert');
+      err.status = 409;
+      throw err;
+    }
+
+    assertClaimStatusTransition(currentStatus, 'expert_assigned');
+
+    const expertRow = await claimsModel.getAvailableExpertForUpdateTx(conn, expertId);
+    if (!expertRow) {
+      const err = new Error('Selected expert is not available for assignment');
+      err.status = 409;
+      throw err;
+    }
 
     await claimsModel.assignExpertTx(conn, claimId, expertId);
     await claimsModel.updateClaimStatusTx(conn, claimId, 'expert_assigned');
@@ -209,7 +237,7 @@ async function assignExpert(claimId, expertId) {
     // ── NOTIFICATION: notify the expert ───────────────────────────────────
     await notificationService.expertAssigned(conn, {
       claim_id:        claimId,
-      expert_user_id:  expertRows[0].user_id,
+      expert_user_id:  expertRow.user_id,
     });
 
     await conn.commit();

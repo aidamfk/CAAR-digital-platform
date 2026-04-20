@@ -11,16 +11,6 @@
     experts: [],
   };
 
-  const CLAIM_TRANSITIONS = {
-    pending: ['under_review'],
-    under_review: ['expert_assigned'],
-    expert_assigned: ['reported'],
-    reported: ['approved', 'rejected'],
-    approved: ['closed'],
-    rejected: [],
-    closed: [],
-  };
-
   const STATUS_LABELS = {
     pending: 'Pending',
     under_review: 'Under Review',
@@ -153,18 +143,15 @@
       return;
     }
 
-    body.innerHTML = list.map((c) => {
-      const allowedTransitions = CLAIM_TRANSITIONS[c.status] || [];
-      const activeExperts = (STATE.experts || []).filter((ex) => ex.is_active);
-      const isFinal = c.status === 'approved' || c.status === 'rejected' || c.status === 'closed';
-      const canAssign = c.status === 'under_review' && !c.expert_id;
-      const canUpdate = !isFinal && allowedTransitions.length > 0 && !(c.status === 'under_review' && !c.expert_id);
-      const statusSelectId = 'claim-status-' + c.claim_id;
-      const expertSelectId = 'claim-expert-' + c.claim_id;
+    let hasPendingClaims = false;
 
-      const statusOptions = allowedTransitions
-        .map((nextStatus) => '<option value="' + nextStatus + '">' + esc(STATUS_LABELS[nextStatus] || nextStatus) + '</option>')
-        .join('');
+    body.innerHTML = list.map((c) => {
+      const activeExperts = (STATE.experts || []).filter((ex) => Boolean(ex.is_active) && Boolean(ex.is_available));
+      const isLocked = c.status === 'approved' || c.status === 'rejected' || c.status === 'closed';
+      const canAssign = c.status === 'under_review' && !c.expert_id;
+      const isWaitingExpertReport = c.status === 'expert_assigned';
+      const canDecide = c.status === 'reported';
+      const expertSelectId = 'claim-expert-' + c.claim_id;
 
       const expertOptions = ['<option value="">Assign expert...</option>']
         .concat(activeExperts.map((ex) => '<option value="' + ex.expert_id + '">' +
@@ -173,15 +160,10 @@
         .join('');
 
       let actionsHtml = '';
-      if (canUpdate) {
-        actionsHtml += [
-          '<select id="' + statusSelectId + '">',
-          statusOptions,
-          '</select>',
-          '<div class="row-actions">',
-          '  <button class="tiny-btn" onclick="window.__adminUpdateClaimStatus(' + c.claim_id + ')">Update Status</button>',
-          '</div>',
-        ].join('');
+
+      if (c.status === 'pending') {
+        hasPendingClaims = true;
+        actionsHtml = '<small>Automatically moving to under review...</small>';
       }
 
       if (canAssign) {
@@ -190,12 +172,21 @@
           '  <select id="' + expertSelectId + '">' + expertOptions + '</select>',
           '  <button class="tiny-btn" ' + (activeExperts.length ? '' : 'disabled ') + 'onclick="window.__adminAssignExpert(' + c.claim_id + ')">Assign Expert</button>',
           '</div>',
-          activeExperts.length ? '' : '<small>No active experts available.</small>',
+          activeExperts.length ? '' : '<small>No available experts right now.</small>',
         ].join('');
-      }
-
-      if (!actionsHtml) {
-        actionsHtml = '<button class="tiny-btn" disabled>No actions available</button>';
+      } else if (isWaitingExpertReport) {
+        actionsHtml = '<small>Waiting for expert report.</small>';
+      } else if (canDecide) {
+        actionsHtml = [
+          '<div class="row-actions">',
+          '  <button class="tiny-btn" onclick="window.__adminApproveClaim(' + c.claim_id + ')">Approve</button>',
+          '  <button class="tiny-btn" onclick="window.__adminRejectClaim(' + c.claim_id + ')">Reject</button>',
+          '</div>',
+        ].join('');
+      } else if (isLocked) {
+        actionsHtml = '<small>Locked final state. No actions available.</small>';
+      } else if (!actionsHtml) {
+        actionsHtml = '<small>No actions available.</small>';
       }
 
       return [
@@ -204,13 +195,16 @@
         '  <td><strong>' + esc(c.client_name || '-') + '</strong><br/><small>' + esc(c.client_email || '-') + '</small></td>',
         '  <td>' + badge(c.status) + (c.status === 'pending' ? ' <span class="priority-chip">Priority</span>' : '') + '</td>',
         '  <td>',
-        isFinal ? '    <div><small>Final state. No actions available.</small></div>' : '',
         (!canAssign && c.expert_id && c.status === 'under_review') ? '    <div><small>Expert already assigned (#' + esc(c.expert_id) + ').</small></div>' : '',
         '    ' + actionsHtml,
         '  </td>',
         '</tr>'
       ].join('');
     }).join('');
+
+    if (hasPendingClaims) {
+      setTimeout(loadAll, 350);
+    }
   }
 
   function renderReports(list) {
@@ -332,22 +326,27 @@
     ].join('')).join('');
   }
 
-  async function updateClaimStatus(claimId) {
-    const select = document.getElementById('claim-status-' + claimId);
-    if (!select) return;
-
+  async function decideClaim(claimId, decision) {
     const res = await api('/api/claims/' + claimId + '/status', {
       method: 'PUT',
-      body: { status: select.value },
+      body: { status: decision },
     });
 
     if (!res.ok) {
-      setMsg((res.data && res.data.error) || 'Failed to update claim status.', true);
+      setMsg((res.data && res.data.error) || 'Failed to apply claim decision.', true);
       return;
     }
 
-    setMsg('Claim status updated.', false);
+    setMsg('Claim decision applied.', false);
     loadAll();
+  }
+
+  async function approveClaim(claimId) {
+    return decideClaim(claimId, 'approved');
+  }
+
+  async function rejectClaim(claimId) {
+    return decideClaim(claimId, 'rejected');
   }
 
   async function assignExpert(claimId) {
@@ -460,7 +459,8 @@
     });
   }
 
-  window.__adminUpdateClaimStatus = updateClaimStatus;
+  window.__adminApproveClaim = approveClaim;
+  window.__adminRejectClaim = rejectClaim;
   window.__adminAssignExpert = assignExpert;
   window.__adminUpdateMessageStatus = updateMessageStatus;
   window.__adminUpdateApplicationStatus = updateApplicationStatus;

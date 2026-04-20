@@ -60,6 +60,8 @@ async function listExperts(req, res) {
               u.is_active
        FROM experts ex
        JOIN users u ON u.id = ex.user_id
+            WHERE ex.is_available = 1
+              AND u.is_active = 1
        ORDER BY u.first_name, u.last_name`
     );
 

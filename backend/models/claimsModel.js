@@ -114,6 +114,41 @@ async function getClaimById(claimId) {
 }
 
 /**
+ * Single claim by id with row-level lock inside a transaction.
+ */
+async function getClaimByIdForUpdateTx(conn, claimId) {
+  const [rows] = await conn.execute(
+    `SELECT
+       cl.id              AS claim_id,
+       cl.contract_id,
+       cl.client_id,
+       cl.expert_id,
+       cl.description,
+       cl.status,
+       cl.claim_date,
+       c.user_id
+     FROM claims     cl
+     JOIN clients    c  ON c.id  = cl.client_id
+     WHERE cl.id = ?
+     FOR UPDATE`,
+    [claimId]
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Auto-promote pending claims to under_review for admin workflow.
+ */
+async function promotePendingClaimsToUnderReview() {
+  const [result] = await pool.execute(
+    `UPDATE claims
+     SET status = 'under_review'
+     WHERE status = 'pending'`
+  );
+  return result.affectedRows || 0;
+}
+
+/**
  * Update status (outside transaction — admin status machine).
  */
 async function updateClaimStatus(claimId, status) {
@@ -141,6 +176,23 @@ async function assignExpertTx(conn, claimId, expertId) {
     'UPDATE claims SET expert_id = ? WHERE id = ?',
     [expertId, claimId]
   );
+}
+
+/**
+ * Fetch expert row with availability + active user guard and lock it.
+ */
+async function getAvailableExpertForUpdateTx(conn, expertId) {
+  const [rows] = await conn.execute(
+    `SELECT ex.id, ex.user_id, ex.is_available, u.is_active
+     FROM experts ex
+     JOIN users u ON u.id = ex.user_id
+     WHERE ex.id = ?
+       AND ex.is_available = 1
+       AND u.is_active = 1
+     FOR UPDATE`,
+    [expertId]
+  );
+  return rows[0] || null;
 }
 
 /**
@@ -228,6 +280,7 @@ async function getAssignedClaimsByExpertId(expertId) {
      JOIN clients c ON c.id = cl.client_id
      JOIN users u ON u.id = c.user_id
      WHERE cl.expert_id = ?
+       AND cl.status = 'expert_assigned'
      ORDER BY cl.claim_date DESC, cl.id DESC`,
     [expertId]
   );
@@ -267,9 +320,12 @@ module.exports = {
   getAllClaims,
   getClaimsByClientId,
   getClaimById,
+  getClaimByIdForUpdateTx,
+  promotePendingClaimsToUnderReview,
   updateClaimStatus,
   updateClaimStatusTx,
   assignExpertTx,
+  getAvailableExpertForUpdateTx,
   getActiveContractByIdAndUserId,
   // expert reports
   createExpertReport,

@@ -7,6 +7,7 @@ const CLAIM_STATUSES = Object.freeze([
   'reported',
   'approved',
   'rejected',
+  // Legacy terminal status kept for backward compatibility with old records.
   'closed',
 ]);
 
@@ -15,7 +16,7 @@ const CLAIM_STATUS_TRANSITIONS = Object.freeze({
   under_review: Object.freeze(['expert_assigned']),
   expert_assigned: Object.freeze(['reported']),
   reported: Object.freeze(['approved', 'rejected']),
-  approved: Object.freeze(['closed']),
+  approved: Object.freeze([]),
   rejected: Object.freeze([]),
   closed: Object.freeze([]),
 });

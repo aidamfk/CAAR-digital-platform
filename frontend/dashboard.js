@@ -35,6 +35,17 @@ var ALL_CONTRACTS       = [];
 var ALL_ROADSIDE        = [];
 var ALL_MESSAGES        = [];
 var _dashStats          = {};
+var DASH_ALERT_ACTIONS  = [];
+
+function _syncBodyLock() {
+  var sidebar = document.getElementById('dashSidebar');
+  var modal = document.getElementById('newClaimModal');
+  var panel = document.getElementById('claimDetailPanel');
+  var sidebarOpen = !!(sidebar && sidebar.classList.contains('open'));
+  var modalOpen = !!(modal && modal.classList.contains('open'));
+  var panelOpen = !!(panel && panel.classList.contains('open'));
+  document.body.style.overflow = (sidebarOpen || modalOpen || panelOpen) ? 'hidden' : '';
+}
 
 /* ── Status config ───────────────────────────────────────────── */
 var STATUS_CONFIG = {
@@ -194,7 +205,7 @@ function renderAlertBanners() {
         ? 'You have 1 claim awaiting review'
         : 'You have ' + pendingClaims.length + ' claims awaiting review',
       message: 'Our team will review your claim shortly. You\'ll be notified when the status changes.',
-      action: { label: 'View Claims', fn: function () { switchSection('claims', document.querySelector('[data-section="claims"]')); } },
+      action: { label: 'View Claims', fn: function () { openLatestClaimPanelFromApi(['pending', 'under_review', 'expert_assigned', 'reported']); } },
     });
   }
 
@@ -207,10 +218,7 @@ function renderAlertBanners() {
         ? 'An expert has been assigned to your claim'
         : expertClaims.length + ' of your claims have an expert assigned',
       message: 'Your claim is being actively handled. The expert will contact you soon.',
-      action: { label: 'View Details', fn: function () {
-        switchSection('claims', document.querySelector('[data-section="claims"]'));
-        if (expertClaims[0]) setTimeout(function () { openClaimPanel(expertClaims[0].claim_id); }, 400);
-      }},
+      action: { label: 'View Claims', fn: function () { openLatestClaimPanelFromApi(['expert_assigned']); } },
     });
   }
 
@@ -221,7 +229,7 @@ function renderAlertBanners() {
       icon: '🚗',
       title: 'Roadside request pending',
       message: 'Your roadside assistance request is being processed. Our team will dispatch help shortly.',
-      action: { label: 'View Request', fn: function () { switchSection('roadside', document.querySelector('[data-section="roadside"]')); } },
+      action: { label: 'View Request', fn: function () { openLatestRoadsidePanelFromApi(); } },
     });
   }
 
@@ -242,6 +250,8 @@ function renderAlertBanners() {
     return;
   }
 
+  DASH_ALERT_ACTIONS = alerts.map(function (a) { return a.action ? a.action.fn : null; });
+
   container.innerHTML = alerts.map(function (a, i) {
     var colorMap = {
       warning: { bg: '#fffbeb', border: '#f59e0b', icon: '#d97706', text: '#92400e' },
@@ -261,7 +271,7 @@ function renderAlertBanners() {
         '<div style="font-weight:700;font-size:.88rem;color:' + c.text + ';margin-bottom:3px;">' + a.title + '</div>' +
         '<div style="font-size:.78rem;color:' + c.text + ';opacity:.8;line-height:1.5;">' + a.message + '</div>' +
       '</div>' +
-      (a.action ? '<button onclick="(' + a.action.fn.toString() + ')()" style="' +
+      (a.action ? '<button type="button" data-alert-action="' + i + '" style="' +
         'flex-shrink:0;padding:7px 14px;background:' + c.border + ';color:#fff;' +
         'border:none;border-radius:8px;font-size:.75rem;font-weight:700;' +
         'cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .2s;"' +
@@ -269,6 +279,100 @@ function renderAlertBanners() {
         a.action.label + '</button>' : '') +
     '</div>';
   }).join('');
+
+  container.querySelectorAll('[data-alert-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var idx = parseInt(btn.getAttribute('data-alert-action'), 10);
+      var actionFn = DASH_ALERT_ACTIONS[idx];
+      if (typeof actionFn === 'function') {
+        actionFn();
+      }
+    });
+  });
+}
+
+async function _refreshClaimsFromApi() {
+  try {
+    var result = await apiRequest('/api/claims/my');
+    if (result.ok) {
+      ALL_CLAIMS = result.data.claims || [];
+      return ALL_CLAIMS;
+    }
+  } catch (_) {}
+  return ALL_CLAIMS;
+}
+
+async function _refreshRoadsideFromApi() {
+  try {
+    var result = await apiRequest('/api/roadside/requests/my');
+    if (result.ok) {
+      ALL_ROADSIDE = result.data.requests || [];
+      return ALL_ROADSIDE;
+    }
+  } catch (_) {}
+  return ALL_ROADSIDE;
+}
+
+async function openLatestClaimPanelFromApi(preferredStatuses) {
+  var claims = await _refreshClaimsFromApi();
+  if (!claims.length) {
+    showToast('No claims available to display.', 'error');
+    return;
+  }
+
+  var selected = null;
+  if (Array.isArray(preferredStatuses) && preferredStatuses.length) {
+    selected = claims.find(function (c) { return preferredStatuses.includes(c.status); }) || null;
+  }
+  if (!selected) {
+    selected = claims[0];
+  }
+
+  switchSection('claims', document.querySelector('[data-section="claims"]'));
+  setTimeout(function () {
+    openClaimPanel(selected.claim_id);
+  }, 180);
+}
+
+window.openRoadsidePanel = function (requestId) {
+  var request = ALL_ROADSIDE.find(function (r) {
+    return String(r.request_id) === String(requestId);
+  });
+  if (!request) return;
+
+  var sc = ROADSIDE_STATUS[request.status] || { cls: 'status-badge--pending', label: request.status || 'Pending' };
+  document.getElementById('cdpTitle').textContent = 'Roadside ' + (request.request_reference || ('#' + request.request_id));
+  document.getElementById('cdpSubtitle').textContent = 'Contract #' + (request.contract_id || '—');
+
+  document.getElementById('cdpBody').innerHTML =
+    '<div class="cdp-section"><div class="cdp-section-title">Request Details</div>' +
+    '<div class="cdp-info-grid">' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Status</div><div class="cdp-info-value"><span class="status-badge ' + sc.cls + '">' + escapeHTML(sc.label) + '</span></div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Created</div><div class="cdp-info-value">' + escapeHTML(request.created_at ? new Date(request.created_at).toLocaleDateString('en-GB') : '—') + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Problem Type</div><div class="cdp-info-value">' + escapeHTML(request.problem_type || '—') + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Vehicle</div><div class="cdp-info-value">' + escapeHTML(request.vehicle_label || request.license_plate || '—') + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Location</div><div class="cdp-info-value">' + escapeHTML(request.location_address || request.city || '—') + '</div></div>' +
+      '<div class="cdp-info-item"><div class="cdp-info-label">Phone</div><div class="cdp-info-value">' + escapeHTML(request.phone || '—') + '</div></div>' +
+    '</div></div>' +
+    '<div class="cdp-section"><div class="cdp-section-title">Description</div>' +
+      '<div class="cdp-description">' + escapeHTML(request.description || 'No description provided.') + '</div></div>';
+
+  document.getElementById('claimPanelOverlay').classList.add('open');
+  document.getElementById('claimDetailPanel').classList.add('open');
+  _syncBodyLock();
+};
+
+async function openLatestRoadsidePanelFromApi() {
+  var requests = await _refreshRoadsideFromApi();
+  if (!requests.length) {
+    showToast('No roadside requests available to display.', 'error');
+    return;
+  }
+
+  switchSection('roadside', document.querySelector('[data-section="roadside"]'));
+  setTimeout(function () {
+    window.openRoadsidePanel(requests[0].request_id);
+  }, 180);
 }
 
 /* ============================================================
@@ -514,15 +618,21 @@ window.switchSection = function (key, _el) {
 };
 
 window.openSidebar = function () {
-  document.getElementById('dashSidebar').classList.add('open');
-  document.getElementById('dashSidebarOverlay').classList.add('show');
-  document.body.style.overflow = 'hidden';
+  var sidebar = document.getElementById('dashSidebar');
+  var overlay = document.getElementById('dashSidebarOverlay');
+  if (!sidebar || !overlay) return;
+  sidebar.classList.add('open');
+  overlay.classList.add('show');
+  _syncBodyLock();
 };
 
 window.closeSidebar = function () {
-  document.getElementById('dashSidebar').classList.remove('open');
-  document.getElementById('dashSidebarOverlay').classList.remove('show');
-  document.body.style.overflow = '';
+  var sidebar = document.getElementById('dashSidebar');
+  var overlay = document.getElementById('dashSidebarOverlay');
+  if (!sidebar || !overlay) return;
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+  _syncBodyLock();
 };
 
 /* ============================================================
@@ -779,7 +889,7 @@ window.openClaimPanel = function (claimId) {
 
   document.getElementById('claimPanelOverlay').classList.add('open');
   document.getElementById('claimDetailPanel').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  _syncBodyLock();
 };
 
 function _buildClaimActionHint(claim) {
@@ -805,7 +915,7 @@ function _buildClaimActionHint(claim) {
 window.closeClaimPanel = function () {
   document.getElementById('claimPanelOverlay').classList.remove('open');
   document.getElementById('claimDetailPanel').classList.remove('open');
-  document.body.style.overflow = '';
+  _syncBodyLock();
 };
 
 /* ============================================================
@@ -862,14 +972,14 @@ window.openNewClaimModal = function (contractId, policyRef, contractList) {
   if (contractId) select.value = String(contractId);
 
   modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  _syncBodyLock();
   setTimeout(function () { document.getElementById('ncDescription').focus(); }, 100);
 };
 
 window.closeNewClaimModal = function () {
   var modal = document.getElementById('newClaimModal');
   if (modal) modal.classList.remove('open');
-  document.body.style.overflow = '';
+  _syncBodyLock();
 };
 
 window.submitNewClaim = async function () {
@@ -1263,5 +1373,13 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     if (typeof window.closeClaimPanel    === 'function') window.closeClaimPanel();
     if (typeof window.closeNewClaimModal === 'function') window.closeNewClaimModal();
+  }
+});
+
+window.addEventListener('resize', function () {
+  if (window.innerWidth > 768) {
+    window.closeSidebar();
+  } else {
+    _syncBodyLock();
   }
 });

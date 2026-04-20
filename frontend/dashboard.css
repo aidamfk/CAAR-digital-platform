@@ -19,6 +19,7 @@
   min-height: 100vh;
   background: var(--bg);
   font-family: var(--font-sans);
+  overflow-x: hidden;
 }
 
 /* Roadside request history */
@@ -486,6 +487,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
 }
 
 /* ==========================================================================
@@ -779,6 +781,7 @@
   padding: 32px 32px 48px;
   max-width: 1400px;
   width: 100%;
+  min-width: 0;
 }
 
 /* ── Content header ── */
@@ -1772,7 +1775,6 @@
 }
 .rdinfo-row:last-child { border-bottom: none; padding-bottom: 0; }
 .rdinfo-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-.rdinfo-content {}
 .rdinfo-label { font-size: 0.65rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.4px; }
 .rdinfo-value { font-weight: 600; color: var(--dark); margin-top: 1px; }
 
@@ -2063,6 +2065,8 @@
 
   .dash-main {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .dash-topbar__hamburger {
@@ -2087,6 +2091,8 @@
 
   .dash-content {
     padding: 20px 16px 36px;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
