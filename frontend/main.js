@@ -25,6 +25,10 @@
 /* ============================================================
    BOOT
 ============================================================ */
+
+// Tout en haut de main.js, avant l'IIFE
+if (window.__caarMainLoaded) { /* ne rien faire */ }
+window.__caarMainLoaded = true;
 (function () {
   'use strict';
 
