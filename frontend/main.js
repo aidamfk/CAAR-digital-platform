@@ -25,6 +25,10 @@
 /* ============================================================
    BOOT
 ============================================================ */
+
+// Tout en haut de main.js, avant l'IIFE
+if (window.__caarMainLoaded) { /* ne rien faire */ }
+window.__caarMainLoaded = true;
 (function () {
   'use strict';
 
@@ -107,7 +111,11 @@
 
     /* ── Footer ── */
     if (document.getElementById('site-footer')) {
-      loadComponent('site-footer', base + 'components/footer.html', null);
+      loadComponent('site-footer', base + 'components/footer.html', function () {
+        if (window.Language && typeof window.Language.applyTranslations === 'function') {
+          window.Language.applyTranslations(window.Language.getLanguage());
+        }
+      });
     }
   }
 
