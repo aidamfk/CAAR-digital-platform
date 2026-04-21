@@ -12,10 +12,25 @@
  *   8. loadCities called with wilaya id='' now shows empty/reset city menu.
  */
 
-const BASE_API = 'http://localhost:3000/api';
+const BASE_API = (function resolveAgencyApiBase() {
+  if (window.CAAR_API_BASE) {
+    return String(window.CAAR_API_BASE).replace(/\/$/, '') + '/api';
+  }
+
+  const isHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+  const isBackendHost = isHttp && /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) && window.location.port === '3000';
+
+  if (isBackendHost) {
+    return window.location.origin + '/api';
+  }
+
+  return 'http://localhost:3000/api';
+})();
 
 function initializeNetworkMap() {
+  if (window.__caarNetworkMapReady) return;
   if (!document.getElementById('filterMap')) return;
+  window.__caarNetworkMapReady = true;
 
   // ── State ──────────────────────────────────────────────────────────────────
   let AGENCIES       = [];
@@ -25,6 +40,19 @@ function initializeNetworkMap() {
   const markerMap    = {};
   let activeFilters  = { wilaya_id: '', city_id: '', type: '', service: '', search: '' };
   let searchTimer    = null;
+
+  function showNetworkError(message) {
+    const noRes = document.getElementById('filterNoResults');
+    const countEl = document.getElementById('filterCountNum');
+    const listEl = document.getElementById('filterCardList');
+
+    if (countEl) countEl.textContent = '0';
+    if (listEl) listEl.innerHTML = '';
+    if (noRes) {
+      noRes.innerHTML = '⚠️ ' + message + '<br><small>Please check that the API server is running and reachable.</small>';
+      noRes.classList.add('show');
+    }
+  }
 
   // ── Icons ──────────────────────────────────────────────────────────────────
   function makeIcon(active) {
@@ -548,10 +576,15 @@ function initializeNetworkMap() {
     try {
       const res = await fetch(`${BASE_API}/agencies`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      ALL_AGENCIES = await res.json();
+      const data = await res.json();
+      ALL_AGENCIES = Array.isArray(data) ? data : [];
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid agencies payload');
+      }
     } catch (err) {
       console.error('[Network] Failed to load agencies:', err.message);
       ALL_AGENCIES = [];
+      showNetworkError('Unable to load agencies right now.');
     }
 
     await loadWilayas();
@@ -573,6 +606,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }, 50);
     // Timeout after 3 seconds to prevent infinite waiting
-    setTimeout(() => clearInterval(headerReadyCheck), 3000);
+    setTimeout(() => {
+      clearInterval(headerReadyCheck);
+      initializeNetworkMap();
+    }, 3000);
   }
 });

@@ -39,7 +39,7 @@
 <!-- ════════════════════════════════════════════
      CONTACT FORM
 ════════════════════════════════════════════ -->
-<section class="contact-form-section" id="contactForm">
+<section class="contact-form-section show" id="contactForm">
   <div id="contactApiMsg" style="display:none;"></div>
   <div class="contact-form-inner">
 
@@ -114,7 +114,7 @@
           <!-- Consent -->
           <div class="cf-check-row">
             <input type="checkbox" id="cfConsent" name="consent" required/>
-            <label for="cfConsent" data-i18n="contact.consent">I agree to the processing of my <a href="#">personal data</a> in accordance with applicable regulations.</label>
+            <label for="cfConsent" data-i18n="contact.consent">I agree to the processing of my personal data in accordance with applicable regulations.</label>
           </div>
           <span class="cf-field-error" id="err-consent" style="margin-bottom:10px;margin-top:-6px;" data-i18n="contact.error_consent">You must agree to data processing to continue.</span>
 
@@ -134,13 +134,13 @@
         <div class="cf-success-state" id="successState">
           <div class="cf-success-icon">✓</div>
           <div class="cf-success-title" data-i18n="contact.success_title">Request sent successfully!</div>
-          <div class="cf-success-sub" data-i18n="contact.success_message">
+          <div class="cf-success-sub" data-i18n="contact.success_sub" data-i18n-html="true">
             Our team will review your message and get back to you within<br>
-            <strong data-i18n="contact.success_hours">24 working hours</strong>. Check your email for confirmation.
+            <strong>24 working hours</strong>. Check your email for confirmation.
           </div>
           <div class="cf-success-actions">
-            <a href="network.html" class="btn-success-primary" data-i18n="contact.success_agency">Find nearest agency</a>
-            <button class="btn-success-secondary" type="button" onclick="resetForm()" data-i18n="contact.success_another">Send another request</button>
+            <a href="network.html" class="btn-success-primary" data-i18n="contact.success_find_agency">Find nearest agency</a>
+            <button class="btn-success-secondary" type="button" onclick="resetContactForm()" data-i18n="contact.success_send_another">Send another request</button>
           </div>
         </div>
 
@@ -155,30 +155,30 @@
         <div class="contact-card-icon">
           <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.13 12.7 19.79 19.79 0 0 1 1.06 4.1 2 2 0 0 1 3 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         </div>
-        <h4 data-i18n="contact.call_title">Call us</h4>
-        <p data-i18n="contact.call_info">+213 (0)21 63 20 72<br/>Sunday to Thursday &ndash; business hours</p>
+        <h4 data-i18n="contact.call_us">Call us</h4>
+        <p data-i18n="contact.call_details" data-i18n-html="true">+213 (0)21 63 20 72<br/>Sunday to Thursday &ndash; business hours</p>
       </div>
 
       <div class="contact-card">
         <div class="contact-card-icon">
           <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <h4 data-i18n="contact.email_title">Email</h4>
-        <p data-i18n="contact.email_info"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="82e1edecf6e3e1f6c2e1e3e3f0ace6f8">[email&#160;protected]</a><br/>For non-urgent requests</p>
+        <h4 data-i18n="contact.email">Email</h4>
+        <p data-i18n="contact.email_details" data-i18n-html="true"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="82e1edecf6e3e1f6c2e1e3e3f0ace6f8">[email&#160;protected]</a><br/>For non-urgent requests</p>
       </div>
 
       <div class="contact-card">
         <div class="contact-card-icon">
           <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
-        <h4 data-i18n="contact.office_title">Head office</h4>
-        <p data-i18n="contact.office_address">48, Rue Didouche Mourad<br/>Algiers 16000, Algeria</p>
+        <h4 data-i18n="contact.head_office">Head office</h4>
+        <p data-i18n="contact.head_office_details" data-i18n-html="true">48, Rue Didouche Mourad<br/>Algiers 16000, Algeria</p>
         <a href="network.html?focus=hq" class="btn-directions" data-i18n="contact.get_directions">Get directions</a>
       </div>
 
       <div class="contact-crossnav">
         <div class="contact-crossnav-label" data-i18n="contact.prefer_in_person">Prefer in-person?</div>
-        <div class="contact-crossnav-text" data-i18n="contact.agency_text">Visit one of our 39+ agencies across Algeria. We'll find the nearest one to you.</div>
+        <div class="contact-crossnav-text" data-i18n="contact.prefer_text">Visit one of our 39+ agencies across Algeria. We'll find the nearest one to you.</div>
         <a href="network.html" class="btn-crossnav" data-i18n="contact.find_agency_cross">
           Find an agency
           <svg viewBox="0 0 12 12"><path d="M4 2l4 4-4 4"/></svg>
@@ -224,7 +224,6 @@
 <script src="app-state.js"></script>
 <script src="auth.js"></script>
 <script src="header-controller.js"></script>
-<div id="contactApiMsg" style="display:none;"></div>
 <script src="js/api.js"></script>
 <script src="js/contact-api.js"></script>
 <script src="main.js"></script>

@@ -519,11 +519,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var ss = document.getElementById('successState'); if (ss) ss.classList.remove('show');
   };
 
-  var formRevealed = false;
+  var section = document.getElementById('contactForm');
+  var formRevealed = !!(section && section.classList.contains('show'));
   var ctaBtn = document.getElementById('ctaBtn');
   if (ctaBtn) {
     ctaBtn.addEventListener('click', function () {
-      var section = document.getElementById('contactForm');
+      section = document.getElementById('contactForm');
       if (!section) return;
       if (!formRevealed) { section.classList.add('show'); formRevealed = true; }
       setTimeout(function () { section.scrollIntoView({ behavior: 'smooth' }); }, 80);
@@ -531,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   window.collapseForm = function () {
-    var section = document.getElementById('contactForm');
+    section = document.getElementById('contactForm');
     if (section) section.classList.remove('show');
     formRevealed = false;
   };

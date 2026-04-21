@@ -848,6 +848,29 @@ input, select, textarea { font-family: var(--font-sans); }
 .caar-hero__image img { height: 260px; width: auto; object-fit: contain; display: block; }
 .caar-hero--no-image .caar-hero__inner { grid-template-columns: 1fr; max-width: 800px; }
 .caar-hero--no-image .caar-hero__text { padding-bottom: 40px; }
+.caar-hero--editorial {
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.caar-hero--editorial .caar-hero__inner {
+  min-height: 360px;
+  padding: 48px 0;
+  align-items: center;
+}
+.caar-hero--editorial .caar-hero__title {
+  font-size: 3rem;
+}
+.caar-hero--editorial .caar-hero__subtitle {
+  max-width: 560px;
+}
+.caar-hero--editorial.caar-hero--no-image .caar-hero__inner {
+  max-width: 980px;
+}
+.caar-hero--editorial.caar-hero--no-image .caar-hero__text {
+  padding-bottom: 0;
+}
 .caar-hero--products { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; }
 .caar-hero--products .caar-hero__inner { grid-template-columns: 1fr 500px; min-height: 420px; padding: 48px 0 48px; }
 .caar-hero--products .caar-hero__image img { height: 400px; }
@@ -884,12 +907,16 @@ input, select, textarea { font-family: var(--font-sans); }
   .caar-hero__image { display: none; }
   .caar-hero__text { padding-bottom: 32px; }
   .caar-hero__title { font-size: 1.8rem; }
+  .caar-hero--editorial { min-height: auto; }
+  .caar-hero--editorial .caar-hero__inner { min-height: auto; padding: 36px 0 24px; }
+  .caar-hero--editorial .caar-hero__title { font-size: 2rem; }
   .caar-hero--products .caar-hero__title { font-size: 2rem; }
   .caar-hero--products .caar-hero__inner { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
   .caar-hero__title { font-size: 1.5rem; }
   .caar-hero__subtitle { font-size: 0.9rem; }
+  .caar-hero--editorial .caar-hero__title { font-size: 1.7rem; }
 }
 
 /* ── 9a. HOME ── */
@@ -1697,7 +1724,7 @@ input, select, textarea { font-family: var(--font-sans); }
 .btn-contact-primary { display: inline-block; padding: 13px 36px; background: var(--hdr-orange); color: #fff; border: 2px solid var(--hdr-orange); border-radius: var(--btn-radius); font-size: .95rem; font-weight: 700; font-family: var(--font-sans); cursor: pointer; transition: background .2s, transform .15s; }
 .btn-contact-primary:hover { background: #e06d00; border-color: #e06d00; transform: translateY(-2px); }
 .contact-form-section { opacity: 0; max-height: 0; overflow: hidden; transition: opacity .5s ease, max-height .6s cubic-bezier(.4,0,.2,1); background: #fafafa; border-bottom: 2px solid #000; }
-.contact-form-section.show { opacity: 1; max-height: 1600px; }
+.contact-form-section.show { opacity: 1; max-height: 2200px; }
 .contact-form-inner { display: grid; grid-template-columns: 1fr 340px; gap: 48px; padding: 52px 7%; max-width: 1200px; margin: 0 auto; }
 .contact-form-left p.form-intro { font-size: .86rem; color: #555; line-height: 1.6; margin-bottom: 22px; max-width: 440px; }
 .cf-group { margin-bottom: 16px; }
@@ -2141,6 +2168,12 @@ input, select, textarea { font-family: var(--font-sans); }
 .network-page .network-hero { background: var(--orange-bg); border-bottom: 1px solid #e8c99a; padding: 40px 60px 36px; overflow: hidden; position: relative; }
 .network-page .network-hero .network-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 600px; gap: 40px; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; padding: 28px 0; }
 .network-page .network-hero .network-hero-left { display: flex; flex-direction: column; gap: 16px; }
+.network-page .network-hero .network-hero-left,
+.network-page .network-hero .network-hero-map-slot {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
 .network-page .network-hero h2 { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; color: var(--dark); line-height: 1.25; margin: 0; }
 .network-page .network-hero p { font-size: .92rem; color: var(--gray); line-height: 1.65; margin: 0; max-width: 420px; }
 .network-page .s-locate-btn.loading { opacity: 0.7; cursor: wait; }

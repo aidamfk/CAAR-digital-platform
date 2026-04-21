@@ -90,14 +90,6 @@
       style: 'opacity:0;transform:translateX(28px)',
       anim:  'opacity:1;transform:translateX(0);transition:opacity .6s ease .1s,transform .6s ease .1s' },
 
-    /* Network page */
-    { sel: '.network-hero-left',
-      style: 'opacity:0;transform:translateX(-28px)',
-      anim:  'opacity:1;transform:translateX(0);transition:opacity .6s ease,transform .6s ease' },
-    { sel: '.network-hero-map-slot',
-      style: 'opacity:0;transform:translateX(28px)',
-      anim:  'opacity:1;transform:translateX(0);transition:opacity .6s ease .1s,transform .6s ease .1s' },
-
     /* Careers */
     { sel: '.why-lead',
       style: 'opacity:0;transform:translateY(20px)',
@@ -140,6 +132,19 @@
     });
   }
 
+  function isRenderable(el) {
+    if (!el || !el.isConnected) return false;
+    var rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  function isInitiallyVisible(el) {
+    if (!isRenderable(el)) return false;
+    var rect = el.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    return rect.top < vh && rect.bottom > 0;
+  }
+
   /* ── Init principal ── */
   function initAnimations() {
     if (window.__caarAnimDone) return;
@@ -153,6 +158,7 @@
     /* Éléments simples */
     ANIMATIONS.forEach(function (cfg) {
       document.querySelectorAll(cfg.sel).forEach(function (el) {
+        if (!isRenderable(el) || isInitiallyVisible(el)) return;
         applyStyle(el, cfg.style);
         observed.push({ el: el, anim: cfg.anim, done: false });
       });
@@ -164,6 +170,7 @@
         Array.prototype.forEach.call(
           parent.querySelectorAll(grp.child),
           function (child, idx) {
+            if (!isRenderable(child) || isInitiallyVisible(child)) return;
             child.style.opacity   = '0';
             child.style.transform = 'translateY(28px)';
             var d = (idx * grp.delay).toFixed(2);
