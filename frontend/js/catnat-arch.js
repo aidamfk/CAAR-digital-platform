@@ -20,8 +20,8 @@ const CATNAT_API = (typeof window.CAAR_API !== 'undefined')
    AUTH HELPER
    ═══════════════════════════════════════════════════════════════ */
 function _getToken() {
-  return localStorage.getItem('caar_quote_token')
-      || localStorage.getItem('token')
+  return localStorage.getItem('token')
+      || localStorage.getItem('caar_quote_token')
       || null;
 }
 
@@ -633,7 +633,7 @@ async function _submitAndProceed() {
     // 1. Create quote
     const quoteRes  = await fetch(CATNAT_API + '/api/catnat/quote', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders(),
       body:    JSON.stringify(payload),
     });
     const quoteData = await quoteRes.json();

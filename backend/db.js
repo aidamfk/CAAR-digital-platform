@@ -52,6 +52,59 @@ async function ensureAuthSchema() {
         conn.release();
     }
 }
+
+async function ensureClientIntegrity() {
+    const conn = await pool.getConnection();
+
+    try {
+        const [tableCheck] = await conn.query(`
+            SELECT COUNT(*) AS cnt
+            FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'clients'
+        `);
+
+        if (Number(tableCheck[0].cnt) === 0) {
+            return;
+        }
+
+        const [indexCheck] = await conn.query(`
+            SELECT COUNT(*) AS cnt
+            FROM information_schema.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'clients'
+              AND INDEX_NAME = 'uq_clients_user_id'
+        `);
+
+        if (Number(indexCheck[0].cnt) > 0) {
+            return;
+        }
+
+        const [dupRows] = await conn.query(`
+            SELECT user_id, COUNT(*) AS cnt
+            FROM clients
+            WHERE user_id IS NOT NULL
+            GROUP BY user_id
+            HAVING COUNT(*) > 1
+            LIMIT 1
+        `);
+
+        if (dupRows.length > 0) {
+            console.warn(
+                "⚠️ Cannot add unique index uq_clients_user_id: duplicate clients detected for at least one user_id"
+            );
+            return;
+        }
+
+        await conn.query(`
+            ALTER TABLE clients
+            ADD UNIQUE INDEX uq_clients_user_id (user_id)
+        `);
+        console.log("✅ clients.user_id unique index added (uq_clients_user_id)");
+    } finally {
+        conn.release();
+    }
+}
 // Test de connexion au démarrage
 pool.getConnection()
     .then(async (conn) => {
@@ -62,6 +115,12 @@ pool.getConnection()
             await ensureAuthSchema();
         } catch (schemaErr) {
             console.error("❌ Erreur migration users.must_change_password:", schemaErr.message);
+        }
+
+        try {
+            await ensureClientIntegrity();
+        } catch (integrityErr) {
+            console.error("❌ Erreur migration clients.user_id unique:", integrityErr.message);
         }
     })
     .catch((err) => {

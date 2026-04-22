@@ -4,7 +4,6 @@
  * the contract-backed roadside assistance request workflow.
  */
 
-const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const pool   = require('../db');
 const m      = require('../models/roadsideModel');
@@ -28,13 +27,59 @@ function generateRoadsideRequestReference() {
   return `RSA-REQ-${date}-${rand}`;
 }
 
+async function resolveOrCreateClientForUser(conn, authenticatedUserId) {
+  const [userRows] = await conn.execute(
+    `SELECT id, email, first_name, last_name, role, is_active, must_change_password
+     FROM users
+     WHERE id = ?
+     FOR UPDATE`,
+    [authenticatedUserId]
+  );
+
+  const user = userRows[0] || null;
+  if (!user) {
+    const err = new Error('Authenticated user not found');
+    err.status = 401;
+    throw err;
+  }
+
+  if (user.role !== 'client') {
+    const err = new Error('Only client accounts can purchase subscriptions');
+    err.status = 403;
+    throw err;
+  }
+
+  if (!user.is_active) {
+    const err = new Error('Your account is deactivated. Please contact support.');
+    err.status = 403;
+    throw err;
+  }
+
+  const [clientRows] = await conn.execute(
+    'SELECT id FROM clients WHERE user_id = ? FOR UPDATE',
+    [authenticatedUserId]
+  );
+
+  if (clientRows.length > 0) {
+    return { user, client_id: clientRows[0].id };
+  }
+
+  const clientId = await m.createClient(conn, {
+    user_id: authenticatedUserId,
+    insurance_number: generateInsuranceNumber(),
+  });
+
+  return { user, client_id: clientId };
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. CREATE QUOTE  (notification added)
 
 async function createQuote({
+  client_id,
   first_name, last_name, email, phone,
   license_plate, brand, model, year, wilaya, plan_id,
-}) {
+}, authenticatedUserId) {
   const plan = await m.getPlanById(plan_id);
   if (!plan) {
     const err = new Error(`Plan with id ${plan_id} not found`);
@@ -47,42 +92,40 @@ async function createQuote({
     err.status = 500; throw err;
   }
 
-  const existingUser = await m.findUserByEmail(email);
-
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
-    let userId, userEmail = email, userRole = 'client', isNewUser = false;
+    const resolved = await resolveOrCreateClientForUser(conn, authenticatedUserId);
+    const user = resolved.user;
+    const resolvedClientId = resolved.client_id;
 
-    if (existingUser) {
-      userId   = existingUser.id;
-      userRole = existingUser.role;
-    } else {
-      const tempPassword  = crypto.randomBytes(12).toString('hex');
-      const password_hash = await bcrypt.hash(tempPassword, 12);
-      userId    = await m.createUser(conn, { first_name, last_name, email, password_hash, phone });
-      isNewUser = true;
+    if (typeof client_id !== 'undefined' && client_id !== null) {
+      const requestedClientId = parseInt(client_id, 10);
+      if (Number.isNaN(requestedClientId) || requestedClientId !== resolvedClientId) {
+        const err = new Error('Forbidden: request client_id does not match authenticated account');
+        err.status = 403;
+        throw err;
+      }
     }
 
-    let clientId;
-    const existingClient = isNewUser ? null : await m.findClientByUserId(userId);
-    if (existingClient) {
-      clientId = existingClient.id;
-    } else {
-      clientId = await m.createClient(conn, {
-        user_id:          userId,
-        insurance_number: generateInsuranceNumber(),
-      });
+    if (email && String(email).trim().toLowerCase() !== String(user.email).toLowerCase()) {
+      const err = new Error('Forbidden: request email does not match authenticated account');
+      err.status = 403;
+      throw err;
     }
+
+    console.info(
+      `[Roadside] createQuote user_id=${authenticatedUserId} resolved_client_id=${resolvedClientId}`
+    );
 
     const vehicleId = await m.createVehicle(conn, {
-      client_id: clientId, license_plate, brand, model,
+      client_id: resolvedClientId, license_plate, brand, model,
       year: parseInt(year, 10), wilaya,
     });
 
     const quoteId = await m.createQuote(conn, {
-      client_id:        clientId,
+      client_id:        resolvedClientId,
       vehicle_id:       vehicleId,
       product_id:       product.id,
       plan_id:          parseInt(plan_id, 10),
@@ -93,7 +136,7 @@ async function createQuote({
 
     // â”€â”€ NOTIFICATION: notify all admins about new roadside subscription â”€â”€
     try {
-      const displayName = (first_name + ' ' + last_name).trim() || email;
+      const displayName = `${user.first_name || first_name || ''} ${user.last_name || last_name || ''}`.trim() || user.email;
       await notificationService.roadsideCreated(pool, {
         quote_id:    quoteId,
         client_name: displayName,
@@ -102,7 +145,7 @@ async function createQuote({
       console.error('[Roadside] roadsideCreated notification failed:', notifErr.message);
     }
 
-    const token = issueAuthToken({ id: userId, email: userEmail, role: userRole });
+    const token = issueAuthToken(user);
 
     return {
       quote_id:         quoteId,
@@ -144,7 +187,7 @@ async function confirmQuote(quoteId, authenticatedUserId) {
 // 3. PROCESS PAYMENT (unchanged)
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-async function processPayment(quoteId, authenticatedUserId, documentData = null) {
+async function processPayment(quoteId, authenticatedUserId, documentData = null, requestClientId = undefined) {
   const conn = await pool.getConnection();
 
   try {
@@ -158,6 +201,25 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
       const err = new Error('Forbidden: this quote does not belong to you');
       err.status = 403; throw err;
     }
+
+    const resolved = await resolveOrCreateClientForUser(conn, authenticatedUserId);
+    const resolvedClientId = resolved.client_id;
+
+    if (typeof requestClientId !== 'undefined' && requestClientId !== null) {
+      const requestedClientId = parseInt(requestClientId, 10);
+      if (Number.isNaN(requestedClientId) || requestedClientId !== resolvedClientId) {
+        const err = new Error('Forbidden: request client_id does not match authenticated account');
+        err.status = 403;
+        throw err;
+      }
+    }
+
+    if (quote.client_id !== resolvedClientId) {
+      const err = new Error('Forbidden: quote client binding mismatch for authenticated account');
+      err.status = 403;
+      throw err;
+    }
+
     if (quote.status !== 'confirmed') {
       const err = new Error(
         `Quote cannot be paid (current status: ${quote.status}). Please confirm the quote first.`
@@ -170,7 +232,7 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
     const today                     = new Date().toISOString().slice(0, 10);
 
     const contractId = await m.createContract(conn, {
-      client_id:      quote.client_id,
+      client_id:      resolvedClientId,
       vehicle_id:     quote.vehicle_id,
       product_id:     quote.product_id,
       plan_id:        quote.plan_id,
@@ -187,7 +249,7 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
 
     if (documentData && documentData.file_name && documentData.file_path) {
       await m.createDocument(conn, {
-        client_id:   quote.client_id,
+        client_id:   resolvedClientId,
         contract_id: contractId,
         file_name:   documentData.file_name,
         file_path:   documentData.file_path,
@@ -201,7 +263,7 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
         `SELECT u.email, u.first_name, u.last_name
          FROM clients c JOIN users u ON c.user_id = u.id
          WHERE c.id = ?`,
-        [quote.client_id]
+        [resolvedClientId]
       );
       user = userRows[0];
       const pdfBuffer = await createContractPDF({
@@ -226,6 +288,9 @@ async function processPayment(quoteId, authenticatedUserId, documentData = null)
     });
 
     await m.updateQuoteStatusTx(conn, quoteId, 'accepted');
+    console.info(
+      `[Roadside] processPayment user_id=${authenticatedUserId} resolved_client_id=${resolvedClientId} inserted_contract_client_id=${resolvedClientId} contract_id=${contractId}`
+    );
     await conn.commit();
 
     return {

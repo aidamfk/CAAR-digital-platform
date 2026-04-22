@@ -20,8 +20,8 @@ const ROADS_API = (typeof window.CAAR_API !== 'undefined')
    AUTH HELPER
    ═══════════════════════════════════════════════════════════════ */
 function _getToken() {
-  return localStorage.getItem('caar_quote_token')
-      || localStorage.getItem('token')
+  return localStorage.getItem('token')
+      || localStorage.getItem('caar_quote_token')
       || null;
 }
 function _authHeaders() {
@@ -539,7 +539,7 @@ const payload = {
      console.log("QUOTE PAYLOAD:", payload);
     const quoteRes  = await fetch(ROADS_API + '/api/roadside/quote', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders(),
       body:    JSON.stringify(payload),
     });
     const quoteData = await quoteRes.json();

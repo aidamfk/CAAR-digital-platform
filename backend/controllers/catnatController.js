@@ -14,6 +14,7 @@ const catnatService = require('../services/catnatService');
 // ── POST /api/catnat/quote ────────────────────────────────────────────────────
 async function createQuote(req, res) {
   const {
+    client_id,
     first_name, last_name, email, phone,
     construction_type, usage_type,
     built_area, num_floors, year_construction, declared_value,
@@ -48,7 +49,9 @@ async function createQuote(req, res) {
   }
 
   try {
+    console.info(`[CATNAT] createQuote req.user.id=${req.user.id}`);
     const result = await catnatService.createQuote({
+      client_id,
       first_name:    first_name.trim(),
       last_name:     last_name.trim(),
       email:         email.trim().toLowerCase(),
@@ -66,7 +69,7 @@ async function createQuote(req, res) {
       has_notarial_deed:    !!has_notarial_deed,
       is_commercial:        !!is_commercial,
       extra_coverages:      Array.isArray(extra_coverages) ? extra_coverages : [],
-    });
+    }, req.user.id);
 
     return res.status(201).json(result);
   } catch (err) {
@@ -97,6 +100,7 @@ async function processPayment(req, res) {
   }
 
   const documentData = req.body.document || null;
+  const requestClientId = req.body.client_id;
   if (documentData && (!documentData.file_name || !documentData.file_path)) {
     return res.status(400).json({
       error: 'If providing a document, file_name and file_path are required',
@@ -104,10 +108,12 @@ async function processPayment(req, res) {
   }
 
   try {
+    console.info(`[CATNAT] processPayment req.user.id=${req.user.id}`);
     const result = await catnatService.processPayment(
       quoteId,
       req.user.id,
-      documentData
+      documentData,
+      requestClientId
     );
     return res.status(200).json(result);
   } catch (err) {

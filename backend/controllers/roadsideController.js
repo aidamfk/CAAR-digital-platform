@@ -13,7 +13,7 @@ const roadsideService = require('../services/roadsideService');
 
 /**
  * Create a new roadside assistance quote.
- * Public endpoint — no JWT required.
+ * Protected endpoint — JWT required.
  *
  * Body: {
  *   first_name, last_name, email, phone,
@@ -26,6 +26,7 @@ const roadsideService = require('../services/roadsideService');
  */
 async function createQuote(req, res) {
   const {
+    client_id,
     first_name,
     last_name,
     email,
@@ -76,7 +77,9 @@ async function createQuote(req, res) {
 
   // ── Service call ──────────────────────────────────────────────────────────
   try {
+    console.info(`[Roadside] createQuote req.user.id=${req.user.id}`);
     const result = await roadsideService.createQuote({
+      client_id,
       first_name:    first_name.trim(),
       last_name:     last_name.trim(),
       email:         email.trim().toLowerCase(),
@@ -87,7 +90,7 @@ async function createQuote(req, res) {
       year:          yearNum,
       wilaya:        wilaya ? wilaya.trim() : null,
       plan_id:       planIdNum,
-    });
+    }, req.user.id);
 
     return res.status(201).json(result);
   } catch (err) {
@@ -145,6 +148,7 @@ async function processPayment(req, res) {
 
   // Optional document upload data
   const documentData = req.body.document || null;
+  const requestClientId = req.body.client_id;
 
   // Basic document validation if provided
   if (documentData) {
@@ -156,10 +160,12 @@ async function processPayment(req, res) {
   }
 
   try {
+    console.info(`[Roadside] processPayment req.user.id=${req.user.id}`);
     const result = await roadsideService.processPayment(
       quoteId,
       req.user.id,
-      documentData
+      documentData,
+      requestClientId
     );
     return res.status(200).json(result);
   } catch (err) {

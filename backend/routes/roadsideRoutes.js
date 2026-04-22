@@ -24,19 +24,19 @@ router.post('/requests', authMiddleware, requireRole('client'), ctrl.createRoads
 router.patch('/requests/:id/status', authMiddleware, requireRole('admin'), ctrl.updateRoadsideRequestStatus);
 router.post('/', authMiddleware, requireRole('client'), ctrl.createRoadsideRequest);
 
-router.post('/quote', ctrl.createQuote);
+router.post('/quote', authMiddleware, requireRole('client'), ctrl.createQuote);
 
 // ── Protected (valid JWT required) ───────────────────────────────────────────
 
 // POST /api/roadside/confirm/:quoteId
 // Header: Authorization: Bearer <token>
 // Returns: { message, quote_id }
-router.post('/confirm/:quoteId', authMiddleware, ctrl.confirmQuote);
+router.post('/confirm/:quoteId', authMiddleware, requireRole('client'), ctrl.confirmQuote);
 
 // POST /api/roadside/pay/:quoteId
 // Header: Authorization: Bearer <token>
 // Body (optional): { document: { file_name, file_path, file_type } }
 // Returns: { message, policy_reference, contract_id, start_date, end_date, amount_paid }
-router.post('/pay/:quoteId', authMiddleware, ctrl.processPayment);
+router.post('/pay/:quoteId', authMiddleware, requireRole('client'), ctrl.processPayment);
 
 module.exports = router;

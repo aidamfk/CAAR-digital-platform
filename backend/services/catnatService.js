@@ -1,7 +1,5 @@
 'use strict';
 
-const bcrypt  = require('bcryptjs');
-const crypto  = require('crypto');
 const pool    = require('../db');
 const m       = require('../models/catnatModel');
 const { createContractPDF } = require('../utils/pdfGenerator');
@@ -12,6 +10,51 @@ const {
   getAnnualContractDates,
   issueAuthToken,
 } = require('../utils/subscriptionHelpers');
+
+async function resolveOrCreateClientForUser(conn, authenticatedUserId) {
+  const [userRows] = await conn.execute(
+    `SELECT id, email, first_name, last_name, role, is_active, must_change_password
+     FROM users
+     WHERE id = ?
+     FOR UPDATE`,
+    [authenticatedUserId]
+  );
+
+  const user = userRows[0] || null;
+  if (!user) {
+    const err = new Error('Authenticated user not found');
+    err.status = 401;
+    throw err;
+  }
+
+  if (user.role !== 'client') {
+    const err = new Error('Only client accounts can purchase subscriptions');
+    err.status = 403;
+    throw err;
+  }
+
+  if (!user.is_active) {
+    const err = new Error('Your account is deactivated. Please contact support.');
+    err.status = 403;
+    throw err;
+  }
+
+  const [clientRows] = await conn.execute(
+    'SELECT id FROM clients WHERE user_id = ? FOR UPDATE',
+    [authenticatedUserId]
+  );
+
+  if (clientRows.length > 0) {
+    return { user, client_id: clientRows[0].id };
+  }
+
+  const clientId = await m.createClient(conn, {
+    user_id: authenticatedUserId,
+    insurance_number: generateInsuranceNumber(),
+  });
+
+  return { user, client_id: clientId };
+}
 
 // ─── HELPERS ─────────────────────────────────────────────────
 
@@ -42,8 +85,9 @@ function calculatePremium({
 
 // ─── CREATE QUOTE ────────────────────────────────────────────
 
-async function createQuote(data) {
+async function createQuote(data, authenticatedUserId) {
   const {
+    client_id,
     first_name, last_name, email, phone,
     construction_type, usage_type,
     built_area, num_floors,
@@ -65,34 +109,35 @@ async function createQuote(data) {
   const product = await m.getCatnatProduct();
   if (!product) throw new Error('CATNAT product not found');
 
-  const existingUser = await m.findUserByEmail(email);
-
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
-    let userId;
-    let userRole = 'client';
+    const resolved = await resolveOrCreateClientForUser(conn, authenticatedUserId);
+    const user = resolved.user;
+    const resolvedClientId = resolved.client_id;
 
-    if (existingUser) {
-      userId   = existingUser.id;
-      userRole = existingUser.role || 'client';
-    } else {
-      const tempPassword  = crypto.randomBytes(12).toString('hex');
-      const password_hash = await bcrypt.hash(tempPassword, 12);
-      userId = await m.createUser(conn, { first_name, last_name, email, password_hash, phone });
+    if (typeof client_id !== 'undefined' && client_id !== null) {
+      const requestedClientId = parseInt(client_id, 10);
+      if (Number.isNaN(requestedClientId) || requestedClientId !== resolvedClientId) {
+        const err = new Error('Forbidden: request client_id does not match authenticated account');
+        err.status = 403;
+        throw err;
+      }
     }
 
-    const existingClient = await m.findClientByUserId(userId);
-    const clientId = existingClient
-      ? existingClient.id
-      : await m.createClient(conn, {
-          user_id: userId,
-          insurance_number: generateInsuranceNumber(),
-        });
+    if (email && String(email).trim().toLowerCase() !== String(user.email).toLowerCase()) {
+      const err = new Error('Forbidden: request email does not match authenticated account');
+      err.status = 403;
+      throw err;
+    }
+
+    console.info(
+      `[CATNAT] createQuote user_id=${authenticatedUserId} resolved_client_id=${resolvedClientId}`
+    );
 
     const propertyId = await m.createProperty(conn, {
-      client_id: clientId,
+      client_id: resolvedClientId,
       construction_type,
       usage_type,
       built_area,
@@ -109,7 +154,7 @@ async function createQuote(data) {
     });
 
     const quoteId = await m.createQuote(conn, {
-      client_id:        clientId,
+      client_id:        resolvedClientId,
       property_id:      propertyId,
       product_id:       product.id,
       plan_id:          null,   // no plan for CATNAT — premium calculated server-side
@@ -120,19 +165,19 @@ async function createQuote(data) {
     await conn.execute(
       `INSERT INTO notifications (user_id, title, message, type)
        VALUES (?, ?, ?, ?)`,
-      [userId, 'Quote created', `Your CATNAT quote #${quoteId} has been created.`, 'info']
+      [authenticatedUserId, 'Quote created', `Your CATNAT quote #${quoteId} has been created.`, 'info']
     );
 
     // Audit log — use correct column names (table_name, record_id, description)
     await conn.execute(
       `INSERT INTO audit_logs (user_id, action, table_name, record_id, description)
        VALUES (?, ?, ?, ?, ?)`,
-      [userId, 'CREATE', 'quotes', quoteId, `CATNAT quote created for property_id=${propertyId}`]
+      [authenticatedUserId, 'CREATE', 'quotes', quoteId, `CATNAT quote created for property_id=${propertyId}`]
     );
 
     await conn.commit();
 
-    const token = issueAuthToken({ id: userId, email, role: userRole });
+    const token = issueAuthToken(user);
 
     return { quote_id: quoteId, estimated_amount, token };
 
@@ -208,7 +253,7 @@ async function confirmQuote(quoteId, userId) {
 
 // ─── PAYMENT ─────────────────────────────────────────────────
 
-async function processPayment(quoteId, userId, documentData = null) {
+async function processPayment(quoteId, userId, documentData = null, requestClientId = undefined) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -229,6 +274,20 @@ async function processPayment(quoteId, userId, documentData = null) {
     // FIX: ownership check
     if (quote.user_id !== userId) throw Object.assign(new Error('Forbidden'), { status: 403 });
 
+    const resolved = await resolveOrCreateClientForUser(conn, userId);
+    const resolvedClientId = resolved.client_id;
+
+    if (typeof requestClientId !== 'undefined' && requestClientId !== null) {
+      const requestedClientId = parseInt(requestClientId, 10);
+      if (Number.isNaN(requestedClientId) || requestedClientId !== resolvedClientId) {
+        throw Object.assign(new Error('Forbidden: request client_id does not match authenticated account'), { status: 403 });
+      }
+    }
+
+    if (quote.client_id !== resolvedClientId) {
+      throw Object.assign(new Error('Forbidden: quote client binding mismatch for authenticated account'), { status: 403 });
+    }
+
     // FIX: enforce status flow — must be confirmed before payment
     if (quote.status !== 'confirmed') {
       throw Object.assign(
@@ -242,7 +301,7 @@ async function processPayment(quoteId, userId, documentData = null) {
     if (quote.property_id) {
       const [existing] = await conn.execute(
         'SELECT id FROM contracts WHERE property_id = ? AND client_id = ? AND product_id = ?',
-        [quote.property_id, quote.client_id, quote.product_id]
+        [quote.property_id, resolvedClientId, quote.product_id]
       );
       if (existing.length > 0) {
         throw Object.assign(
@@ -256,7 +315,7 @@ async function processPayment(quoteId, userId, documentData = null) {
     const policy_reference = generatePolicyReference('CAT', quoteId);
 
     const contractId = await m.createContract(conn, {
-      client_id:      quote.client_id,
+      client_id:      resolvedClientId,
       property_id:    quote.property_id,
       product_id:     quote.product_id,
       plan_id:        null,
@@ -275,7 +334,7 @@ async function processPayment(quoteId, userId, documentData = null) {
     // Optional document
     if (documentData && documentData.file_name && documentData.file_path) {
       await m.createDocument(conn, {
-        client_id:   quote.client_id,
+        client_id:   resolvedClientId,
         contract_id: contractId,
         file_name:   documentData.file_name,
         file_path:   documentData.file_path,
@@ -288,7 +347,7 @@ const [userRows] = await conn.execute(
    FROM clients c
    JOIN users u ON c.user_id = u.id
    WHERE c.id = ?`,
-  [quote.client_id]
+  [resolvedClientId]
 );
 
 const user = userRows[0];
@@ -328,6 +387,10 @@ await sendContractEmail({
     await conn.execute(
       'UPDATE quotes SET status = ? WHERE id = ?',
       ['accepted', quoteId]
+    );
+
+    console.info(
+      `[CATNAT] processPayment user_id=${userId} resolved_client_id=${resolvedClientId} inserted_contract_client_id=${resolvedClientId} contract_id=${contractId}`
     );
 
     await conn.commit();
