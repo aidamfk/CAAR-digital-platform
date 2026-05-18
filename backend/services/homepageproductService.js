@@ -10,7 +10,7 @@
  *   - name is required and must be ≤ 120 chars
  *   - cta_label defaults to 'Subscribe' if empty
  *   - display_order must be a non-negative integer
- *   - image_url is optional; if provided must be a valid HTTP/HTTPS URL
+ *   - image_url is optional; if provided must be a valid HTTP/HTTPS URL or a local asset path
  *   - is_active must be boolean
  *   - Admin callers receive all rows; public callers receive only active rows
  */
@@ -31,6 +31,23 @@ function sanitizeImageUrl(imageUrl) {
   }
 
   return imageUrl.replace(/^frontend\//, '');
+}
+
+function isValidImageUrl(imageUrl) {
+  if (typeof imageUrl !== 'string') {
+    return false;
+  }
+
+  const trimmed = imageUrl.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (/^https?:\/\/\S+$/i.test(trimmed)) {
+    return true;
+  }
+
+  return /^(?:\/)?(?!.*:\/\/)(?!.*\s)(?!.*\\)[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/.test(trimmed);
 }
 
 function normalize(row) {
@@ -83,8 +100,8 @@ function validateAndNormalise({ name, description, image_url, cta_label, is_acti
     if (cleanImageUrl.length > 512) {
       throw makeError('image_url must not exceed 512 characters', 400);
     }
-    if (!/^https?:\/\/.+/.test(cleanImageUrl)) {
-      throw makeError('image_url must be a valid HTTP/HTTPS URL', 400);
+    if (!isValidImageUrl(cleanImageUrl)) {
+      throw makeError('image_url must be a valid HTTP/HTTPS URL or local asset path', 400);
     }
   }
 

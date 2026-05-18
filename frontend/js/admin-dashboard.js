@@ -439,7 +439,7 @@
         '    </div>',
         '    <div class="cms-item-field">',
         '      <label data-i18n="admin.table.image_url">Image URL</label>',
-        '      <input class="cms-table-input" id="' + imageId + '" type="url" value="' + esc(product.image_url || '') + '" placeholder="' + esc('https://example.com/image.jpg') + '" data-i18n-placeholder="admin.products.image_placeholder" />',
+        '      <input class="cms-table-input" id="' + imageId + '" type="text" value="' + esc(product.image_url || '') + '" placeholder="' + esc('img/catnat.webp or https://example.com/image.jpg') + '" data-i18n-placeholder="admin.products.image_placeholder" />',
         '    </div>',
         '    <div class="cms-item-field">',
         '      <label data-i18n="admin.table.cta_label">CTA Label</label>',
